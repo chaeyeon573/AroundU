@@ -1,0 +1,105 @@
+import { useEffect } from 'react';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { useAppStore } from '@/store/useAppStore';
+import { AppShell } from '@/components/layout/AppShell';
+import { ErrorState } from '@/components/ui';
+import { WelcomePage } from '@/pages/onboarding/WelcomePage';
+import { OnboardingPage } from '@/pages/onboarding/OnboardingPage';
+import { HomePage } from '@/pages/home/HomePage';
+import { MapPage } from '@/pages/map/MapPage';
+import { CommunityPage } from '@/pages/community/CommunityPage';
+import { ProfilePage } from '@/pages/profile/ProfilePage';
+import { EditProfilePage } from '@/pages/profile/EditProfilePage';
+import { ActivityDetailPage } from '@/pages/activity/ActivityDetailPage';
+import { ManageActivityPage } from '@/pages/activity/ManageActivityPage';
+import { CreateActivityPage } from '@/pages/create/CreateActivityPage';
+import { CreatePostPage } from '@/pages/create/CreatePostPage';
+import { PersonPage } from '@/pages/people/PersonPage';
+import { OrgPage } from '@/pages/org/OrgPage';
+import { ChatInboxPage } from '@/pages/chat/ChatInboxPage';
+import { ChatRoomPage } from '@/pages/chat/ChatRoomPage';
+import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
+import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { PrivacySettingsPage } from '@/pages/settings/PrivacySettingsPage';
+import { SafetySettingsPage } from '@/pages/settings/SafetySettingsPage';
+import { SearchPage } from '@/pages/home/SearchPage';
+import { ProfileListPage } from '@/pages/profile/ProfileListPage';
+
+function RequireAuth() {
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const status = useAppStore((s) => s.status);
+  const location = useLocation();
+  if (status === 'idle' || status === 'loading') return <SplashScreen />;
+  if (status === 'error') return <FullError />;
+  if (!currentUserId) return <Navigate to="/welcome" replace state={{ from: location }} />;
+  return <Outlet />;
+}
+
+function RedirectIfAuthed() {
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const status = useAppStore((s) => s.status);
+  if (status === 'idle' || status === 'loading') return <SplashScreen />;
+  if (currentUserId) return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
+function SplashScreen() {
+  return (
+    <div className="h-full grid place-items-center bg-bg">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-16 w-16 rounded-3xl bg-primary grid place-items-center text-white text-3xl shadow-[var(--shadow-float)]">📍</div>
+        <div className="text-[15px] font-bold">AroundU</div>
+        <div className="h-1 w-24 rounded-full bg-line overflow-hidden"><div className="h-full w-1/2 bg-primary animate-pulse" /></div>
+      </div>
+    </div>
+  );
+}
+
+function FullError() {
+  const error = useAppStore((s) => s.error);
+  const init = useAppStore((s) => s.init);
+  return <div className="h-full grid place-items-center"><ErrorState message={error ?? undefined} onRetry={init} /></div>;
+}
+
+export default function App() {
+  const init = useAppStore((s) => s.init);
+  useEffect(() => { init(); }, [init]);
+
+  return (
+    <Routes>
+      <Route element={<RedirectIfAuthed />}>
+        <Route element={<AppShell withNav={false} />}>
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/onboarding/*" element={<OnboardingPage />} />
+        </Route>
+      </Route>
+      <Route element={<RequireAuth />}>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+        <Route element={<AppShell withNav={false} />}>
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/activities/:id" element={<ActivityDetailPage />} />
+          <Route path="/activities/:id/edit" element={<CreateActivityPage />} />
+          <Route path="/activities/:id/manage" element={<ManageActivityPage />} />
+          <Route path="/create/activity" element={<CreateActivityPage />} />
+          <Route path="/create/post" element={<CreatePostPage />} />
+          <Route path="/users/:id" element={<PersonPage />} />
+          <Route path="/orgs/:id" element={<OrgPage />} />
+          <Route path="/chats" element={<ChatInboxPage />} />
+          <Route path="/chats/:roomId" element={<ChatRoomPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/profile/:list" element={<ProfileListPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+          <Route path="/settings/safety" element={<SafetySettingsPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

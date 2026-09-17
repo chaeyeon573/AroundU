@@ -1,0 +1,502 @@
+import type {
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField,
+} from '@/types';
+import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
+
+const T = todayISO();
+const T1 = addDaysISO(1);
+const T2 = addDaysISO(2);
+const T4 = addDaysISO(4);
+const T9 = addDaysISO(9);
+
+export const DEMO_USER_ID = 'u_me';
+
+const defaultVisibility = (v: Visibility = 'school'): Record<ProfileField, Visibility> => ({
+  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v,
+});
+
+export const schools: School[] = [
+  { id: 's_yonsei', name: '연세대학교', emailDomain: 'yonsei.ac.kr', region: '신촌', center: { lat: 37.5636, lng: 126.9376 } },
+  { id: 's_ewha', name: '이화여자대학교', emailDomain: 'ewhain.net', region: '신촌', center: { lat: 37.5618, lng: 126.9466 } },
+  { id: 's_sogang', name: '서강대학교', emailDomain: 'sogang.ac.kr', region: '신촌', center: { lat: 37.5511, lng: 126.9410 } },
+  { id: 's_hongik', name: '홍익대학교', emailDomain: 'hongik.ac.kr', region: '홍대', center: { lat: 37.5511, lng: 126.9250 } },
+  { id: 's_snu', name: '서울대학교', emailDomain: 'snu.ac.kr', region: '관악', center: { lat: 37.4602, lng: 126.9527 } },
+  { id: 's_korea', name: '고려대학교', emailDomain: 'korea.ac.kr', region: '안암', center: { lat: 37.5895, lng: 127.0323 } },
+  { id: 's_kaist', name: 'KAIST', emailDomain: 'kaist.ac.kr', region: '대전 유성', center: { lat: 36.3721, lng: 127.3604 } },
+];
+
+const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
+  birthYear: 2002,
+  gender: 'private',
+  avatar: { emoji: '🙂', hue: 210, photoType: 'face' },
+  identityVerified: false,
+  affiliation: {
+    type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '경영학과', year: 2021,
+    emailVerified: true, showSchool: true, showDepartment: true,
+  },
+  bio: '',
+  likes: '',
+  freeTime: '',
+  availability: 'after18',
+  interests: [],
+  purposes: ['friend'],
+  region: '신촌',
+  fieldVisibility: defaultVisibility(),
+  settings: { messagePolicy: 'connected', notifications: true, locationPermission: 'granted' },
+  createdAt: isoHoursAgo(24 * 30),
+  ...u,
+});
+
+export const users: User[] = [
+  mk({
+    id: DEMO_USER_ID, nickname: '하늘', birthYear: 2001, gender: 'private',
+    avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '사이드 프로젝트와 커피를 좋아하는 4학년. 새로운 사람과 이야기하는 걸 좋아해요.',
+    likes: '스페셜티 커피, 인디 음악, 전시 보기',
+    freeTime: '카페에서 코딩하거나 백양로 산책',
+    availability: 'after18',
+    interests: ['coffee', 'study', 'startup', 'exhibition', 'exercise'],
+    purposes: ['friend', 'study', 'networking'],
+    nowWant: '오늘 저녁 신촌에서 커피 한 잔?',
+    fieldVisibility: defaultVisibility('school'),
+  }),
+  mk({
+    id: 'u_jimin', nickname: '지민', birthYear: 2002, gender: 'female',
+    avatar: { emoji: '👩‍🎨', hue: 20, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '경영학과', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '카페, 전시회, 러닝을 좋아해요. 창업 동아리에서 마케팅을 맡고 있어요.',
+    likes: '핸드드립, 미술관 데이트, 한강 러닝',
+    freeTime: '전시 보러 가거나 새로 생긴 카페 탐방',
+    availability: 'after18',
+    interests: ['coffee', 'exhibition', 'exercise', 'startup', 'networking'],
+    purposes: ['friend', 'networking', 'dating'],
+    nowWant: '오늘 신촌에서 커피 마실 사람?',
+  }),
+  mk({
+    id: 'u_dohyun', nickname: '도현', birthYear: 2000, gender: 'male',
+    avatar: { emoji: '🧑‍🔬', hue: 160, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'graduate', department: '인공지능학과', year: 2024, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: 'AI 연구실 석사 1년차. 논문 스터디 같이 하실 분 환영합니다.',
+    likes: '논문 읽기, 보드게임, 클라이밍',
+    freeTime: '공학관 근처에서 클라이밍',
+    availability: 'afternoon',
+    interests: ['research', 'study', 'exercise', 'coffee'],
+    purposes: ['study', 'networking'],
+    nowWant: 'LLM 논문 같이 읽을 분',
+  }),
+  mk({
+    id: 'u_seoyeon', nickname: '서연', birthYear: 2003, gender: 'female',
+    avatar: { emoji: '🎸', hue: 290, photoType: 'masked' }, identityVerified: false,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '심리학과', year: 2022, emailVerified: true, showSchool: true, showDepartment: false },
+    bio: '밴드 동아리 기타. 주말엔 홍대 공연 보러 다녀요.',
+    likes: '록 음악, 떡볶이, 고양이',
+    freeTime: '합주실에서 연습',
+    availability: 'weekend',
+    interests: ['club', 'exhibition', 'meal', 'walk'],
+    purposes: ['friend', 'hobby', 'club'],
+    nowWant: '주말에 공연 같이 볼 사람',
+  }),
+  mk({
+    id: 'u_minjun', nickname: '민준', birthYear: 2001, gender: 'male',
+    avatar: { emoji: '🏃', hue: 120, photoType: 'back' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_sogang', schoolName: '서강대학교', role: 'undergraduate', department: '경제학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '매일 아침 러닝. 신촌 러닝 크루 운영 중입니다.',
+    likes: '러닝, 단백질 쉐이크, 자전거',
+    freeTime: '한강 자전거',
+    availability: 'now',
+    interests: ['exercise', 'cycling', 'walk', 'meal'],
+    purposes: ['friend', 'hobby'],
+    nowWant: '오후 7시 러닝 같이 뛰어요',
+  }),
+  mk({
+    id: 'u_yuna', nickname: '유나', birthYear: 2002, gender: 'female',
+    avatar: { emoji: '📚', hue: 45, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_ewha', schoolName: '이화여자대학교', role: 'undergraduate', department: '통계학과', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '통계 스터디 모집 중. 조용한 카페에서 공부하는 걸 좋아해요.',
+    likes: 'R, 크로플, 산책',
+    freeTime: '도서관 근처 카페',
+    availability: 'afternoon',
+    interests: ['study', 'coffee', 'walk', 'research'],
+    purposes: ['study', 'friend'],
+    nowWant: '중앙도서관에서 같이 공부해요',
+  }),
+  mk({
+    id: 'u_taeho', nickname: '태호', birthYear: 1999, gender: 'male',
+    avatar: { emoji: '🚀', hue: 10, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'alumni', department: '전기전자공학부', year: 2023, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '졸업 후 스타트업 창업. 후배들과 커피챗 환영해요.',
+    likes: '프로덕트, 등산, 위스키',
+    freeTime: '정문 카페에서 커피챗',
+    availability: 'after18',
+    interests: ['startup', 'networking', 'coffee'],
+    purposes: ['networking'],
+    nowWant: '창업 관심 있는 분과 커피챗',
+  }),
+  mk({
+    id: 'u_hana', nickname: '하나', birthYear: 2003, gender: 'female',
+    avatar: { emoji: '🎨', hue: 340, photoType: 'face' }, identityVerified: false,
+    affiliation: { type: 'university', schoolId: 's_hongik', schoolName: '홍익대학교', role: 'undergraduate', department: '시각디자인과', year: 2022, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '전시랑 플리마켓 좋아해요. 같이 다닐 친구 찾는 중!',
+    likes: '드로잉, 빈티지 샵, 아이스 라떼',
+    freeTime: '홍대 골목 산책',
+    availability: 'weekend',
+    interests: ['exhibition', 'shopping', 'walk', 'coffee'],
+    purposes: ['friend', 'hobby'],
+    nowWant: '이번 주말 전시 같이 볼 사람',
+  }),
+  mk({
+    id: 'u_junho', nickname: '준호', birthYear: 2000, gender: 'male',
+    avatar: { emoji: '🎤', hue: 265, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2019, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '밴드 동아리 회장. 학생회관 공연 준비 중이에요.',
+    likes: '기타, 라멘, 영화',
+    freeTime: '합주 아니면 영화',
+    availability: 'in_class',
+    interests: ['club', 'exhibition', 'meal', 'coffee'],
+    purposes: ['club', 'friend'],
+  }),
+  mk({
+    id: 'u_sua', nickname: '수아', birthYear: 2004, gender: 'female',
+    avatar: { emoji: '🌱', hue: 95, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2023, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '2학년. 코딩 스터디랑 산책 친구 구해요.',
+    likes: '알고리즘, 김밥, 산책',
+    freeTime: '백양로 산책',
+    availability: 'now',
+    interests: ['study', 'walk', 'coffee', 'startup'],
+    purposes: ['study', 'friend'],
+    nowWant: '지금 백양로 산책 가실 분',
+  }),
+  mk({
+    id: 'u_woojin', nickname: '우진', birthYear: 2001, gender: 'male',
+    avatar: { emoji: '🧗', hue: 200, photoType: 'face' }, identityVerified: true,
+    affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '통계학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
+    bio: '통계학과 학생회. 스터디 운영 중.',
+    likes: '수학, 클라이밍, 국밥',
+    freeTime: '클라이밍장',
+    availability: 'after18',
+    interests: ['study', 'exercise', 'research'],
+    purposes: ['study', 'club'],
+  }),
+];
+
+export const organizations: Organization[] = [
+  {
+    id: 'o_band', name: '소리울림 (밴드 동아리)', logo: { emoji: '🎸', hue: 280 }, type: 'club', schoolId: 's_yonsei', verified: true,
+    description: '1987년부터 이어온 연세대 중앙 밴드 동아리. 매 학기 학생회관 정기공연을 엽니다.',
+    gallery: [{ emoji: '🎤', hue: 280, caption: '봄 정기공연' }, { emoji: '🥁', hue: 300, caption: '합주실' }, { emoji: '🎹', hue: 260, caption: '신입생 환영회' }],
+    regularActivities: ['매주 화·목 합주 (학생회관 지하)', '학기별 정기공연', '방학 합숙'],
+    recruitment: { title: '2학기 신입회원 모집', period: `${T} ~ ${T9}`, open: true },
+    notices: [{ id: 'n1', title: '정기공연 리허설 안내', body: '이번 주 목요일 저녁 7시 학생회관 지하 합주실', createdAt: isoHoursAgo(5) }],
+    followerIds: ['u_seoyeon', 'u_hana', DEMO_USER_ID], memberIds: ['u_junho', 'u_seoyeon'], adminIds: ['u_junho'], applicantIds: [],
+  },
+  {
+    id: 'o_stat', name: '통계학과 학생회', logo: { emoji: '📊', hue: 210 }, type: 'council', schoolId: 's_yonsei', parent: '통계학과', verified: true,
+    description: '통계학과 학생들의 학업과 교류를 돕습니다. 스터디·멘토링·학과 행사를 운영해요.',
+    gallery: [{ emoji: '📈', hue: 210, caption: '멘토링 데이' }, { emoji: '🍕', hue: 30, caption: '개강총회' }],
+    regularActivities: ['월간 스터디 매칭', '학기 초 개강총회'],
+    notices: [{ id: 'n2', title: '중간고사 스터디 모집', body: '중앙도서관 그룹스터디룸에서 진행합니다.', createdAt: isoHoursAgo(30) }],
+    followerIds: ['u_yuna', 'u_woojin'], memberIds: ['u_woojin'], adminIds: ['u_woojin'], applicantIds: [],
+  },
+  {
+    id: 'o_ailab', name: 'AI 연구실 (Vision & Language Lab)', logo: { emoji: '🧠', hue: 170 }, type: 'lab', schoolId: 's_yonsei', parent: '인공지능학과', verified: true,
+    description: '멀티모달 AI를 연구합니다. 매주 공개 세미나를 열고 학부 인턴을 모집해요.',
+    gallery: [{ emoji: '🖥️', hue: 170, caption: '연구실' }, { emoji: '📝', hue: 190, caption: '세미나' }],
+    regularActivities: ['매주 수요일 공개 세미나 (공학관)', '학부 인턴 프로그램'],
+    recruitment: { title: '학부 연구 인턴 모집', period: `${T} ~ ${addDaysISO(20)}`, open: true },
+    notices: [],
+    followerIds: ['u_dohyun', DEMO_USER_ID], memberIds: ['u_dohyun'], adminIds: ['u_dohyun'], applicantIds: [],
+  },
+  {
+    id: 'o_startup', name: '연세 창업동아리 YSVC', logo: { emoji: '🚀', hue: 15 }, type: 'club', schoolId: 's_yonsei', verified: false,
+    description: '아이디어를 제품으로. 매주 커피챗과 데모데이를 운영합니다.',
+    gallery: [{ emoji: '💡', hue: 15, caption: '데모데이' }],
+    regularActivities: ['매주 금 커피챗', '학기 말 데모데이'],
+    recruitment: { title: '가을 기수 모집', period: `${T} ~ ${addDaysISO(14)}`, open: true },
+    notices: [],
+    followerIds: ['u_jimin', 'u_taeho'], memberIds: ['u_jimin', 'u_taeho'], adminIds: ['u_taeho'], applicantIds: [],
+  },
+  {
+    id: 'o_run', name: '신촌 러닝 크루', logo: { emoji: '🏃', hue: 130 }, type: 'club', schoolId: 's_sogang', verified: false,
+    description: '신촌 일대 대학생 연합 러닝 크루. 초보 환영.',
+    gallery: [{ emoji: '🌅', hue: 130, caption: '아침 러닝' }],
+    regularActivities: ['매주 월·수·금 저녁 7시 러닝'],
+    notices: [],
+    followerIds: ['u_minjun', 'u_jimin'], memberIds: ['u_minjun'], adminIds: ['u_minjun'], applicantIds: [],
+  },
+];
+
+export const activities: Activity[] = [
+  {
+    id: 'a_coffee_sinchon', kind: 'personal', category: 'coffee', title: '오늘 오후 6시 신촌에서 커피 마실 사람?',
+    description: '창업이나 AI에 관심 있는 분이면 좋아요. 가볍게 이야기 나눠요. 최대 4명, 연세대학교 구성원에게 공개.',
+    cover: { emoji: '☕', hue: 30 }, hostId: 'u_jimin', hostType: 'user', date: T, startTime: '18:00', endTime: '19:30',
+    place: { name: '정문 카페 (커피리브레 신촌)', address: '서대문구 연세로', lat: 37.5589, lng: 126.9368 },
+    capacity: 4, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [
+      { id: 'c1', authorId: 'u_sua', text: '창업 관심 많은데 초보도 괜찮을까요?', createdAt: isoMinutesAgo(40) },
+      { id: 'c2', authorId: 'u_jimin', text: '당연하죠! 편하게 오세요 :)', createdAt: isoMinutesAgo(35) },
+    ], createdAt: isoHoursAgo(2),
+  },
+  {
+    id: 'a_stat_study', kind: 'group', category: 'study', title: '통계학 중간고사 스터디',
+    description: '회귀분석·확률 파트 위주로 같이 문제 풀어요. 통계학과 아니어도 환영.',
+    cover: { emoji: '📖', hue: 220 }, hostId: 'u_woojin', hostType: 'user', orgId: 'o_stat', date: T, startTime: '14:00', endTime: '17:00',
+    place: { name: '중앙도서관 그룹스터디룸 3', lat: 37.5645, lng: 126.9375 },
+    capacity: 6, visibility: 'public', joinPolicy: 'approval', fee: 0, conditions: '통계 기초 수강자', comments: [], createdAt: isoHoursAgo(20),
+  },
+  {
+    id: 'a_band_show', kind: 'org_event', category: 'performance', title: '소리울림 가을 정기공연',
+    description: '밴드 동아리 정기공연! 신입회원 무대도 있어요. 친구랑 같이 오세요.',
+    cover: { emoji: '🎤', hue: 285 }, hostId: 'u_junho', hostType: 'org', orgId: 'o_band', date: T2, startTime: '19:00', endTime: '21:00',
+    place: { name: '학생회관 대강당', lat: 37.5637, lng: 126.9387 },
+    capacity: 200, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [
+      { id: 'c3', authorId: 'u_hana', text: '타교생도 갈 수 있나요?', createdAt: isoHoursAgo(3) },
+      { id: 'c4', authorId: 'u_junho', text: '네! 누구나 환영입니다.', createdAt: isoHoursAgo(2) },
+    ], createdAt: isoHoursAgo(48),
+  },
+  {
+    id: 'a_running', kind: 'group', category: 'exercise', title: '오후 7시 러닝 모임 (5km)',
+    description: '운동장에서 출발해 신촌 한 바퀴. 페이스 6분대, 초보 환영. 끝나고 국밥.',
+    cover: { emoji: '🏃', hue: 135 }, hostId: 'u_minjun', hostType: 'user', orgId: 'o_run', date: T, startTime: '19:00', endTime: '20:00',
+    place: { name: '대운동장', lat: 37.5662, lng: 126.9352 },
+    capacity: 10, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(6),
+  },
+  {
+    id: 'a_startup_chat', kind: 'personal', category: 'networking', title: '창업 커피챗 — 프로덕트 이야기',
+    description: '졸업 후 창업한 선배가 후배들과 커피챗. MVP, 팀빌딩 뭐든 물어보세요.',
+    cover: { emoji: '🚀', hue: 15 }, hostId: 'u_taeho', hostType: 'user', orgId: 'o_startup', date: T1, startTime: '18:30', endTime: '20:00',
+    place: { name: '정문 카페 (스타벅스 연세점)', lat: 37.5594, lng: 126.9372 },
+    capacity: 5, visibility: 'school', joinPolicy: 'approval', fee: 0, conditions: '창업에 관심 있는 연세대 구성원', comments: [], createdAt: isoHoursAgo(10),
+  },
+  {
+    id: 'a_ai_seminar', kind: 'org_event', category: 'seminar', title: 'AI 연구실 공개 세미나: 멀티모달 LLM',
+    description: '최신 멀티모달 모델 리뷰. 학부생 환영, 사전 지식 불필요. 세미나 후 인턴 Q&A.',
+    cover: { emoji: '🧠', hue: 175 }, hostId: 'u_dohyun', hostType: 'org', orgId: 'o_ailab', date: T1, startTime: '16:00', endTime: '17:30',
+    place: { name: '제1공학관 B101', lat: 37.5617, lng: 126.9367 },
+    capacity: 40, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(72),
+  },
+  {
+    id: 'a_band_recruit', kind: 'org_event', category: 'club', title: '동아리 신입회원 모집 부스',
+    description: '백양로에서 신입회원 모집 부스 운영. 기타 체험도 가능!',
+    cover: { emoji: '🎸', hue: 270 }, hostId: 'u_junho', hostType: 'org', orgId: 'o_band', date: T, startTime: '11:00', endTime: '17:00',
+    place: { name: '백양로 삼거리', lat: 37.5625, lng: 126.9378 },
+    capacity: 999, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(30),
+  },
+  {
+    id: 'a_festival', kind: 'org_event', category: 'school_event', title: '2026 가을 아카라카 사전 행사',
+    description: '학교 공식 행사. 노천극장에서 진행되는 사전 축제. 학생증 지참.',
+    cover: { emoji: '🎓', hue: 355 }, hostId: 'u_junho', hostType: 'org', official: true, date: T4, startTime: '17:00', endTime: '22:00',
+    place: { name: '노천극장', lat: 37.5668, lng: 126.9385 },
+    capacity: 3000, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(100),
+  },
+  {
+    id: 'a_exhibit', kind: 'personal', category: 'etc', title: '주말 전시 같이 볼 사람 (홍대 → 성수)',
+    description: '토요일 오후 홍대에서 만나 성수 전시까지. 사진 좋아하시는 분!',
+    cover: { emoji: '🎨', hue: 335 }, hostId: 'u_hana', hostType: 'user', date: addDaysISO(3), startTime: '14:00', endTime: '18:00',
+    place: { name: '홍대입구역 3번 출구', lat: 37.5571, lng: 126.9245 },
+    capacity: 3, visibility: 'public', joinPolicy: 'approval', fee: 15000, conditions: '전시 입장료 각자 부담', comments: [], createdAt: isoHoursAgo(9),
+  },
+  {
+    id: 'a_walk', kind: 'personal', category: 'etc', title: '지금 백양로 산책 30분',
+    description: '수업 끝나고 머리 식힐 겸 산책. 가볍게 이야기해요.',
+    cover: { emoji: '🚶', hue: 100 }, hostId: 'u_sua', hostType: 'user', date: T, startTime: '15:30', endTime: '16:00',
+    place: { name: '백양로 (언더우드관 앞)', lat: 37.5647, lng: 126.9380 },
+    capacity: 2, visibility: 'department', visibilityTargets: ['컴퓨터과학과'], joinPolicy: 'open', fee: 0, comments: [], createdAt: isoMinutesAgo(25),
+  },
+  {
+    id: 'a_deal', kind: 'org_event', category: 'store_deal', title: '학생증 제시 시 아메리카노 1+1',
+    description: '정문 앞 카페 오늘 하루 한정 혜택. AroundU 화면 제시.',
+    cover: { emoji: '🏷️', hue: 50 }, hostId: 'u_taeho', hostType: 'user', date: T, startTime: '10:00', endTime: '21:00',
+    place: { name: '카페 온도 (연세로)', lat: 37.5580, lng: 126.9360 },
+    capacity: 999, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(12),
+  },
+  {
+    id: 'a_friends_dinner', kind: 'group', category: 'meal', title: '친구들끼리 저녁 (마라탕)',
+    description: '친구 공개. 시험 끝난 기념 마라탕!',
+    cover: { emoji: '🍜', hue: 10 }, hostId: 'u_seoyeon', hostType: 'user', date: T1, startTime: '19:00', endTime: '20:30',
+    place: { name: '신촌 마라공방', lat: 37.5563, lng: 126.9382 },
+    capacity: 5, visibility: 'friends', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(4),
+  },
+  {
+    id: 'a_invite_only', kind: 'group', category: 'study', title: '캡스톤 팀 회의',
+    description: '초대된 팀원만 참가.',
+    cover: { emoji: '🗂️', hue: 200 }, hostId: 'u_junho', hostType: 'user', date: T2, startTime: '13:00', endTime: '15:00',
+    place: { name: '제3공학관 세미나실', lat: 37.5612, lng: 126.9360 },
+    capacity: 4, visibility: 'public', joinPolicy: 'invite', invitedIds: ['u_sua'], fee: 0, comments: [], createdAt: isoHoursAgo(50),
+  },
+  {
+    id: 'a_mine', kind: 'personal', category: 'study', title: '리액트 사이드 프로젝트 같이 하실 분',
+    description: '주 1회 만나서 진행. 포트폴리오 목적. 디자이너 한 분 있으면 좋겠어요.',
+    cover: { emoji: '💻', hue: 235 }, hostId: DEMO_USER_ID, hostType: 'user', date: T2, startTime: '18:00', endTime: '20:00',
+    place: { name: '중앙도서관 1층 카페', lat: 37.5643, lng: 126.9372 },
+    capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, comments: [
+      { id: 'c5', authorId: 'u_hana', text: '디자인 쪽인데 관심 있어요!', createdAt: isoHoursAgo(1) },
+    ], createdAt: isoHoursAgo(26),
+  },
+];
+
+export const participations: Participation[] = [
+  { id: 'p1', activityId: 'a_coffee_sinchon', userId: 'u_sua', status: 'approved', createdAt: isoMinutesAgo(30) },
+  { id: 'p2', activityId: 'a_coffee_sinchon', userId: 'u_taeho', status: 'approved', createdAt: isoMinutesAgo(50) },
+  { id: 'p3', activityId: 'a_stat_study', userId: 'u_yuna', status: 'approved', createdAt: isoHoursAgo(10) },
+  { id: 'p4', activityId: 'a_stat_study', userId: 'u_dohyun', status: 'approved', createdAt: isoHoursAgo(8) },
+  { id: 'p5', activityId: 'a_running', userId: 'u_jimin', status: 'approved', createdAt: isoHoursAgo(3) },
+  { id: 'p6', activityId: 'a_running', userId: DEMO_USER_ID, status: 'approved', createdAt: isoHoursAgo(2) },
+  { id: 'p7', activityId: 'a_band_show', userId: 'u_hana', status: 'approved', createdAt: isoHoursAgo(3) },
+  { id: 'p8', activityId: 'a_band_show', userId: 'u_seoyeon', status: 'approved', createdAt: isoHoursAgo(40) },
+  { id: 'p9', activityId: 'a_mine', userId: 'u_hana', status: 'pending', message: '디자이너예요. 피그마 잘 다뤄요!', createdAt: isoMinutesAgo(55) },
+  { id: 'p10', activityId: 'a_mine', userId: 'u_sua', status: 'pending', message: '리액트 배우는 중인데 참여하고 싶어요.', createdAt: isoMinutesAgo(20) },
+  { id: 'p11', activityId: 'a_mine', userId: 'u_dohyun', status: 'approved', createdAt: isoHoursAgo(5) },
+  { id: 'p12', activityId: 'a_ai_seminar', userId: 'u_sua', status: 'approved', createdAt: isoHoursAgo(6) },
+  { id: 'p13', activityId: 'a_ai_seminar', userId: 'u_woojin', status: 'approved', createdAt: isoHoursAgo(7) },
+  { id: 'p14', activityId: 'a_startup_chat', userId: 'u_jimin', status: 'approved', createdAt: isoHoursAgo(9) },
+  { id: 'p15', activityId: 'a_friends_dinner', userId: 'u_junho', status: 'approved', createdAt: isoHoursAgo(3) },
+];
+
+export const posts: Post[] = [
+  {
+    id: 'po1', authorId: 'u_jimin', authorType: 'user', media: [{ emoji: '☕', hue: 30 }, { emoji: '🍰', hue: 20 }],
+    text: '정문 앞 새로 생긴 카페. 플랫화이트 맛집 인정. 오늘 저녁 여기서 커피 모임 열었어요 ☕',
+    tags: ['신촌카페', '커피'], visibility: 'public', likeIds: ['u_sua', 'u_taeho', 'u_hana'], savedIds: [],
+    comments: [{ id: 'pc1', authorId: 'u_sua', text: '저 갈래요!!', createdAt: isoMinutesAgo(50) }],
+    relatedActivityId: 'a_coffee_sinchon', createdAt: isoHoursAgo(2),
+  },
+  {
+    id: 'po2', authorId: 'u_junho', authorType: 'org', orgId: 'o_band', media: [{ emoji: '🎤', hue: 285 }],
+    text: '소리울림 가을 정기공연 D-2! 학생회관 대강당에서 만나요. 신입 무대 기대해주세요 🎸',
+    tags: ['밴드', '정기공연', '동아리'], visibility: 'public', likeIds: ['u_seoyeon', 'u_hana', 'u_jimin', DEMO_USER_ID], savedIds: [DEMO_USER_ID],
+    comments: [], relatedActivityId: 'a_band_show', createdAt: isoHoursAgo(5),
+  },
+  {
+    id: 'po3', authorId: 'u_minjun', authorType: 'user', media: [{ emoji: '🌅', hue: 130 }],
+    text: '오늘 아침 한강 10km. 저녁엔 운동장에서 5km 같이 뛰어요. 초보 환영!',
+    tags: ['러닝', '신촌러닝크루'], visibility: 'public', likeIds: ['u_jimin', 'u_woojin'], savedIds: [],
+    comments: [{ id: 'pc2', authorId: 'u_jimin', text: '저녁에 봬요!', createdAt: isoHoursAgo(1) }],
+    relatedActivityId: 'a_running', createdAt: isoHoursAgo(7),
+  },
+  {
+    id: 'po4', authorId: 'u_seoyeon', authorType: 'user', media: [{ emoji: '🐈', hue: 290 }, { emoji: '🎸', hue: 280 }],
+    text: '합주실 고양이 등장. 오늘 연습은 망했지만 행복함 😻 (친구 공개)',
+    tags: ['고양이', '합주'], visibility: 'friends', likeIds: [DEMO_USER_ID], savedIds: [],
+    comments: [], createdAt: isoHoursAgo(9),
+  },
+  {
+    id: 'po5', authorId: 'u_dohyun', authorType: 'org', orgId: 'o_ailab', media: [{ emoji: '🧠', hue: 175 }],
+    text: '내일 오후 4시 공학관 공개 세미나. 멀티모달 LLM 리뷰 + 학부 인턴 Q&A. 사전 지식 없어도 괜찮아요.',
+    tags: ['AI', '세미나', '연구실'], visibility: 'public', likeIds: ['u_sua', DEMO_USER_ID], savedIds: ['u_sua'],
+    comments: [], relatedActivityId: 'a_ai_seminar', createdAt: isoHoursAgo(12),
+  },
+  {
+    id: 'po6', authorId: 'u_yuna', authorType: 'user', media: [{ emoji: '📚', hue: 45 }],
+    text: '중도 4층 창가 자리 꿀팁: 오후 2시 이후 햇빛 안 들어와서 노트북 하기 좋음. (같은 학교만)',
+    tags: ['중앙도서관', '공부'], visibility: 'school', likeIds: ['u_woojin'], savedIds: [],
+    comments: [], createdAt: isoHoursAgo(15),
+  },
+  {
+    id: 'po7', authorId: 'u_hana', authorType: 'user', media: [{ emoji: '🎨', hue: 335 }, { emoji: '📷', hue: 320 }],
+    text: '지난 주 성수 전시 후기. 이번 주말에 또 갈 건데 같이 가실 분 활동 열어뒀어요!',
+    tags: ['전시', '성수', '후기'], visibility: 'public', likeIds: ['u_jimin', 'u_seoyeon'], savedIds: [],
+    comments: [{ id: 'pc3', authorId: 'u_seoyeon', text: '사진 너무 예뻐요', createdAt: isoHoursAgo(20) }],
+    relatedActivityId: 'a_exhibit', createdAt: isoHoursAgo(22),
+  },
+  {
+    id: 'po8', authorId: 'u_taeho', authorType: 'user', media: [{ emoji: '🏷️', hue: 50 }],
+    text: '연세로 카페 온도, 오늘 학생증 보여주면 아메리카노 1+1이래요. 학교 주변 정보 공유!',
+    tags: ['학교주변', '혜택'], visibility: 'public', likeIds: ['u_sua', 'u_jimin', 'u_minjun', 'u_yuna'], savedIds: [],
+    comments: [], relatedActivityId: 'a_deal', createdAt: isoHoursAgo(11),
+  },
+  {
+    id: 'po9', authorId: DEMO_USER_ID, authorType: 'user', media: [{ emoji: '💻', hue: 235 }],
+    text: '사이드 프로젝트 팀원 모집 중! 리액트로 캠퍼스 앱 만들어요.',
+    tags: ['사이드프로젝트', '리액트'], visibility: 'school', likeIds: ['u_sua', 'u_hana'], savedIds: [],
+    comments: [], relatedActivityId: 'a_mine', createdAt: isoHoursAgo(26),
+  },
+];
+
+export const relationships: Relationships = {
+  likes: [
+    { fromId: 'u_jimin', toId: DEMO_USER_ID, createdAt: isoHoursAgo(3) },
+    { fromId: 'u_hana', toId: DEMO_USER_ID, createdAt: isoHoursAgo(8) },
+    { fromId: DEMO_USER_ID, toId: 'u_yuna', createdAt: isoHoursAgo(30) },
+  ],
+  follows: [
+    { fromId: DEMO_USER_ID, toId: 'u_taeho', targetType: 'user' },
+    { fromId: DEMO_USER_ID, toId: 'o_band', targetType: 'org' },
+    { fromId: DEMO_USER_ID, toId: 'o_ailab', targetType: 'org' },
+    { fromId: 'u_sua', toId: DEMO_USER_ID, targetType: 'user' },
+    { fromId: 'u_jimin', toId: DEMO_USER_ID, targetType: 'user' },
+  ],
+  friendRequests: [
+    { id: 'fr1', fromId: 'u_minjun', toId: DEMO_USER_ID, status: 'pending', createdAt: isoHoursAgo(2) },
+    { id: 'fr2', fromId: DEMO_USER_ID, toId: 'u_dohyun', status: 'pending', createdAt: isoHoursAgo(20) },
+  ],
+  friends: [
+    { a: DEMO_USER_ID, b: 'u_seoyeon', since: isoHoursAgo(24 * 20) },
+    { a: DEMO_USER_ID, b: 'u_junho', since: isoHoursAgo(24 * 60) },
+    { a: DEMO_USER_ID, b: 'u_sua', since: isoHoursAgo(24 * 5) },
+    { a: 'u_seoyeon', b: 'u_junho', since: isoHoursAgo(24 * 90) },
+    { a: 'u_jimin', b: 'u_seoyeon', since: isoHoursAgo(24 * 30) },
+  ],
+  blocks: [],
+};
+
+export const proposals: ActivityProposal[] = [
+  {
+    id: 'pr1', fromId: 'u_sua', toId: DEMO_USER_ID, category: 'study', message: '이번 주 목요일 저녁에 알고리즘 같이 풀어요!', when: `${T2} 19:00`,
+    status: 'pending', createdAt: isoHoursAgo(1), expiresAt: new Date(Date.now() + 47 * 3600000).toISOString(),
+  },
+];
+
+export const chatRooms: ChatRoom[] = [
+  {
+    id: 'cr_seoyeon', type: 'direct', memberIds: [DEMO_USER_ID, 'u_seoyeon'], createdAt: isoHoursAgo(24 * 20),
+    messages: [
+      { id: 'm1', senderId: 'u_seoyeon', text: '내일 마라탕 올 거지?', createdAt: isoHoursAgo(3) },
+      { id: 'm2', senderId: DEMO_USER_ID, text: '당연하지 ㅋㅋ 7시 맞지?', createdAt: isoHoursAgo(2.5) },
+      { id: 'm3', senderId: 'u_seoyeon', text: 'ㅇㅇ 준호도 온대', createdAt: isoHoursAgo(2) },
+    ],
+    lastReadAt: { [DEMO_USER_ID]: isoHoursAgo(2.4), u_seoyeon: isoHoursAgo(2) },
+  },
+  {
+    id: 'cr_junho', type: 'direct', memberIds: [DEMO_USER_ID, 'u_junho'], createdAt: isoHoursAgo(24 * 60),
+    messages: [
+      { id: 'm4', senderId: 'u_junho', text: '공연 티켓 두 장 빼놨어', createdAt: isoHoursAgo(26) },
+      { id: 'm5', senderId: DEMO_USER_ID, text: '고마워!! 하나랑 같이 갈게', createdAt: isoHoursAgo(25) },
+    ],
+    lastReadAt: { [DEMO_USER_ID]: isoHoursAgo(25), u_junho: isoHoursAgo(25) },
+  },
+  {
+    id: 'cr_running', type: 'activity', activityId: 'a_running', memberIds: ['u_minjun', 'u_jimin', DEMO_USER_ID], title: '오후 7시 러닝 모임 (5km)', createdAt: isoHoursAgo(6),
+    messages: [
+      { id: 'm6', senderId: 'u_minjun', text: '오늘 운동장 정문 쪽 트랙에서 6시 50분 집합!', createdAt: isoHoursAgo(1.5), },
+      { id: 'm7', senderId: 'u_jimin', text: '넵 물 챙겨갈게요', createdAt: isoHoursAgo(1) },
+    ],
+    lastReadAt: { [DEMO_USER_ID]: isoHoursAgo(3) },
+  },
+  {
+    id: 'cr_mine', type: 'activity', activityId: 'a_mine', memberIds: [DEMO_USER_ID, 'u_dohyun'], title: '리액트 사이드 프로젝트 같이 하실 분', createdAt: isoHoursAgo(5),
+    messages: [
+      { id: 'm8', senderId: 'u_dohyun', text: '백엔드는 제가 볼게요. 파이썬 괜찮죠?', createdAt: isoHoursAgo(4) },
+    ],
+    lastReadAt: { [DEMO_USER_ID]: isoHoursAgo(4) },
+  },
+  {
+    id: 'cr_band', type: 'org', orgId: 'o_band', memberIds: ['u_junho', 'u_seoyeon', 'u_hana', DEMO_USER_ID], title: '소리울림 팔로워 채널', createdAt: isoHoursAgo(24 * 10),
+    messages: [
+      { id: 'm9', senderId: 'u_junho', text: '[공지] 정기공연 리허설 목요일 7시. 팔로워분들 관람 환영!', createdAt: isoHoursAgo(5) },
+    ],
+    lastReadAt: { [DEMO_USER_ID]: isoHoursAgo(6) },
+  },
+];
+
+export const notifications: Notification[] = [
+  { id: 'nt1', userId: DEMO_USER_ID, type: 'participation_request', title: '참가 요청 2건', body: '하나, 수아님이 "리액트 사이드 프로젝트"에 참가를 신청했어요.', link: '/activities/a_mine/manage', read: false, createdAt: isoMinutesAgo(20) },
+  { id: 'nt2', userId: DEMO_USER_ID, type: 'proposal', title: '활동 제안이 도착했어요', body: '수아님이 알고리즘 스터디를 제안했어요.', link: '/chats?tab=requests', read: false, createdAt: isoHoursAgo(1) },
+  { id: 'nt3', userId: DEMO_USER_ID, type: 'activity_reminder', title: '활동 시작 1시간 전', body: '"오후 7시 러닝 모임"이 곧 시작해요. 대운동장으로 가세요.', link: '/activities/a_running', read: false, createdAt: isoHoursAgo(1.2) },
+  { id: 'nt4', userId: DEMO_USER_ID, type: 'comment', title: '새 댓글', body: '하나님이 "리액트 사이드 프로젝트"에 댓글을 남겼어요.', link: '/activities/a_mine', read: true, createdAt: isoHoursAgo(1) },
+  { id: 'nt5', userId: DEMO_USER_ID, type: 'follow', title: '새 팔로워', body: '지민님이 회원님을 팔로우하기 시작했어요.', link: '/users/u_jimin', read: true, createdAt: isoHoursAgo(3) },
+  { id: 'nt6', userId: DEMO_USER_ID, type: 'org_event', title: '소리울림 새 행사', body: '가을 정기공연이 등록되었어요.', link: '/activities/a_band_show', read: true, createdAt: isoHoursAgo(48) },
+  { id: 'nt7', userId: DEMO_USER_ID, type: 'nearby_activity', title: '가까운 곳에서 관심 활동 시작', body: '정문 카페에서 창업 커피챗이 열려요.', link: '/activities/a_startup_chat', read: true, createdAt: isoHoursAgo(10) },
+  { id: 'nt8', userId: DEMO_USER_ID, type: 'like', title: '좋아요', body: '수아, 하나님이 회원님의 게시물을 좋아해요.', link: '/community', read: true, createdAt: isoHoursAgo(24) },
+];

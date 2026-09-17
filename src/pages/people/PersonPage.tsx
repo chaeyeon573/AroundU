@@ -1,0 +1,163 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock } from 'lucide-react';
+import { TopBar } from '@/components/layout/TopBar';
+import { Avatar, Portrait, VerifiedBadge, Tag, Button, BottomSheet, Dialog, Textarea, Input, Chip, Cover, EmptyState, VisibilityTag } from '@/components/ui';
+import { SheetItem } from '@/components/cards/PostCard';
+import { ReportSheet } from '@/components/cards/ReportSheet';
+import { ActivityCard } from '@/components/cards/ActivityCard';
+import { affiliationText } from '@/components/cards/PersonCard';
+import { useViewer } from '@/hooks/useViewer';
+import { useAppStore } from '@/store/useAppStore';
+import { api } from '@/api';
+import { AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ALL_CATEGORIES, CATEGORY_EMOJI, CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/labels';
+import { commonInterests, mutualFriends } from '@/lib/relations';
+import { todayISO } from '@/lib/format';
+import type { ActivityCategory } from '@/types';
+import { cn } from '@/lib/cn';
+
+export function PersonPage() {
+  const { id } = useParams();
+  const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const v = useViewer();
+  const run = useAppStore((s) => s.run);
+  const showToast = useAppStore((s) => s.showToast);
+  const orgs = useAppStore((s) => s.organizations);
+  const proposals = useAppStore((s) => s.proposals);
+  const user = v.userById(id!);
+  const [menu, setMenu] = useState(false);
+  const [report, setReport] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [propose, setPropose] = useState(params.get('propose') === '1');
+  const [pCat, setPCat] = useState<ActivityCategory>('coffee');
+  const [pMsg, setPMsg] = useState('');
+  const [pWhen, setPWhen] = useState(`${todayISO()} 18:00`);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (params.get('propose')) setParams({}, { replace: true }); }, [params, setParams]);
+
+  if (!user || user.id === v.me.id) { if (user?.id === v.me.id) nav('/profile', { replace: true }); return <div className="min-h-full"><TopBar back title="프로필" /><EmptyState emoji="🙈" title="사용자를 찾을 수 없어요" /></div>; }
+  if (v.hasBlocked(user.id)) return <div className="min-h-full"><TopBar back title="프로필" /><EmptyState emoji="🚫" title="차단한 사용자예요" description="차단을 해제하면 프로필을 다시 볼 수 있어요." action={<Button variant="outline" onClick={() => run(() => api.relationships.unblock(v.me.id, user.id), '차단을 해제했어요.')}>차단 해제</Button>} /></div>;
+  if (v.isBlocked(user.id)) return <div className="min-h-full"><TopBar back title="프로필" /><EmptyState emoji="🙈" title="사용자를 찾을 수 없어요" /></div>;
+
+  const liked = v.iLike(user.id);
+  const mutual = v.isMutual(user.id);
+  const following = v.isFollowing(user.id);
+  const friend = v.isFriend(user.id);
+  const outReq = v.pendingOut(user.id);
+  const inReq = v.pendingIn(user.id);
+  const conn = v.connection(user.id);
+  const msg = v.canMessage(user.id);
+  const common = commonInterests(v.me, user);
+  const mutualF = mutualFriends(v.snap, v.me.id, user.id);
+  const see = (f: Parameters<typeof v.canSeeField>[1]) => v.canSeeField(user, f);
+  const upcoming = v.visibleActivities.filter((a) => a.visibility === 'public' && a.date >= todayISO() && (a.hostId === user.id || v.snap.participations.some((p) => p.activityId === a.id && p.userId === user.id && p.status === 'approved')));
+  const hosting = v.visibleActivities.filter((a) => a.hostId === user.id && a.date >= todayISO());
+  const userPosts = v.visiblePosts.filter((p) => p.authorId === user.id && p.authorType === 'user');
+  const adminOrgs = orgs.filter((o) => o.adminIds.includes(user.id));
+  const pendingProposal = proposals.find((p) => p.fromId === v.me.id && p.toId === user.id && p.status === 'pending');
+
+  const like = async () => {
+    const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
+    if (res.mutual) showToast('서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?', 'success');
+  };
+  const openChat = async () => {
+    try { const res = await run(() => api.chats.openDirect(v.me.id, user.id)); nav(`/chats/${res.room.id}`); } catch { /* toast */ }
+  };
+  const sendProposal = async () => {
+    setBusy(true);
+    try { await run(() => api.proposals.create(v.me.id, user.id, { category: pCat, message: pMsg, when: pWhen }), '활동을 제안했어요. 수락되면 알려드릴게요.'); setPropose(false); } catch { /* */ } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="min-h-full pb-28">
+      <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label="더보기"><MoreHorizontal size={20} /></button>} />
+      <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} photoType={user.avatar.photoType} className="h-[300px]" />
+      <div className="px-4 -mt-8 relative space-y-3">
+        <div className="card p-4">
+          <div className="flex items-center gap-2"><h1 className="text-[22px] font-extrabold">{user.nickname}</h1>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} label />}{user.identityVerified && <VerifiedBadge kind="identity" size={18} label />}</div>
+          <div className="text-[13px] text-ink-3 mt-0.5">{affiliationText(user)} · {new Date().getFullYear() - user.birthYear + 1}세</div>
+          {mutual && <div className="mt-3 rounded-xl bg-heart-soft text-heart text-[13px] font-semibold px-3 py-2.5 flex items-center gap-2"><Heart size={15} fill="currentColor" />서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?</div>}
+          {conn !== 'none' && !mutual && <Tag tone="mint" className="mt-2"><Check size={11} />{{ friend: '친구', activity: '같은 활동 참가자', proposal: '활동 제안 수락', matched: '매칭' }[conn]}</Tag>}
+          {inReq && (
+            <div className="mt-3 rounded-xl bg-primary-soft px-3 py-2.5 flex items-center gap-2 text-[13px]"><span className="flex-1 font-semibold text-primary">{user.nickname}님이 친구 요청을 보냈어요</span>
+              <Button size="sm" variant="outline" onClick={() => run(() => api.relationships.respondFriendRequest(inReq.id, false))}>거절</Button><Button size="sm" onClick={() => run(() => api.relationships.respondFriendRequest(inReq.id, true), '친구가 되었어요!')}>수락</Button></div>
+          )}
+          {see('bio') && user.bio && <p className="text-[14px] text-ink-2 leading-relaxed mt-3">{user.bio}</p>}
+          {(common.length > 0 || mutualF.length > 0) && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {common.length > 0 && <Tag tone="primary"><Sparkles size={11} /> 공통 관심사 {common.map((i) => INTEREST_LABELS[i]).join(', ')}</Tag>}
+              {mutualF.length > 0 && <Tag tone="mint"><Users size={11} /> 함께 아는 친구 {mutualF.length}명</Tag>}
+            </div>
+          )}
+        </div>
+
+        <div className="card p-4 space-y-3">
+          <Block label="관심사" visible><div className="flex flex-wrap gap-1.5">{user.interests.map((i) => <Chip key={i} size="sm" active={common.includes(i)}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div></Block>
+          <Block label="하고 싶은 활동" visible={see('freeTime')}>{user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 mb-1.5">“{user.nowWant}”</div>}<p className="text-[13px] text-ink-2">{user.freeTime || '아직 작성하지 않았어요'}</p></Block>
+          <Block label="좋아하는 것" visible={see('likes')}><p className="text-[13px] text-ink-2">{user.likes || '—'}</p></Block>
+          <Block label="활동 가능한 시간" visible={see('availability') && user.availability !== 'hidden'}><p className="text-[13px] text-ink-2 flex items-center gap-1"><Clock size={13} className="text-ink-3" />{AVAILABILITY_LABELS[user.availability]}</p></Block>
+          <Block label="이용 목적" visible={see('purposes')}><div className="flex flex-wrap gap-1.5">{user.purposes.map((p) => <Tag key={p}>{PURPOSE_LABELS[p]}</Tag>)}</div></Block>
+          <Block label="지역" visible><p className="text-[13px] text-ink-2 flex items-center gap-1"><MapPin size={13} className="text-ink-3" />{user.region} 근처 <span className="text-ink-3 text-[11px]">· 정확한 위치는 공개되지 않아요</span></p></Block>
+          {see('height') && user.height && <Block label="키" visible><p className="text-[13px] text-ink-2">{user.height}cm</p></Block>}
+        </div>
+
+        {(see('posts') ? userPosts.length > 0 : true) && (
+          <div className="card p-4">
+            <div className="flex items-center justify-between"><b className="text-[14px]">사진과 게시물</b>{!see('posts') && <VisibilityTag value={user.fieldVisibility.posts} />}</div>
+            {see('posts') ? <div className="grid grid-cols-3 gap-1.5 mt-3">{userPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} className="aspect-square rounded-xl" size={30} /></button>)}</div>
+              : <p className="text-[12px] text-ink-3 mt-2 flex items-center gap-1"><Lock size={12} />공개 범위에 포함되지 않아 볼 수 없어요.</p>}
+          </div>
+        )}
+
+        {hosting.length > 0 && <div><h2 className="text-[15px] font-bold mb-2">운영 중인 모임</h2><div className="space-y-2">{hosting.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div></div>}
+        {adminOrgs.length > 0 && <div><h2 className="text-[15px] font-bold mb-2">운영 중인 조직</h2><div className="space-y-2">{adminOrgs.map((o) => <button key={o.id} onClick={() => nav(`/orgs/${o.id}`)} className="card w-full p-3 flex items-center gap-3 text-left press"><Avatar emoji={o.logo.emoji} hue={o.logo.hue} size={40} className="!rounded-xl" /><b className="text-[14px]">{o.name}</b></button>)}</div></div>}
+        {upcoming.filter((a) => a.hostId !== user.id).length > 0 && <div><h2 className="text-[15px] font-bold mb-2">참여 예정인 공개 활동</h2><div className="space-y-2">{upcoming.filter((a) => a.hostId !== user.id).map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div></div>}
+      </div>
+
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
+        <div className="flex gap-2">
+          <button onClick={like} aria-label="관심" className={cn('h-[52px] w-[52px] rounded-2xl grid place-items-center press', liked ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={22} fill={liked ? 'currentColor' : 'none'} /></button>
+          <Button size="lg" variant={following ? 'secondary' : 'outline'} onClick={() => run(() => api.relationships.toggleFollow(v.me.id, user.id, 'user'))}>{following ? '팔로잉' : '팔로우'}</Button>
+          {friend ? <Button size="lg" variant="secondary" icon={<Check size={16} />} disabled>친구</Button>
+            : outReq ? <Button size="lg" variant="outline" onClick={() => run(() => api.relationships.cancelFriendRequest(outReq.id), '요청을 취소했어요.')}>요청 취소</Button>
+            : <Button size="lg" variant="outline" icon={<UserPlus size={16} />} onClick={() => run(() => api.relationships.sendFriendRequest(v.me.id, user.id), '친구 요청을 보냈어요.')}>친구 요청</Button>}
+          {msg.ok ? <Button size="lg" className="flex-1" icon={<MessageCircle size={18} />} onClick={openChat}>메시지</Button>
+            : <Button size="lg" className="flex-1" icon={<CalendarPlus size={18} />} onClick={() => setPropose(true)} disabled={!!pendingProposal}>{pendingProposal ? '제안 대기 중' : '활동 제안'}</Button>}
+        </div>
+        {!msg.ok && <p className="text-[11px] text-ink-3 mt-2 text-center flex items-center justify-center gap-1"><Lock size={11} />{msg.reason}</p>}
+      </div>
+
+      <BottomSheet open={propose} onClose={() => setPropose(false)} title={`${user.nickname}님에게 활동 제안`}>
+        <p className="text-[12px] text-ink-3">읽음 여부는 표시되지 않고, 48시간이 지나면 자동으로 만료돼요.</p>
+        <div className="flex flex-wrap gap-1.5 mt-3">{ALL_CATEGORIES.filter((c) => !['school_event', 'store_deal'].includes(c)).map((c) => <Chip key={c} size="sm" color={CATEGORY_COLORS[c]} active={pCat === c} onClick={() => setPCat(c)}>{CATEGORY_EMOJI[c]} {CATEGORY_LABELS[c]}</Chip>)}</div>
+        <Input className="mt-3" placeholder="언제? 예: 오늘 18:00" value={pWhen} onChange={(e) => setPWhen(e.target.value)} />
+        <Textarea className="mt-2" placeholder="예: 신촌에서 커피 한 잔 어때요?" value={pMsg} onChange={(e) => setPMsg(e.target.value)} />
+        <Button full size="lg" className="mt-4" loading={busy} disabled={!pMsg.trim()} onClick={sendProposal}>제안 보내기</Button>
+      </BottomSheet>
+
+      <BottomSheet open={menu} onClose={() => setMenu(false)} title={user.nickname}>
+        <div className="space-y-1">
+          {friend && <SheetItem icon={<Users size={18} />} label="친구 끊기" onClick={() => { setMenu(false); run(() => api.relationships.unfriend(v.me.id, user.id), '친구를 끊었어요.'); }} />}
+          <SheetItem icon={<Flag size={18} />} label="사용자 신고" danger onClick={() => { setMenu(false); setReport(true); }} />
+          <SheetItem icon={<Ban size={18} />} label="사용자 차단" danger onClick={() => { setMenu(false); setBlockOpen(true); }} />
+        </div>
+      </BottomSheet>
+      <ReportSheet open={report} onClose={() => setReport(false)} targetType="user" targetId={user.id} />
+      <Dialog open={blockOpen} onClose={() => setBlockOpen(false)} title={`${user.nickname}님을 차단할까요?`} description="서로의 프로필, 활동, 게시물이 보이지 않고 메시지를 주고받을 수 없어요. 상대에게 알림이 가지 않아요.">
+        <Button variant="outline" full onClick={() => setBlockOpen(false)}>취소</Button>
+        <Button variant="danger" full onClick={async () => { setBlockOpen(false); await run(() => api.relationships.block(v.me.id, user.id), '차단했어요.'); nav(-1); }}>차단</Button>
+      </Dialog>
+    </div>
+  );
+}
+
+function Block({ label, visible, children }: { label: string; visible: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-ink-3 mb-1">{label}</div>
+      {visible ? children : <p className="text-[12px] text-ink-3 flex items-center gap-1"><Lock size={12} />비공개 항목이에요</p>}
+    </div>
+  );
+}
+

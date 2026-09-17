@@ -1,0 +1,48 @@
+import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, Ban, Flag } from 'lucide-react';
+import { TopBar } from '@/components/layout/TopBar';
+import { Avatar, Button, Segmented, Tag } from '@/components/ui';
+import { useViewer } from '@/hooks/useViewer';
+import { useAppStore } from '@/store/useAppStore';
+import { api } from '@/api';
+import { relativeTime } from '@/lib/format';
+
+export function SafetySettingsPage() {
+  const nav = useNavigate();
+  const v = useViewer();
+  const run = useAppStore((s) => s.run);
+  const reports = useAppStore((s) => s.reports);
+  const me = v.me;
+  const blocked = v.snap.relationships.blocks.filter((b) => b.fromId === me.id).map((b) => v.userById(b.toId)).filter(Boolean);
+  const myReports = reports.filter((r) => r.reporterId === me.id);
+  return (
+    <div className="min-h-full pb-8">
+      <TopBar back title="계정 및 안전 설정" />
+      <div className="px-4 py-3 space-y-4">
+        <div className="card p-4">
+          <b className="text-[14px] flex items-center gap-1.5"><ShieldCheck size={16} className="text-mint" />인증 상태</b>
+          <div className="flex gap-2 mt-2">{me.affiliation.type === 'university' && (me.affiliation.emailVerified ? <Tag tone="primary">학교 인증 완료</Tag> : <Tag tone="gold">학교 미인증</Tag>)}{me.identityVerified ? <Tag tone="mint">본인 인증 완료</Tag> : <Tag>본인 미인증</Tag>}</div>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => nav('/profile/edit')}>인증 관리</Button>
+        </div>
+        <div className="card p-4">
+          <b className="text-[14px]">메시지 수신 제한</b>
+          <p className="text-[12px] text-ink-3 mt-0.5 mb-3">연결되지 않은 사람은 어떤 설정에서도 메시지를 보낼 수 없어요.</p>
+          <Segmented value={me.settings.messagePolicy} onChange={(val) => run(() => api.users.update(me.id, { settings: { ...me.settings, messagePolicy: val } }), '메시지 수신 설정을 바꿨어요.')} options={[{ value: 'connected', label: '연결된 사람' }, { value: 'friends_only', label: '친구만' }, { value: 'none', label: '받지 않음' }]} />
+        </div>
+        <div className="card p-4">
+          <b className="text-[14px] flex items-center gap-1.5"><Ban size={16} className="text-danger" />차단한 사용자 {blocked.length}</b>
+          {blocked.length === 0 ? <p className="text-[12px] text-ink-3 mt-2">차단한 사용자가 없어요.</p> : (
+            <div className="mt-2 divide-y divide-line">{blocked.map((u) => u && <div key={u.id} className="flex items-center gap-3 py-2.5"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={36} /><b className="flex-1 text-[14px]">{u.nickname}</b><Button size="sm" variant="outline" onClick={() => run(() => api.relationships.unblock(me.id, u.id), '차단을 해제했어요.')}>차단 해제</Button></div>)}</div>
+          )}
+        </div>
+        <div className="card p-4">
+          <b className="text-[14px] flex items-center gap-1.5"><Flag size={16} className="text-accent" />신고 내역 {myReports.length}</b>
+          {myReports.length === 0 ? <p className="text-[12px] text-ink-3 mt-2">신고 내역이 없어요.</p> : (
+            <div className="mt-2 space-y-2">{myReports.map((r) => <div key={r.id} className="text-[12px]"><Tag>{{ user: '사용자', activity: '활동', post: '게시물', message: '메시지' }[r.targetType]}</Tag> <span className="text-ink-2">{r.reason}</span> <span className="text-ink-3">· {relativeTime(r.createdAt)} · 검토 중</span></div>)}</div>
+          )}
+        </div>
+        <p className="text-[11px] text-ink-3 text-center">활동 주최자·참가자 평가와 후기는 다음 버전에서 추가될 예정이에요.</p>
+      </div>
+    </div>
+  );
+}
