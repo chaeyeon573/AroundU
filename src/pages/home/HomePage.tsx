@@ -11,12 +11,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { HOME_ACTIVITY_FILTERS, AVAILABILITY_LABELS } from '@/lib/labels';
 import { commonInterests, friendsOf } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
-import type { Activity, User } from '@/types';
-
-const SCOPES = [
-  { key: 'recommend', label: '추천' }, { key: 'friends', label: '친구' }, { key: 'school', label: '내 학교' }, { key: 'nearby', label: '주변' }, { key: 'public', label: '전체 공개' },
-] as const;
-type Scope = typeof SCOPES[number]['key'];
+import type { Activity } from '@/types';
 
 export function HomePage() {
   const nav = useNavigate();
@@ -25,7 +20,6 @@ export function HomePage() {
   const init = useAppStore((s) => s.init);
   const posts = useAppStore((s) => s.posts);
   const v = useViewer();
-  const [scope, setScope] = useState<Scope>('recommend');
   const [cat, setCat] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [onlyToday, setOnlyToday] = useState(false);
@@ -33,37 +27,16 @@ export function HomePage() {
   const [skipped, setSkipped] = useState<string[]>([]);
 
   const me = v.me;
-  const mySchool = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
   const friendIds = useMemo(() => new Set(friendsOf(v.snap, me.id)), [v.snap, me.id]);
 
-  const scopeUser = (u: User) => {
-    const sid = u.affiliation.type === 'university' ? u.affiliation.schoolId : '';
-    switch (scope) {
-      case 'friends': return friendIds.has(u.id);
-      case 'school': return sid === mySchool;
-      case 'nearby': return u.region === me.region;
-      case 'public': return true;
-      default: return true;
-    }
-  };
-  const scopeActivity = (a: Activity) => {
-    const host = v.userById(a.hostId);
-    switch (scope) {
-      case 'friends': return friendIds.has(a.hostId);
-      case 'school': return host?.affiliation.type === 'university' && host.affiliation.schoolId === mySchool;
-      case 'nearby': return host?.region === me.region || a.place.name.includes(me.region);
-      case 'public': return a.visibility === 'public';
-      default: return true;
-    }
-  };
   const catFilter = HOME_ACTIVITY_FILTERS.find((f) => f.key === cat)?.categories ?? null;
   const catActivity = (a: Activity) => (!catFilter || catFilter.includes(a.category)) && (!onlyToday || a.date === todayISO()) && (!onlyFree || a.fee === 0);
 
-  const people = useMemo(() => v.visibleUsers.filter(scopeUser).filter((u) => !skipped.includes(u.id))
-    .sort((a, b) => commonInterests(me, b).length - commonInterests(me, a).length), [v.visibleUsers, scope, skipped, me]); // eslint-disable-line react-hooks/exhaustive-deps
+  const people = useMemo(() => v.visibleUsers.filter((u) => !skipped.includes(u.id))
+    .sort((a, b) => commonInterests(me, b).length - commonInterests(me, a).length), [v.visibleUsers, skipped, me]);
   const nowPeople = people.filter((u) => u.availability === 'now' && v.canSeeField(u, 'availability'));
-  const acts = useMemo(() => v.visibleActivities.filter(scopeActivity).filter(catActivity).filter((a) => a.date >= todayISO())
-    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime)), [v.visibleActivities, scope, cat, onlyToday, onlyFree]); // eslint-disable-line react-hooks/exhaustive-deps
+  const acts = useMemo(() => v.visibleActivities.filter(catActivity).filter((a) => a.date >= todayISO())
+    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime)), [v.visibleActivities, cat, onlyToday, onlyFree]); // eslint-disable-line react-hooks/exhaustive-deps
   const friendActs = acts.filter((a) => friendIds.has(a.hostId));
   const orgEvents = acts.filter((a) => a.hostType === 'org' && !a.official);
   const officialEvents = acts.filter((a) => a.official);
@@ -85,8 +58,7 @@ export function HomePage() {
         <button onClick={() => setFilterOpen(true)} className="h-11 w-11 rounded-2xl bg-surface border border-line grid place-items-center press" aria-label="필터"><SlidersHorizontal size={18} /></button>
       </div>
       <div className="px-4 pt-3">
-        <ChipRow className="py-0">{SCOPES.map((s) => <Chip key={s.key} active={scope === s.key} onClick={() => setScope(s.key)}>{s.label}</Chip>)}</ChipRow>
-        <ChipRow className="pt-2 pb-0">{HOME_ACTIVITY_FILTERS.map((f) => <Chip key={f.key} size="sm" active={cat === f.key} onClick={() => setCat(f.key)}>{f.label}</Chip>)}</ChipRow>
+        <ChipRow className="py-0">{HOME_ACTIVITY_FILTERS.map((f) => <Chip key={f.key} size="sm" active={cat === f.key} onClick={() => setCat(f.key)}>{f.label}</Chip>)}</ChipRow>
       </div>
 
       {status === 'loading' && <CardSkeleton />}
