@@ -12,6 +12,16 @@ import { useAppStore } from '@/store/useAppStore';
 import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS } from '@/lib/labels';
 import { formatDateTime, isThisWeek, todayISO, formatFee } from '@/lib/format';
 import type { Activity, ActivityCategory } from '@/types';
+import { PLACE_PRESETS } from '@/data/places';
+
+/** 외부 타일을 불러올 수 없는 환경(VITE_MAP_TILES=off)에서는 캠퍼스 랜드마크 라벨로 대체 */
+export const TILES_ENABLED = import.meta.env.VITE_MAP_TILES !== 'off';
+export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+export function LandmarkLayer({ schoolId }: { schoolId: string }) {
+  if (TILES_ENABLED) return null;
+  const places = PLACE_PRESETS[schoolId] ?? [];
+  return <>{places.map((p) => <Marker key={p.name} position={[p.lat, p.lng]} interactive={false} icon={L.divIcon({ className: 'leaflet-div-icon', html: `<div class="au-landmark">${p.name}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] })} />)}</>;
+}
 import { cn } from '@/lib/cn';
 
 type TimeRange = 'now' | 'today' | 'week';
@@ -102,8 +112,8 @@ export function MapPage() {
             </div>
           ) : (
             <>
-              <MapContainer center={center} zoom={focused ? 17 : 16} className="h-full w-full z-0" zoomControl={false} attributionControl>
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OpenStreetMap &copy; CARTO' />
+              <MapContainer center={center} zoom={focused ? 17 : 16} className={cn('h-full w-full z-0', !TILES_ENABLED && 'no-tiles')} zoomControl={false} attributionControl={TILES_ENABLED}>
+                {TILES_ENABLED ? <TileLayer url={TILE_URL} attribution='&copy; OpenStreetMap &copy; CARTO' /> : <LandmarkLayer schoolId={schoolId} />}
                 <BoundsWatcher onChange={setBounds} />
                 <FlyTo center={center} zoom={focused ? 17 : 16} key={`${schoolId}-${focus}`} />
                 {filtered.map((a) => (

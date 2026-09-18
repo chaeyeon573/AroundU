@@ -102,3 +102,15 @@ input, textarea, select { font: inherit; }
 .au-marker > span { transform: rotate(45deg); display: block; }
 .au-marker.selected { outline: 3px solid rgba(61,90,254,.35); }
 .leaflet-control-attribution { font-size: 9px; opacity: .7; }
+.leaflet-container.no-tiles {
+  background-color: #EAF0F6;
+  background-image:
+    linear-gradient(rgba(61,90,254,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,90,254,.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.au-landmark {
+  transform: translate(-50%, -50%);
+  white-space: nowrap; font-size: 11px; font-weight: 600; color: #4B5060;
+  background: rgba(255,255,255,.85); padding: 2px 7px; border-radius: 8px; border: 1px solid #E6E8EF;
+}

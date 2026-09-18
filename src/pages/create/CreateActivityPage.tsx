@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { TILES_ENABLED, TILE_URL, LandmarkLayer } from '@/pages/map/MapPage';
 import { MapPin } from 'lucide-react';
 import type { ActivityInput } from '@/api';
 import type { ActivityCategory, ActivityKind, JoinPolicy, Visibility } from '@/types';
@@ -93,8 +94,8 @@ export function CreateActivityPage() {
             <div className="space-y-2">
               <Input placeholder="장소 이름" value={form.place.name} onChange={(e) => patch({ place: { ...form.place, name: e.target.value } })} />
               <div className="h-[180px] rounded-xl overflow-hidden border border-line">
-                <MapContainer center={[form.place.lat, form.place.lng]} zoom={16} className="h-full w-full z-0" zoomControl={false} attributionControl={false}>
-                  <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                <MapContainer center={[form.place.lat, form.place.lng]} zoom={16} className={`h-full w-full z-0 ${TILES_ENABLED ? '' : 'no-tiles'}`} zoomControl={false} attributionControl={false}>
+                  {TILES_ENABLED ? <TileLayer url={TILE_URL} /> : <LandmarkLayer schoolId={schoolId} />}
                   <ClickToPlace onPick={(lat, lng) => patch({ place: { ...form.place, lat, lng } })} />
                   <Marker position={[form.place.lat, form.place.lng]} icon={L.divIcon({ className: 'leaflet-div-icon', html: `<div class="au-marker" style="background:${CATEGORY_COLORS[form.category]}"><span>${CATEGORY_EMOJI[form.category]}</span></div>`, iconSize: [36, 36], iconAnchor: [18, 34] })} />
                 </MapContainer>

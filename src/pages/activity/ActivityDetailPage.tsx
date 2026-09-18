@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { TILES_ENABLED, TILE_URL, LandmarkLayer } from '@/pages/map/MapPage';
 import { Clock, MapPin, Users, Ticket, Lock, Share2, Flag, MoreHorizontal, Pencil, Trash2, BadgeCheck, MessageCircle, ShieldCheck } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Cover, Tag, VisibilityTag, BottomSheet, Dialog, Input, EmptyState } from '@/components/ui';
@@ -75,8 +76,8 @@ export function ActivityDetailPage() {
 
         <div className="card mt-3 overflow-hidden">
           <div className="h-[160px]">
-            <MapContainer center={[a.place.lat, a.place.lng]} zoom={16} className="h-full w-full z-0" zoomControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false} attributionControl={false}>
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+            <MapContainer center={[a.place.lat, a.place.lng]} zoom={16} className={`h-full w-full z-0 ${TILES_ENABLED ? '' : 'no-tiles'}`} zoomControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false} attributionControl={false}>
+              {TILES_ENABLED ? <TileLayer url={TILE_URL} /> : <LandmarkLayer schoolId={host?.affiliation.type === 'university' ? host.affiliation.schoolId : 's_yonsei'} />}
               <Marker position={[a.place.lat, a.place.lng]} icon={L.divIcon({ className: 'leaflet-div-icon', html: `<div class="au-marker" style="background:${color}"><span>${CATEGORY_EMOJI[a.category]}</span></div>`, iconSize: [36, 36], iconAnchor: [18, 34] })} />
             </MapContainer>
           </div>
