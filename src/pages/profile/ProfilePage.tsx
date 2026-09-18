@@ -12,6 +12,9 @@ import { ALL_AVAILABILITY, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS 
 import { friendsOf, followersOf, followingOf } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
 import type { Availability } from '@/types';
+import { PromptAnswerCard, VoicePlayer, PollCard, CompletionMeter } from '@/components/prompts/PromptComponents';
+import { profileCompletion, questionById, MAX_TEXT_PROMPTS } from '@/data/prompts';
+import { Mic, MessageSquareText, Plus } from 'lucide-react';
 
 export function ProfilePage() {
   const nav = useNavigate();
@@ -36,6 +39,8 @@ export function ProfilePage() {
   const savedPosts = posts.filter((p) => p.savedIds.includes(me.id));
   const savedActs = activities.filter((a) => posts.some((p) => p.savedIds.includes(me.id) && p.relatedActivityId === a.id));
 
+  const completion = profileCompletion(me);
+  const missing = completion.items.filter((i) => !i.done);
   if (status === 'loading') return <div><TopBar title="프로필" /><CardSkeleton count={2} /></div>;
   if (status === 'error') return <div><TopBar title="프로필" /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
 
@@ -52,6 +57,7 @@ export function ProfilePage() {
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
                 {me.affiliation.type === 'university' && (me.affiliation.emailVerified ? <Tag tone="primary"><ShieldCheck size={11} /> 학교 인증</Tag> : <Tag tone="gold">학교 미인증</Tag>)}
                 {me.identityVerified ? <Tag tone="mint">본인 인증</Tag> : <Tag>본인 미인증</Tag>}
+                {completion.complete && <Tag tone="mint">프로필 완성</Tag>}
               </div>
             </div>
           </div>
@@ -63,6 +69,20 @@ export function ProfilePage() {
             ))}
           </div>
           <div className="flex gap-2 mt-3"><Button full variant="outline" icon={<Pencil size={15} />} onClick={() => nav('/profile/edit')}>프로필 편집</Button><Button full variant="outline" icon={<Lock size={15} />} onClick={() => nav('/settings/privacy')}>공개 범위</Button></div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-2"><b className="text-[14px] flex items-center gap-1.5"><MessageSquareText size={15} className="text-primary" />내 질문 답변</b><button onClick={() => nav('/profile/prompts')} className="text-[12px] font-semibold text-primary">편집</button></div>
+          <CompletionMeter {...completion} />
+          {missing.length > 0 && <p className="text-[11px] text-ink-3 mt-1.5">남은 항목: {missing.map((i) => i.label).join(', ')}</p>}
+          <div className="mt-3 space-y-2">
+            {me.prompts.filter((p) => p.answer.trim()).map((p) => <PromptAnswerCard key={p.questionId} prompt={p} compact />)}
+            {me.voicePrompt && <div className="rounded-2xl bg-surface-2 px-3 py-2"><div className="text-[11px] font-bold text-primary flex items-center gap-1"><Mic size={11} />{questionById(me.voicePrompt.questionId)?.text}</div><div className="mt-1.5 flex"><VoicePlayer duration={me.voicePrompt.durationSec} /></div></div>}
+            {me.poll && <PollCard poll={me.poll} ownerName="나" isMine />}
+          </div>
+          {(me.prompts.length < MAX_TEXT_PROMPTS || !me.voicePrompt || !me.poll) && (
+            <Button size="sm" variant="secondary" full className="mt-3" icon={<Plus size={14} />} onClick={() => nav('/profile/prompts')}>{me.prompts.length < 3 ? '필수 질문 답하기' : '질문 하나 더 답하기'}</Button>
+          )}
         </div>
 
         <button onClick={() => setAvailOpen(true)} className="card w-full p-3.5 flex items-center gap-3 text-left press">

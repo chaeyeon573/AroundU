@@ -12,7 +12,7 @@ const T9 = addDaysISO(9);
 export const DEMO_USER_ID = 'u_me';
 
 const defaultVisibility = (v: Visibility = 'school'): Record<ProfileField, Visibility> => ({
-  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v,
+  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v, prompts: 'public',
 });
 
 export const schools: School[] = [
@@ -41,6 +41,7 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
   interests: [],
   purposes: ['friend'],
   region: '신촌',
+  prompts: [],
   fieldVisibility: defaultVisibility(),
   settings: { messagePolicy: 'connected', notifications: true, locationPermission: 'granted' },
   createdAt: isoHoursAgo(24 * 30),
@@ -60,6 +61,9 @@ export const users: User[] = [
     purposes: ['friend', 'study', 'networking'],
     nowWant: '오늘 저녁 신촌에서 커피 한 잔?',
     fieldVisibility: defaultVisibility('school'),
+    prompts: [{ questionId: 'q_now', answer: '정문 카페에서 커피 마시면서 사이드 프로젝트 얘기' }, { questionId: 'q_spot', answer: '중도 4층 창가, 오후엔 햇빛이 딱 좋아요' }, { questionId: 'q_ask_me', answer: '리액트, 신촌 카페 지도, 전시 추천' }],
+    voicePrompt: { questionId: 'v_now', durationSec: 18, recordedAt: isoHoursAgo(40) },
+    poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 0, votes: { u_sua: 0, u_jimin: 2 } },
   }),
   mk({
     id: 'u_jimin', nickname: '지민', birthYear: 2002, gender: 'female',
@@ -72,6 +76,9 @@ export const users: User[] = [
     interests: ['coffee', 'exhibition', 'exercise', 'startup', 'networking'],
     purposes: ['friend', 'networking', 'dating'],
     nowWant: '오늘 신촌에서 커피 마실 사람?',
+    prompts: [{ questionId: 'q_now', answer: '오늘 6시 신촌에서 커피, 창업 얘기 환영' }, { questionId: 'q_cafe', answer: '커피리브레 신촌점 플랫화이트' }, { questionId: 'q_always', answer: '전시회. 특히 사진전' }, { questionId: 'q_role', answer: '분위기 메이커 겸 일정 잡는 사람' }],
+    voicePrompt: { questionId: 'v_campus', durationSec: 24, recordedAt: isoHoursAgo(70) },
+    poll: { questionId: 'p_first', options: ['커피', '밥', '같이 운동'], ownChoice: 0, votes: { u_sua: 0, u_taeho: 1, u_hana: 0 } },
   }),
   mk({
     id: 'u_dohyun', nickname: '도현', birthYear: 2000, gender: 'male',
@@ -84,6 +91,8 @@ export const users: User[] = [
     interests: ['research', 'study', 'exercise', 'coffee'],
     purposes: ['study', 'networking'],
     nowWant: 'LLM 논문 같이 읽을 분',
+    prompts: [{ questionId: 'q_project', answer: '멀티모달 LLM 논문 리뷰, 학부생 세미나 준비' }, { questionId: 'q_study_type', answer: '조용히 각자 읽고 30분 토론' }, { questionId: 'q_hobby', answer: '클라이밍. 초보 같이 가요' }],
+    poll: { questionId: 'p_study', options: ['중도 붙박이', '카페 노마드', '집에서 벼락치기'], ownChoice: 0, votes: { u_yuna: 0 } },
   }),
   mk({
     id: 'u_seoyeon', nickname: '서연', birthYear: 2003, gender: 'female',
@@ -96,6 +105,8 @@ export const users: User[] = [
     interests: ['club', 'exhibition', 'meal', 'walk'],
     purposes: ['friend', 'hobby', 'club'],
     nowWant: '주말에 공연 같이 볼 사람',
+    prompts: [{ questionId: 'q_into', answer: '요즘 90년대 브릿팝 다시 파는 중' }, { questionId: 'q_free_day', answer: '토요일 오후. 공연 보러 가요' }, { questionId: 'q_emoji', answer: '🎸🐈🍜' }],
+    voicePrompt: { questionId: 'v_song', durationSec: 29, recordedAt: isoHoursAgo(100) },
   }),
   mk({
     id: 'u_minjun', nickname: '민준', birthYear: 2001, gender: 'male',
@@ -108,6 +119,8 @@ export const users: User[] = [
     interests: ['exercise', 'cycling', 'walk', 'meal'],
     purposes: ['friend', 'hobby'],
     nowWant: '오후 7시 러닝 같이 뛰어요',
+    prompts: [{ questionId: 'q_morning', answer: '아침형. 6시에 한강 뜁니다' }, { questionId: 'q_always', answer: '러닝. 페이스 맞춰드려요' }, { questionId: 'q_first_meet', answer: '가볍게 5km 뛰고 국밥' }],
+    poll: { questionId: 'p_weekend', options: ['바로 나감', '집이 좋아', '전시·공연이면 나감'], ownChoice: 0, votes: {} },
   }),
   mk({
     id: 'u_yuna', nickname: '유나', birthYear: 2002, gender: 'female',
@@ -120,6 +133,7 @@ export const users: User[] = [
     interests: ['study', 'coffee', 'walk', 'research'],
     purposes: ['study', 'friend'],
     nowWant: '중앙도서관에서 같이 공부해요',
+    prompts: [{ questionId: 'q_spot', answer: '중도 4층 창가 (오후 2시 이후)' }, { questionId: 'q_study_type', answer: '카페에서 조용히, 질문은 쪽지로' }, { questionId: 'q_ask_me', answer: 'R, 통계 과제, 크로플 맛집' }],
   }),
   mk({
     id: 'u_taeho', nickname: '태호', birthYear: 1999, gender: 'male',
@@ -132,6 +146,8 @@ export const users: User[] = [
     interests: ['startup', 'networking', 'coffee'],
     purposes: ['networking'],
     nowWant: '창업 관심 있는 분과 커피챗',
+    prompts: [{ questionId: 'q_ask_me', answer: 'MVP 만들기, 팀빌딩, 투자 미팅 준비' }, { questionId: 'q_want_person', answer: '뭔가 만들고 있는 사람' }, { questionId: 'q_3hours', answer: '정문 카페에서 후배들 커피챗' }],
+    voicePrompt: { questionId: 'v_hello', durationSec: 12, recordedAt: isoHoursAgo(200) },
   }),
   mk({
     id: 'u_hana', nickname: '하나', birthYear: 2003, gender: 'female',
@@ -144,6 +160,8 @@ export const users: User[] = [
     interests: ['exhibition', 'shopping', 'walk', 'coffee'],
     purposes: ['friend', 'hobby'],
     nowWant: '이번 주말 전시 같이 볼 사람',
+    prompts: [{ questionId: 'q_always', answer: '전시랑 플리마켓' }, { questionId: 'q_new', answer: '필름 카메라 시작했어요' }, { questionId: 'q_emoji', answer: '🎨📷🧋' }],
+    poll: { questionId: 'p_weekend', options: ['바로 나감', '집이 좋아', '전시·공연이면 나감'], ownChoice: 2, votes: { u_seoyeon: 2 } },
   }),
   mk({
     id: 'u_junho', nickname: '준호', birthYear: 2000, gender: 'male',
@@ -155,6 +173,7 @@ export const users: User[] = [
     availability: 'in_class',
     interests: ['club', 'exhibition', 'meal', 'coffee'],
     purposes: ['club', 'friend'],
+    prompts: [{ questionId: 'q_project', answer: '가을 정기공연 준비 중' }, { questionId: 'q_role', answer: '총무 겸 기타' }, { questionId: 'q_cafe', answer: '학생회관 지하 라멘집' }],
   }),
   mk({
     id: 'u_sua', nickname: '수아', birthYear: 2004, gender: 'female',
@@ -167,6 +186,8 @@ export const users: User[] = [
     interests: ['study', 'walk', 'coffee', 'startup'],
     purposes: ['study', 'friend'],
     nowWant: '지금 백양로 산책 가실 분',
+    prompts: [{ questionId: 'q_now', answer: '백양로 산책 30분' }, { questionId: 'q_gap', answer: '알고리즘 문제 하나 풀고 산책' }, { questionId: 'q_want_person', answer: '코딩 같이 배울 사람' }],
+    poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 2, votes: { u_me: 2 } },
   }),
   mk({
     id: 'u_woojin', nickname: '우진', birthYear: 2001, gender: 'male',
@@ -178,6 +199,7 @@ export const users: User[] = [
     availability: 'after18',
     interests: ['study', 'exercise', 'research'],
     purposes: ['study', 'club'],
+    prompts: [{ questionId: 'q_study_type', answer: '토론형. 문제 하나로 30분 싸움 가능' }, { questionId: 'q_hobby', answer: '클라이밍' }, { questionId: 'q_cafe', answer: '신촌 국밥집 (이름 비밀)' }],
   }),
 ];
 

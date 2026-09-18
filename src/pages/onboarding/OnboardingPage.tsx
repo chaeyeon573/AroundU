@@ -9,19 +9,21 @@ import { ALL_AVAILABILITY, ALL_INTERESTS, ALL_PURPOSES, AVAILABILITY_LABELS, INT
 import { api } from '@/api';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
+import { PromptEditor, VoicePromptEditor, PollEditor } from '@/components/prompts/PromptComponents';
+import { REQUIRED_TEXT_PROMPTS } from '@/data/prompts';
 
-const STEPS = ['basic', 'school', 'interests', 'profile', 'permissions'] as const;
+const STEPS = ['basic', 'school', 'interests', 'profile', 'prompts', 'permissions'] as const;
 type Step = typeof STEPS[number];
 
 const EMOJIS = ['🙂', '😎', '🧑‍💻', '👩‍🎨', '🧑‍🔬', '🏃', '🎸', '📚', '🌱', '🎨', '🚀', '🧗', '☕', '🐱', '🦊', '🎧'];
-const DEFAULT_FV: Record<ProfileField, Visibility> = { bio: 'school', likes: 'school', freeTime: 'school', height: 'private', availability: 'school', preferredPartner: 'private', purposes: 'school', interests: 'public', posts: 'school' };
+const DEFAULT_FV: Record<ProfileField, Visibility> = { bio: 'school', likes: 'school', freeTime: 'school', height: 'private', availability: 'school', preferredPartner: 'private', purposes: 'school', interests: 'public', posts: 'school', prompts: 'public' };
 
 type Draft = RegisterInput & { avatarType: 'face' | 'masked' | 'back'; email: string; codeSent: boolean };
 const initial: Draft = {
   nickname: '', birthYear: 2002, gender: 'private', avatar: { emoji: '🙂', hue: 210, photoType: 'face' }, avatarType: 'face',
   schoolId: '', role: 'undergraduate', department: '', year: 2022, emailVerified: false, showSchool: true, showDepartment: true, email: '', codeSent: false,
   interests: [], purposes: [], bio: '', likes: '', freeTime: '', height: undefined, availability: 'after18', preferredPartner: '',
-  fieldVisibility: DEFAULT_FV, locationPermission: 'undecided', notifications: true,
+  fieldVisibility: DEFAULT_FV, prompts: [], voicePrompt: undefined, poll: undefined, locationPermission: 'undecided', notifications: true,
 };
 
 const KEY = 'aroundu.onboarding.draft';
@@ -39,7 +41,8 @@ export function OnboardingPage() {
       <Route path="basic" element={<Frame step="basic"><BasicStep form={form} patch={patch} next={() => go('school')} /></Frame>} />
       <Route path="school" element={<Frame step="school"><SchoolStep form={form} patch={patch} next={() => go('interests')} /></Frame>} />
       <Route path="interests" element={<Frame step="interests"><InterestsStep form={form} patch={patch} next={() => go('profile')} /></Frame>} />
-      <Route path="profile" element={<Frame step="profile"><ProfileStep form={form} patch={patch} next={() => go('permissions')} /></Frame>} />
+      <Route path="profile" element={<Frame step="profile"><ProfileStep form={form} patch={patch} next={() => go('prompts')} /></Frame>} />
+      <Route path="prompts" element={<Frame step="prompts"><PromptsStep form={form} patch={patch} next={() => go('permissions')} /></Frame>} />
       <Route path="permissions" element={<Frame step="permissions"><PermissionsStep form={form} patch={patch} /></Frame>} />
     </Routes>
   );
@@ -47,7 +50,7 @@ export function OnboardingPage() {
 
 function Frame({ step, children }: { step: Step; children: React.ReactNode }) {
   const idx = STEPS.indexOf(step);
-  const titles: Record<Step, string> = { basic: '기본 정보', school: '학교 인증', interests: '관심사와 이용 목적', profile: '프로필 작성', permissions: '권한 설정' };
+  const titles: Record<Step, string> = { basic: '기본 정보', school: '학교 인증', interests: '관심사와 이용 목적', profile: '프로필 작성', prompts: '질문 답변', permissions: '권한 설정' };
   return (
     <div className="min-h-full flex flex-col">
       <TopBar back title={<span className="text-[15px]">{titles[step]} <span className="text-ink-3 font-medium">{idx + 1}/{STEPS.length}</span></span>} />
@@ -193,6 +196,22 @@ function ProfileStep({ form, patch, next }: StepProps) {
       </div>
       <Field label="관심 있는 사람의 조건 (선택)" right={fv('preferredPartner')}><Input placeholder="예: 창업이나 AI에 관심 있는 분" value={form.preferredPartner ?? ''} onChange={(e) => patch({ preferredPartner: e.target.value })} /></Field>
       <Button full size="lg" onClick={next}>다음</Button>
+    </>
+  );
+}
+
+function PromptsStep({ form, patch, next }: StepProps) {
+  const answered = form.prompts.filter((p) => p.answer.trim()).length;
+  const ok = answered >= REQUIRED_TEXT_PROMPTS && form.prompts.every((p) => p.answer.trim());
+  return (
+    <>
+      <div><h2 className="text-[22px] font-extrabold">질문에 답해주세요</h2><p className="text-[13px] text-ink-3 mt-1">텍스트 질문 {REQUIRED_TEXT_PROMPTS}개는 필수예요. 답은 프로필 카드에 그대로 보여요.</p></div>
+      <Field label={`텍스트 질문 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)`} required right={<VisibilityPicker compact value={form.fieldVisibility.prompts} onChange={(v) => patch({ fieldVisibility: { ...form.fieldVisibility, prompts: v } })} label="질문 답변 공개 범위" />}>
+        <PromptEditor value={form.prompts} onChange={(prompts) => patch({ prompts })} />
+      </Field>
+      <Field label="음성 질문 (선택)" hint="30초 안에 목소리로 답해요."><VoicePromptEditor value={form.voicePrompt} onChange={(voicePrompt) => patch({ voicePrompt })} /></Field>
+      <Field label="투표형 질문 (선택)" hint="방문자가 한 표씩 던질 수 있어요."><PollEditor value={form.poll} onChange={(poll) => patch({ poll })} /></Field>
+      <Button full size="lg" disabled={!ok} onClick={next}>{ok ? '다음' : `질문 ${REQUIRED_TEXT_PROMPTS - Math.min(answered, REQUIRED_TEXT_PROMPTS)}개 더 답해주세요`}</Button>
     </>
   );
 }

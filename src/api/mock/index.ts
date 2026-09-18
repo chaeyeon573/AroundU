@@ -120,6 +120,7 @@ export const mockApi: AroundUApi = {
           },
           bio: input.bio, likes: input.likes, freeTime: input.freeTime, height: input.height, availability: input.availability,
           interests: input.interests, purposes: input.purposes, preferredPartner: input.preferredPartner, region: school.region,
+          prompts: input.prompts, voicePrompt: input.voicePrompt, poll: input.poll,
           fieldVisibility: input.fieldVisibility,
           settings: { messagePolicy: 'connected', notifications: input.notifications, locationPermission: input.locationPermission },
           createdAt: new Date().toISOString(),
@@ -167,6 +168,14 @@ export const mockApi: AroundUApi = {
     },
     async setAvailability(id, availability) {
       return request(() => { const u = find(db.users, id); u.availability = availability; return { users: [u] }; });
+    },
+    async votePoll(ownerId, voterId, optionIndex) {
+      return request(() => {
+        const u = find(db.users, ownerId);
+        if (!u.poll) throw new Error('투표형 질문이 없어요.');
+        u.poll.votes[voterId] = optionIndex;
+        return { users: [u] };
+      });
     },
   },
 

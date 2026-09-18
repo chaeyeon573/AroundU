@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock } from 'lucide-react';
+import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock, Mic } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Portrait, VerifiedBadge, Tag, Button, BottomSheet, Dialog, Textarea, Input, Chip, Cover, EmptyState, VisibilityTag } from '@/components/ui';
 import { SheetItem } from '@/components/cards/PostCard';
@@ -15,6 +15,8 @@ import { commonInterests, mutualFriends } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
 import type { ActivityCategory } from '@/types';
 import { cn } from '@/lib/cn';
+import { PromptAnswerCard, VoicePlayer, PollCard } from '@/components/prompts/PromptComponents';
+import { questionById } from '@/data/prompts';
 
 export function PersonPage() {
   const { id } = useParams();
@@ -91,6 +93,14 @@ export function PersonPage() {
             </div>
           )}
         </div>
+
+        {see('prompts') && (user.prompts.length > 0 || user.voicePrompt || user.poll) && (
+          <div className="space-y-2.5">
+            {user.prompts.filter((p) => p.answer.trim()).map((p) => <PromptAnswerCard key={p.questionId} prompt={p} />)}
+            {user.voicePrompt && <div className="card p-4"><div className="text-[12px] font-bold text-primary flex items-center gap-1"><Mic size={12} />{questionById(user.voicePrompt.questionId)?.text}</div><div className="mt-2 flex"><VoicePlayer duration={user.voicePrompt.durationSec} /></div></div>}
+            {user.poll && <PollCard poll={user.poll} ownerName={user.nickname} myVote={user.poll.votes[v.me.id]} onVote={(i) => run(() => api.users.votePoll(user.id, v.me.id, i), '투표했어요.')} />}
+          </div>
+        )}
 
         <div className="card p-4 space-y-3">
           <Block label="관심사" visible><div className="flex flex-wrap gap-1.5">{user.interests.map((i) => <Chip key={i} size="sm" active={common.includes(i)}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div></Block>

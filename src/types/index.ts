@@ -43,7 +43,27 @@ export interface CompanyAffiliation {
 
 export type Affiliation = UniversityAffiliation | CompanyAffiliation;
 
-export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts';
+export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts' | 'prompts';
+
+/** 프로필 질문(텍스트) — 질문 풀에서 골라 짧게 답한다 */
+export interface ProfilePrompt {
+  questionId: string;
+  answer: string;
+}
+/** 음성 질문 — 데모에서는 녹음 길이만 저장 */
+export interface VoicePrompt {
+  questionId: string;
+  durationSec: number;
+  recordedAt: string;
+}
+/** 투표형 질문 — 방문자가 한 표씩 던질 수 있다 */
+export interface PollPrompt {
+  questionId: string;
+  options: string[];
+  /** 본인이 고른 답 */
+  ownChoice: number;
+  votes: Record<ID, number>;
+}
 
 export interface User {
   id: ID;
@@ -65,6 +85,10 @@ export interface User {
   region: string;
   /** 지금 하고 싶은 활동 (한 줄) */
   nowWant?: string;
+  /** 프로필 질문 답변 (텍스트 3개 필수) */
+  prompts: ProfilePrompt[];
+  voicePrompt?: VoicePrompt;
+  poll?: PollPrompt;
   fieldVisibility: Record<ProfileField, Visibility>;
   settings: {
     messagePolicy: 'connected' | 'friends_only' | 'none';

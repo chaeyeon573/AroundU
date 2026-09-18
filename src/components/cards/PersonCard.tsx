@@ -8,6 +8,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { commonInterests } from '@/lib/relations';
 import { cn } from '@/lib/cn';
+import { PromptAnswerCard } from '@/components/prompts/PromptComponents';
 
 interface Props {
   user: User;
@@ -67,7 +68,8 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
           {showAvail && <div className="flex items-center gap-1"><Clock size={12} className="text-ink-3" />{AVAILABILITY_LABELS[user.availability]}</div>}
           <div className="flex items-center gap-1"><MapPin size={12} className="text-ink-3" />{user.region} 근처 · {user.purposes.slice(0, 2).map((p) => PURPOSE_LABELS[p]).join(', ')}</div>
         </div>
-        {user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2">“{user.nowWant}”</div>}
+        {v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? <PromptAnswerCard prompt={user.prompts[0]} compact />
+          : user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2">“{user.nowWant}”</div>}
         <div className="mt-auto flex items-center gap-1.5 pt-1">
           <button onClick={like} aria-label="관심" className={cn('h-10 w-10 rounded-xl grid place-items-center press', liked ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={18} fill={liked ? 'currentColor' : 'none'} /></button>
           <Button size="sm" className="flex-1 h-10" onClick={() => nav(`/users/${user.id}?propose=1`)}>같이하기</Button>

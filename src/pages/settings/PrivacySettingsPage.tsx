@@ -7,6 +7,7 @@ import type { ProfileField, Visibility } from '@/types';
 
 const FIELDS: { key: ProfileField; label: string; desc?: string }[] = [
   { key: 'bio', label: '자기소개' },
+  { key: 'prompts', label: '질문 답변 (텍스트·음성·투표)', desc: '홈 카드에도 첫 번째 답변이 보여요' },
   { key: 'interests', label: '관심사', desc: '추천에 사용되므로 전체 공개를 권장해요' },
   { key: 'likes', label: '좋아하는 것' },
   { key: 'freeTime', label: '하고 싶은 활동' },

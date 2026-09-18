@@ -45,6 +45,9 @@ export interface RegisterInput {
   availability: Availability;
   preferredPartner?: string;
   fieldVisibility: User['fieldVisibility'];
+  prompts: User['prompts'];
+  voicePrompt?: User['voicePrompt'];
+  poll?: User['poll'];
   locationPermission: User['settings']['locationPermission'];
   notifications: boolean;
 }
@@ -96,6 +99,8 @@ export interface AroundUApi {
   users: {
     update(id: ID, patch: Partial<User>): Promise<Patch>;
     setAvailability(id: ID, availability: Availability): Promise<Patch>;
+    /** 다른 사용자의 투표형 질문에 한 표 */
+    votePoll(ownerId: ID, voterId: ID, optionIndex: number): Promise<Patch>;
   };
 
   activities: {

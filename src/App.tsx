@@ -24,6 +24,7 @@ import { PrivacySettingsPage } from '@/pages/settings/PrivacySettingsPage';
 import { SafetySettingsPage } from '@/pages/settings/SafetySettingsPage';
 import { SearchPage } from '@/pages/home/SearchPage';
 import { ProfileListPage } from '@/pages/profile/ProfileListPage';
+import { EditPromptsPage } from '@/pages/profile/EditPromptsPage';
 
 function RequireAuth() {
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/chats/:roomId" element={<ChatRoomPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/profile/prompts" element={<EditPromptsPage />} />
           <Route path="/profile/:list" element={<ProfileListPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
