@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SlidersHorizontal, MessageCircle, X, Bell, Search, UserPlus, Compass } from 'lucide-react';
+import { SlidersHorizontal, MessageCircle, X, Bell, Search, UserPlus } from 'lucide-react';
 import { t, lang } from '@/i18n';
 import { useUnreadCounts } from '@/components/layout/TopBar';
 import { LAST_SEEN_KEY } from '@/components/layout/BottomNav';
@@ -100,7 +100,7 @@ export function HomePage() {
           </div>
           <div className="shrink-0 px-4 pb-2 grid grid-cols-2 gap-2">
             <button onClick={() => friend(current.u)} className="h-12 rounded-full bg-primary text-white text-[14px] font-bold press flex items-center justify-center gap-1.5"><UserPlus size={17} />{v.isFriend(current.u.id) ? t('친구') : v.pendingOut(current.u.id) ? t('요청됨') : t('친구로 연결')}</button>
-            <button onClick={() => nav(`/users/${current.u.id}?tab=together`)} className="h-12 rounded-full bg-surface border border-line text-[14px] font-bold press flex items-center justify-center gap-1.5"><Compass size={17} />{t('함께할 일')}</button>
+            <button onClick={() => (v.canMessage(current.u.id).ok ? openChat(current.u) : nav(`/users/${current.u.id}?propose=1`))} className="h-12 rounded-full bg-surface border border-line text-[14px] font-bold press flex items-center justify-center gap-1.5"><MessageCircle size={17} />{v.canMessage(current.u.id).ok ? t('메시지') : t('활동 제안')}</button>
           </div>
           </div>
         </div>

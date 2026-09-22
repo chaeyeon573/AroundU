@@ -427,7 +427,7 @@ export const mockApi: AroundUApi = {
         const author = find(db.users, authorId);
         const o: Opportunity = {
           id: uid('op'), type: input.type, title: input.title, host: input.host || author.nickname, orgId: input.orgId, description: input.description,
-          cover: { emoji: { event: '🎪', club: '🎸', lab: '🔬', internship: '💼', scholarship: '🎓', hackathon: '💡', startup: '🚀', activity: '☕' }[input.type], hue: 200 },
+          cover: { emoji: { event: '🎪', club: '🎸', lab: '🔬', internship: '💼', scholarship: '🎓', hackathon: '💡', startup: '🚀', activity: '☕', exchange: '✈️' }[input.type], hue: 200 },
           deadline: input.deadline, date: input.date, eligibility: t('누구나'), rolesNeeded: input.rolesNeeded, sourceUrl: input.sourceUrl, sourceLabel: input.sourceUrl ? t('공유된 링크') : '',
           tags: [], interests: [], goals: [], schoolId: author.affiliation.type === 'university' ? author.affiliation.schoolId : undefined, lastVerified: new Date().toISOString().slice(0, 10), qna: [], reviews: [], createdAt: new Date().toISOString(),
         };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Pencil, Clock, ChevronRight, Heart, Users, CalendarDays, Bookmark, Lock, Grid3X3, MessageCircle, CalendarCheck, Building2, History } from 'lucide-react';
+import { Settings, Pencil, Clock, ChevronRight, Users, CalendarDays, Bookmark, Lock, Grid3X3, MessageCircle, CalendarCheck, Building2, History } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, VerifiedBadge, Button, Chip, Cover, BottomSheet, Segmented, CardSkeleton, ErrorState } from '@/components/ui';
 import { ActivityCard } from '@/components/cards/ActivityCard';
@@ -97,13 +97,12 @@ export function ProfilePage() {
         </button>
         <div className="card divide-y divide-line">
           {[
-            { icon: <CalendarCheck size={17} />, tone: 'bg-accent-soft text-accent', label: 'My Plans', sub: invites ? `${t('받은 초대')} ${invites} · ${t('예정')} ${upcomingMine}` : `${t('예정')} ${upcomingMine}`, to: '/plans', badge: invites },
-            { icon: <CalendarDays size={17} />, tone: 'bg-primary-soft text-primary', label: t('내 시간표'), sub: me.timetable.length ? `${me.timetable.length}${t('개 수업 · ')}${statusLabel(statusNow(me.timetable))}` : t('시간표 만들기'), to: '/timetable' },
+            { icon: <CalendarDays size={17} />, tone: 'bg-primary-soft text-primary', label: t('내 시간표'), sub: me.timetable.length ? statusLabel(statusNow(me.timetable)) : t('시간표 만들기'), to: '/timetable' },
             { icon: <Users size={17} />, tone: 'bg-mint-soft text-mint', label: t('친구'), sub: `${friends.length}${t('명')}`, to: '/profile/friends' },
+            { icon: <CalendarCheck size={17} />, tone: 'bg-accent-soft text-accent', label: 'My Plans', sub: invites ? `${t('받은 초대')} ${invites} · ${t('예정')} ${upcomingMine}` : `${t('예정')} ${upcomingMine}`, to: '/plans', badge: invites },
+            { icon: <Bookmark size={17} />, tone: 'bg-gold-soft text-[#B57A0E]', label: t('저장·지원 내역'), sub: `${t('공고')} ${savedOpps} · ${t('관심 행사')} ${eventIntents}`, to: '/community?tab=opportunities&sub=saved' },
             { icon: <MessageCircle size={17} />, tone: 'bg-surface-2 text-ink-2', label: t('채팅'), sub: t('개인·활동·조직 대화'), to: '/chats' },
-            { icon: <Bookmark size={17} />, tone: 'bg-gold-soft text-[#B57A0E]', label: t('저장한 공고'), sub: `${savedOpps}${t('개')} · ${t('마감 알림')}`, to: '/community?tab=opportunities&sub=saved' },
-            { icon: <Heart size={17} />, tone: 'bg-heart-soft text-heart', label: t('관심 표시한 행사'), sub: `${eventIntents}${t('개')}`, to: '/plans' },
-            { icon: <Building2 size={17} />, tone: 'bg-surface-2 text-ink-2', label: t('가입한 동아리'), sub: myOrgs.length ? myOrgs.map((o) => o.name).join(', ') : t('아직 없어요'), to: '/community?tab=clubs&mine=1' },
+            { icon: <Building2 size={17} />, tone: 'bg-surface-2 text-ink-2', label: t('가입한 단체'), sub: myOrgs.length ? myOrgs.map((o) => o.name).join(', ') : t('아직 없어요'), to: '/community?tab=clubs&mine=1' },
             { icon: <History size={17} />, tone: 'bg-surface-2 text-ink-2', label: t('참여·활동 기록'), sub: `${t('만든 활동')} ${created.length} · ${t('참여')} ${joined.length}`, to: '' },
           ].map((row) => (
             <button key={row.label} onClick={() => row.to ? nav(row.to) : setTab('joined')} className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left press">

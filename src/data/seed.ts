@@ -643,6 +643,11 @@ export const notifications: Notification[] = [
 
 export const opportunities: Opportunity[] = [
   {
+    id: 'op_exchange', type: 'exchange', title: '2027 봄 교환학생 모집 (UC Berkeley 외 40개교)', host: '연세대 국제처', description: '1학기 또는 1년. 평점 3.0 이상, 어학 성적 제출. 설명회 다음 주 백양누리.',
+    cover: { emoji: '✈️', hue: 210 }, deadline: addDaysISO(18), eligibility: '재학생, 평점 3.0 이상, 어학 성적', benefit: '등록금 본교 납부, 교환 장학금 지원 가능',
+    sourceUrl: 'https://example.com/exchange', sourceLabel: '국제처 공지', tags: ['교환학생', '해외'], interests: ['networking'], goals: ['friends'], schoolId: 's_yonsei', official: true, lastVerified: T, qna: [], reviews: [], createdAt: isoHoursAgo(36),
+  },
+  {
     id: 'op_hackathon', type: 'hackathon', title: 'AI Campus Hackathon 2026', host: '연세대 창업지원단 × 네이버', description: '48시간 동안 캠퍼스 문제를 AI로 푸는 해커톤. 2~4인 팀, 전공 무관. 우승팀 상금 500만원과 인턴 면접 기회.',
     cover: { emoji: '💡', hue: 230 , url: photo('c_abstract2') }, deadline: addDaysISO(7), date: addDaysISO(14), startTime: '09:00', place: { name: '공학관 대강당', lat: 37.5617, lng: 126.9367 },
     eligibility: '연세대 재학생·대학원생, 전공 무관', benefit: '상금 500만원, 인턴 면접 기회', rolesNeeded: ['developer', 'designer', 'planning'], teamSize: '2~4명',

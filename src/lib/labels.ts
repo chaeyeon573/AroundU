@@ -47,7 +47,7 @@ export const JOIN_POLICY_LABELS: Record<JoinPolicy, string> = {
 };
 
 export const ROLE_LABELS: Record<UniversityRole, string> = { undergraduate: t('학부생'), graduate: t('대학원생'), alumni: t('졸업생') };
-export const ORG_TYPE_LABELS: Record<OrganizationType, string> = { club: t('동아리'), department: t('학과'), lab: t('연구실'), council: t('학생회'), greek: t('소셜 조직 (Greek)') };
+export const ORG_TYPE_LABELS: Record<OrganizationType, string> = { club: t('동아리'), department: t('학과'), lab: t('연구실·RA'), council: t('학생회'), greek: t('소셜 조직 (Greek)') };
 export const KIND_LABELS: Record<ActivityKind, string> = { personal: t('개인 활동'), group: t('그룹 모임'), org_event: t('동아리·학교 행사') };
 export const GENDER_LABELS: Record<Gender, string> = { female: t('여성'), male: t('남성'), other: t('기타'), private: t('비공개') };
 
@@ -84,10 +84,10 @@ export const LOOKING_FOR_ROLES: Role[] = ['friend', 'teammate', 'cofounder', 'de
 export const OFFER_ROLES: Role[] = ['developer', 'designer', 'data', 'marketing', 'planning', 'presentation', 'video', 'research', 'club_ops'];
 export const RESIDENCE_LABELS: Record<Residence, string> = { dorm: t('기숙사'), offcampus: t('학교 근처 자취'), commute: t('통학') };
 export const OPP_TYPE_LABELS: Record<OpportunityType, string> = {
-  event: t('학교 행사'), club: t('동아리'), lab: t('연구실'), internship: t('인턴'), scholarship: t('장학금'), hackathon: t('해커톤·공모전'), startup: t('창업'), activity: t('활동'),
+  event: t('학교 행사'), club: t('동아리'), lab: t('연구실·RA'), internship: t('인턴'), scholarship: t('장학금'), hackathon: t('해커톤·공모전'), startup: t('창업'), activity: t('활동'), exchange: t('교환학생'),
 };
-export const OPP_TYPE_EMOJI: Record<OpportunityType, string> = { event: '🎪', club: '🎸', lab: '🔬', internship: '💼', scholarship: '🎓', hackathon: '💡', startup: '🚀', activity: '☕' };
-export const OPP_TYPE_COLORS: Record<OpportunityType, string> = { event: '#E5484D', club: '#8B5CF6', lab: '#0EA5A5', internship: '#4F46E5', scholarship: '#F5A524', hackathon: '#3D5AFE', startup: '#F0752B', activity: '#C98A3B' };
+export const OPP_TYPE_EMOJI: Record<OpportunityType, string> = { event: '🎪', club: '🎸', lab: '🔬', internship: '💼', scholarship: '🎓', hackathon: '💡', startup: '🚀', activity: '☕', exchange: '✈️' };
+export const OPP_TYPE_COLORS: Record<OpportunityType, string> = { event: '#E5484D', club: '#8B5CF6', lab: '#0EA5A5', internship: '#4F46E5', scholarship: '#F5A524', hackathon: '#3D5AFE', startup: '#F0752B', activity: '#C98A3B', exchange: '#5A8FD6' };
 export const ALL_GOALS = Object.keys(GOAL_LABELS) as Goal[];
 export const ALL_OPP_TYPES = Object.keys(OPP_TYPE_LABELS) as OpportunityType[];
 export const MEET_PREF_LABELS: Record<MeetPreference, string> = {

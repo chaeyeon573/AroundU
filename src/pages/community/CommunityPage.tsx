@@ -12,7 +12,7 @@ import { ShareOpportunitySheet } from '@/components/create/ShareOpportunitySheet
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { opportunityScore, daysUntil, isTogetherType } from '@/lib/recommend';
-import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI } from '@/lib/labels';
+import { OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI } from '@/lib/labels';
 import type { OpportunityType, OrganizationType, PostType } from '@/types';
 
 type Tab = 'feed' | 'opportunities' | 'clubs';
@@ -29,9 +29,9 @@ export function CommunityPage() {
   const [share, setShare] = useState(false);
   return (
     <div className="min-h-full pb-6">
-      <TopBar title={t('커뮤니티')} bell messages right={tab === 'opportunities' ? <Button size="sm" variant="ghost" icon={<Link2 size={16} />} onClick={() => setShare(true)}>{t('공유')}</Button> : <Button size="sm" variant="ghost" icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>{t('글쓰기')}</Button>} />
+      <TopBar title={t('캠퍼스')} bell messages right={tab === 'opportunities' ? <Button size="sm" variant="ghost" icon={<Link2 size={16} />} onClick={() => setShare(true)}>{t('공유')}</Button> : <Button size="sm" variant="ghost" icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>{t('글쓰기')}</Button>} />
       <div className="px-4 flex gap-6 border-b border-line">
-        {([['feed', 'Feed'], ['opportunities', t('기회')], ['clubs', 'Clubs']] as [Tab, string][]).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={cn('h-11 text-[15px] font-bold border-b-2 -mb-px transition', tab === k ? 'border-ink text-ink' : 'border-transparent text-ink-3')}>{l}</button>)}
+        {([['feed', t('피드')], ['opportunities', t('공고')], ['clubs', t('단체')]] as [Tab, string][]).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={cn('h-11 text-[15px] font-bold border-b-2 -mb-px transition', tab === k ? 'border-ink text-ink' : 'border-transparent text-ink-3')}>{l}</button>)}
       </div>
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
@@ -78,10 +78,10 @@ function OpportunitiesTab() {
   const v = useViewer();
   const me = v.me;
   const mySchool = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
-  const scored = useMemo(() => opps.filter((o) => !o.schoolId || o.schoolId === mySchool).filter((o) => !o.deadline || daysUntil(o.deadline) >= 0)
+  const scored = useMemo(() => opps.filter((o) => !isTogetherType(o.type) || (o.type === 'hackathon' && !o.rolesNeeded)).filter((o) => !o.schoolId || o.schoolId === mySchool).filter((o) => !o.deadline || daysUntil(o.deadline) >= 0)
     .map((o) => ({ o, ...opportunityScore(me, o, intents) })), [opps, intents, me, mySchool]);
-  const list = sub === 'foryou' ? [...scored].filter((x) => isTogetherType(x.o.type)).sort((a, b) => b.score - a.score)
-    : sub === 'notices' ? scored.filter((x) => !isTogetherType(x.o.type)).sort((a, b) => (a.o.deadline ?? '9').localeCompare(b.o.deadline ?? '9'))
+  const list = sub === 'foryou' ? [...scored].sort((a, b) => b.score - a.score)
+    : sub === 'notices' ? [...scored].sort((a, b) => (a.o.deadline ?? '9').localeCompare(b.o.deadline ?? '9'))
     : sub === 'saved' ? scored.filter((x) => intents.some((i) => i.opportunityId === x.o.id && i.userId === me.id && (i.saved || i.intent !== 'interested')))
     : scored.filter((x) => x.o.type === sub);
   const urgent = scored.filter((x) => x.o.deadline && daysUntil(x.o.deadline) <= 7 && intents.some((i) => i.opportunityId === x.o.id && i.userId === me.id));
@@ -89,9 +89,9 @@ function OpportunitiesTab() {
     <div className="space-y-3">
       <ChipRow className="py-0">
         <Chip size="sm" active={sub === 'foryou'} onClick={() => setSub('foryou')}><Sparkles size={13} /> {t('나에게 맞는')}</Chip>
-        <Chip size="sm" active={sub === 'notices'} onClick={() => setSub('notices')}><Bell size={13} /> {t('공고')}</Chip>
+        <Chip size="sm" active={sub === 'notices'} onClick={() => setSub('notices')}><Bell size={13} /> {t('마감순')}</Chip>
         <Chip size="sm" active={sub === 'saved'} onClick={() => setSub('saved')}><Bookmark size={13} /> {t('저장·지원')}</Chip>
-        {ALL_OPP_TYPES.filter((ty) => ty !== 'activity').map((ty) => <Chip key={ty} size="sm" color={OPP_TYPE_COLORS[ty]} active={sub === ty} onClick={() => setSub(ty)}>{OPP_TYPE_EMOJI[ty]} {OPP_TYPE_LABELS[ty]}</Chip>)}
+        {(['scholarship', 'internship', 'lab', 'hackathon', 'exchange'] as OpportunityType[]).map((ty) => <Chip key={ty} size="sm" color={OPP_TYPE_COLORS[ty]} active={sub === ty} onClick={() => setSub(ty)}>{OPP_TYPE_EMOJI[ty]} {OPP_TYPE_LABELS[ty]}</Chip>)}
       </ChipRow>
       {sub === 'foryou' && me.goals.length === 0 && (
         <button onClick={() => nav('/profile/context')} className="card w-full p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E9EDFF,#FFFFFF)]"><span className="text-2xl">🎯</span><span className="flex-1 text-[13px]"><b>{t('이번 학기 목표를 알려주세요')}</b><br /><span className="text-ink-2">{t('목표와 역할을 설정하면 맞는 기회와 사람을 더 정확히 추천해요.')}</span></span></button>
