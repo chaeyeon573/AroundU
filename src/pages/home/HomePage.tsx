@@ -78,14 +78,10 @@ export function HomePage() {
   const tog = <T,>(arr: T[], x: T) => (arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]);
 
   return (
-    <div className="h-full flex flex-col bg-bg">
+    <div className="h-full flex flex-col" style={{ background: 'linear-gradient(160deg, #FDE7EA 0%, #FBF2F4 45%, #E9F0FB 100%)' }}>
       <header className="shrink-0 flex items-center gap-1 h-14 px-2">
         <IconButton onClick={() => nav('/search?tab=people')} aria-label={t('검색')}><Search size={21} /></IconButton>
-        <div className="flex-1 flex justify-center">
-          <div className="flex bg-surface-2 rounded-full p-1">
-            {(['foryou', 'nearby'] as Mode[]).map((m) => <button key={m} onClick={() => { setMode(m); reset(); }} className={cn('h-8 px-4 rounded-full text-[12px] font-bold tracking-wide transition', mode === m ? 'bg-ink text-white shadow' : 'text-ink-2')}>{m === 'foryou' ? (lang === 'en' ? 'FOR YOU' : '추천') : (lang === 'en' ? 'NEARBY' : '근처')}</button>)}
-          </div>
-        </div>
+        <button onClick={() => { setMode(mode === 'foryou' ? 'nearby' : 'foryou'); reset(); }} className="flex-1 text-center font-display text-[24px] font-bold tracking-tight">{mode === 'foryou' ? (lang === 'en' ? 'Discover' : '발견') : (lang === 'en' ? 'Nearby' : '근처')}<span className="ml-1 text-[11px] font-sans font-semibold text-ink-3 align-middle">{mode === 'foryou' ? (lang === 'en' ? 'NEARBY ›' : '근처 ›') : (lang === 'en' ? 'FOR YOU ›' : '추천 ›')}</span></button>
         <IconButton onClick={() => nav('/notifications')} badge={counts.bell} aria-label={t('알림')}><Bell size={21} /></IconButton>
         <IconButton onClick={() => setFilterOpen(true)} aria-label={t('조건')} className={cn(chips.length > 0 && 'bg-ink text-white')}><SlidersHorizontal size={19} /></IconButton>
       </header>
@@ -98,13 +94,12 @@ export function HomePage() {
         <EmptyState emoji="🙋" title={t('이 조건에 맞는 사람이 아직 없어요')} action={<Button size="sm" variant="outline" onClick={() => { setF(EMPTY); reset(); }}>{t('조건 지우기')}</Button>} />
       ) : (
         <div className="flex-1 min-h-0 flex flex-col">
-          <div ref={scroller} className="flex-1 min-h-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-2 px-3" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 24 + 8))); }}>
+          <div className="relative flex-1 min-h-0 flex flex-col">
+          <div ref={scroller} className="flex-1 min-h-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 px-4 pb-3" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 24 + 8))); }}>
             {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} liked={v.iLike(c.u.id)} onOpen={() => nav(`/users/${c.u.id}`)} />)}
           </div>
-          <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-2">
-            <button onClick={() => like(current.u)} aria-label={t('관심')} className={cn('flex-1 h-[54px] rounded-full grid place-items-center press shadow-[var(--shadow-card)]', v.iLike(current.u.id) ? 'bg-primary text-white' : 'bg-surface text-primary border border-line')}><Heart size={24} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} /></button>
-            <button onClick={() => nav(`/users/${current.u.id}?propose=1&cat=coffee`)} aria-label={t('커피 제안')} className="h-[54px] w-[54px] rounded-full bg-ink text-white grid place-items-center press"><Coffee size={22} /></button>
-            <button onClick={() => (v.canMessage(current.u.id).ok ? openChat(current.u) : nav(`/users/${current.u.id}?propose=1`))} aria-label={t('메시지')} className="flex-1 h-[54px] rounded-full bg-[linear-gradient(90deg,#FF6F61,#FBBE02)] text-white grid place-items-center press shadow-[var(--shadow-float)]"><MessageCircle size={24} /></button>
+          <button onClick={() => (v.canMessage(current.u.id).ok ? openChat(current.u) : nav(`/users/${current.u.id}?propose=1&cat=coffee`))} aria-label={t('커피 제안')} className="absolute left-1 top-[52%] h-14 w-14 rounded-full bg-white/90 backdrop-blur text-ink grid place-items-center shadow-[0_8px_24px_rgba(0,0,0,.18)] press">{v.canMessage(current.u.id).ok ? <MessageCircle size={22} /> : <Coffee size={22} />}</button>
+          <button onClick={() => like(current.u)} aria-label={t('관심')} className={cn('absolute right-1 top-[46%] h-[72px] w-[72px] rounded-full grid place-items-center shadow-[0_10px_30px_rgba(255,111,97,.45)] press ring-[6px] ring-white/40', v.iLike(current.u.id) ? 'bg-primary text-white' : 'bg-white/90 backdrop-blur text-primary')}><Heart size={30} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} /></button>
           </div>
         </div>
       ))}
@@ -139,7 +134,6 @@ export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reas
   const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
   const common = commonInterests(v.me, user);
   const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
-  const want = v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? user.prompts[0].answer : user.nowWant;
   const reason = reasons.filter((r) => r.kind !== 'school')[0];
   const year = yearOf(user);
   const dept = user.affiliation.type === 'university' && user.affiliation.showDepartment ? user.affiliation.department : '';
@@ -150,7 +144,7 @@ export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reas
     else onOpen();
   };
   return (
-    <article className="relative h-full shrink-0 snap-center rounded-[28px] overflow-hidden bg-ink text-white select-none" style={{ width: 'calc(100% - 24px)' }}>
+    <article className="relative h-full shrink-0 snap-center rounded-[32px] overflow-hidden bg-ink text-white select-none shadow-[0_20px_50px_rgba(60,30,40,.18)]" style={{ width: 'calc(100% - 32px)' }}>
       <div className="absolute inset-0" onClick={tap} style={{ background: `linear-gradient(135deg, hsl(${user.avatar.hue} 60% 75%), hsl(${(user.avatar.hue + 40) % 360} 55% 60%))` }}>
         {photos.length > 0 ? <img src={assetUrl(photos[pi])} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} /> : <span className="absolute inset-0 grid place-items-center text-[120px]">{user.avatar.emoji}</span>}
         <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(to_bottom,rgba(0,0,0,.45),rgba(0,0,0,0))]" />
@@ -160,14 +154,13 @@ export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reas
       {liked && <span className="absolute top-6 right-4 h-8 w-8 rounded-full bg-primary grid place-items-center"><Heart size={15} fill="currentColor" /></span>}
       {user.avatar.photoType !== 'face' && <span className="absolute top-6 left-4 rounded-full bg-black/35 backdrop-blur text-[11px] px-2.5 py-1">{user.avatar.photoType === 'masked' ? t('얼굴 비공개') : t('뒷모습')}</span>}
       <div className="absolute inset-x-0 bottom-0 p-5 pointer-events-none">
-        {reason && <div className="inline-flex items-center gap-1 rounded-full bg-white/90 text-ink text-[11px] font-bold px-2.5 py-1 mb-2">✦ {reason.text}</div>}
-        <div className="flex items-end gap-2"><h2 className="font-display text-[38px] leading-none font-bold">{user.nickname}</h2><span className="text-[22px] font-display opacity-80 leading-none pb-0.5">{new Date().getFullYear() - user.birthYear + 1}</span>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <span className="pb-1"><VerifiedBadge kind="school" size={18} /></span>}</div>
-        <div className="mt-1 text-[13px] opacity-90">{[user.affiliation.type === 'university' && user.affiliation.showSchool ? user.affiliation.schoolName : '', dept, year ? `${year}${t('학년')}` : ''].filter(Boolean).join(' · ')}</div>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <span className="rounded-full bg-white/20 backdrop-blur px-2.5 h-7 inline-flex items-center text-[12px] font-semibold">⏱ {avail.text}</span>
-          {(common.length ? common : user.interests).slice(0, 3).map((i) => <span key={i} className={cn('rounded-full backdrop-blur px-2.5 h-7 inline-flex items-center text-[12px] font-semibold', common.includes(i) ? 'bg-accent text-ink' : 'bg-white/20')}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</span>)}
+        {reason && <div className="inline-flex items-center rounded-full bg-white/90 text-ink text-[11px] font-bold px-3 py-1 mb-3">{reason.text}</div>}
+        <div className="flex items-center gap-2"><h2 className="font-display text-[36px] leading-none font-bold">{user.nickname}, {new Date().getFullYear() - user.birthYear + 1}</h2>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={20} />}</div>
+        <div className="mt-2 text-[11px] font-semibold tracking-[0.12em] uppercase opacity-85">{[user.affiliation.type === 'university' && user.affiliation.showSchool ? user.affiliation.schoolName : '', dept, year ? `${year}${t('학년')}` : ''].filter(Boolean).join(' · ')}</div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {(avail.auto && avail.text.includes(t('공강'))) || user.availability === 'now' ? <span className="rounded-full bg-mint text-white px-2.5 h-7 inline-flex items-center text-[11px] font-bold">{lang === 'en' ? 'Free now' : '지금 공강'}</span> : null}
+          {(common.length ? common : user.interests).slice(0, 3).map((i) => <span key={i} className="rounded-full bg-white/25 backdrop-blur px-3 h-7 inline-flex items-center text-[12px] font-semibold">{INTEREST_LABELS[i]}</span>)}
         </div>
-        {want && <p className="mt-2.5 text-[14px] font-display italic opacity-95 line-clamp-2">“{want}”</p>}
       </div>
     </article>
   );

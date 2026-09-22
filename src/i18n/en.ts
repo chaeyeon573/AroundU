@@ -1219,4 +1219,7 @@ export const en: Record<string, string> = {
   '조건': 'Filters',
   '조건 지우기': 'Clear filters',
   '관계': 'Connection',
+  '내 역할': 'my role',
+  '3시간 이내': 'Within 3 hours',
+  '지금 시간 되는 사람': 'Free right now',
 };
