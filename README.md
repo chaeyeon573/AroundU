@@ -127,9 +127,27 @@ DATABASE_URL=postgres://... npm run server   # 없으면 server/.data/db.json �
 DATABASE_URL=... npm run import:courses -- fall2026-berkeley.csv
 ```
 
-registrar 소스 예: Berkeley Class API (developer portal 키 필요), Stanford ExploreCourses XML, UCLA Registrar 스케줄, MIT Subject Listing, SF State Class Schedule. 어느 것이든 위 헤더로만 맞추면 된다.
+공개 소스에서 바로 가져오는 스크립트도 있다 (인터넷이 열린 환경에서 실행):
 
-**동아리·소로리티·프래터니티** — `src/data/catalog/orgs.ts` 에 5개 캠퍼스 338개 조직이 있다. 그리스 조직은 IFC / Panhellenic / NPHC(Divine Nine) / MGC / Professional / Service 계열별로 전국 조직 사전(`NATIONAL_GREEK`)에서 골라 넣었고, 동아리는 CalLink 등 각 학교 학생단체 디렉터리 기준이다. 캠퍼스별 챕터 존재 여부는 학기마다 바뀌므로 **모두 `verified: false`** 로 시작한다. 조직 관리자가 인증하거나 CSV 로 갱신한다:
+```bash
+npm run fetch:courses -- stanford      # ExploreCourses XML, 키 불필요
+npm run fetch:courses -- mit           # FireRoad API, 키 불필요
+BERKELEY_APP_ID=… BERKELEY_APP_KEY=… BERKELEY_TERM_ID=2268 npm run fetch:courses -- berkeley   # SIS Class API 키 (api-central.berkeley.edu)
+```
+
+UCLA 와 SF State 는 공개 API 가 없어서 학교 스케줄 페이지에서 받은 표를 위 CSV 헤더로 맞춰 `import:courses` 로 넣는다.
+
+**동아리·소로리티·프래터니티** — `src/data/catalog/orgs.ts` 에 5개 캠퍼스 338개 조직이 있다. 그리스 조직은 IFC / Panhellenic / NPHC(Divine Nine) / MGC / Professional / Service 계열별로 전국 조직 사전(`NATIONAL_GREEK`)에서 골라 넣었고, 동아리는 CalLink 등 각 학교 학생단체 디렉터리 기준이다. 이 목록은 외부에서 가져온 것이 아니라 직접 정리한 **시작용 목록**이라 캠퍼스별 챕터 존재 여부가 검증되지 않았고, **모두 `verified: false`** 로 시작한다.
+
+실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink · UCLA · MIT · SF State 는 모두 CampusLabs Engage 공개 API 를 쓴다):
+
+```bash
+npm run fetch:orgs                      # 4개 학교 전부 → DB 반영 + server/.data/orgs-<school>.csv
+npm run fetch:orgs -- s_berkeley        # 한 학교만
+FETCH_DRY=1 npm run fetch:orgs          # CSV 만 만들고 DB 는 건드리지 않음
+```
+
+카테고리 이름에 fraternity/sorority/Panhellenic/IFC/NPHC 가 있으면 `greek` 으로, 학생회는 `council` 로 분류된다. Stanford 는 Engage 를 쓰지 않으므로 CSV 로 넣거나 `ENGAGE_HOSTS=s_stanford=https://…` 로 호스트를 지정한다. 손으로 고칠 때는 CSV 로:
 
 ```bash
 # school_id,name,type,category,description,emoji,hue,website,instagram,dues,join_process
