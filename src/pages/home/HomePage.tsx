@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SlidersHorizontal, Heart, MessageCircle, Coffee, X, Bell, Search } from 'lucide-react';
+import { SlidersHorizontal, MessageCircle, X, Bell, Search, UserPlus, Compass } from 'lucide-react';
 import { t, lang } from '@/i18n';
 import { useUnreadCounts } from '@/components/layout/TopBar';
 import { LAST_SEEN_KEY } from '@/components/layout/BottomNav';
@@ -28,7 +28,6 @@ export function HomePage() {
   const error = useAppStore((s) => s.error);
   const init = useAppStore((s) => s.init);
   const run = useAppStore((s) => s.run);
-  const showToast = useAppStore((s) => s.showToast);
   const opps = useAppStore((s) => s.opportunities);
   const intents = useAppStore((s) => s.opportunityIntents);
   const counts = useUnreadCounts();
@@ -61,8 +60,9 @@ export function HomePage() {
   const current = cards[Math.min(idx, Math.max(0, cards.length - 1))];
   try { if (current) localStorage.setItem(LAST_SEEN_KEY, current.u.id); } catch { /* */ }
 
-  const like = async (u: User) => {
-    try { const res = await run(() => api.relationships.toggleLike(me.id, u.id)); if (res.mutual) setMatched(u); else if (!v.iLike(u.id)) showToast(`${u.nickname} ♥`); } catch { /* */ }
+  const friend = async (u: User) => {
+    if (v.isFriend(u.id) || v.pendingOut(u.id)) return;
+    try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
   };
   const openChat = async (u: User) => { try { const res = await run(() => api.chats.openDirect(me.id, u.id)); setMatched(null); nav(`/chats/${res.room.id}`); } catch { /* */ } };
   const reset = () => { setIdx(0); scroller.current?.scrollTo({ left: 0 }); };
@@ -96,10 +96,12 @@ export function HomePage() {
         <div className="flex-1 min-h-0 flex flex-col">
           <div className="relative flex-1 min-h-0 flex flex-col">
           <div ref={scroller} className="flex-1 min-h-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 px-4 pb-3" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 24 + 8))); }}>
-            {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} liked={v.iLike(c.u.id)} onOpen={() => nav(`/users/${c.u.id}`)} />)}
+            {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} onOpen={() => nav(`/users/${c.u.id}`)} />)}
           </div>
-          <button onClick={() => (v.canMessage(current.u.id).ok ? openChat(current.u) : nav(`/users/${current.u.id}?propose=1&cat=coffee`))} aria-label={t('커피 제안')} className="absolute left-1 top-[calc(44%-28px)] h-14 w-14 rounded-full bg-white/90 backdrop-blur text-ink grid place-items-center shadow-[0_8px_24px_rgba(0,0,0,.18)] press">{v.canMessage(current.u.id).ok ? <MessageCircle size={22} /> : <Coffee size={22} />}</button>
-          <button onClick={() => like(current.u)} aria-label={t('관심')} className={cn('absolute right-1 top-[calc(44%-36px)] h-[72px] w-[72px] rounded-full grid place-items-center shadow-[0_10px_30px_rgba(255,111,97,.45)] press ring-[6px] ring-white/40', v.iLike(current.u.id) ? 'bg-primary text-white' : 'bg-white/90 backdrop-blur text-primary')}><Heart size={30} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} /></button>
+          <div className="shrink-0 px-4 pb-2 grid grid-cols-2 gap-2">
+            <button onClick={() => friend(current.u)} className="h-12 rounded-full bg-primary text-white text-[14px] font-bold press flex items-center justify-center gap-1.5"><UserPlus size={17} />{v.isFriend(current.u.id) ? t('친구') : v.pendingOut(current.u.id) ? t('요청됨') : t('친구로 연결')}</button>
+            <button onClick={() => nav(`/users/${current.u.id}?tab=together`)} className="h-12 rounded-full bg-surface border border-line text-[14px] font-bold press flex items-center justify-center gap-1.5"><Compass size={17} />{t('함께할 일')}</button>
+          </div>
           </div>
         </div>
       ))}
@@ -128,7 +130,7 @@ export function HomePage() {
 }
 
 /** 전체 화면 사진 카드 — 위쪽 흰 바는 사진 장수, 탭하면 다음 사진 */
-export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reasons: Reason[]; liked: boolean; onOpen: () => void }) {
+export function PersonSlide({ user, reasons, onOpen }: { user: User; reasons: Reason[]; onOpen: () => void }) {
   const v = useViewer();
   const [pi, setPi] = useState(0);
   const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
@@ -150,7 +152,6 @@ export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reas
         {photos.length > 0 ? <img src={assetUrl(photos[pi])} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} /> : <span className="absolute inset-0 grid place-items-center text-[96px]">{user.avatar.emoji}</span>}
         {photos.length > 1 && <div className="absolute top-3 inset-x-3 flex gap-1">{photos.map((_, i) => <span key={i} className={cn('h-[3px] flex-1 rounded-full', i === pi ? 'bg-white' : 'bg-white/45')} />)}</div>}
         {user.avatar.photoType !== 'face' && <span className="absolute bottom-3 left-3 rounded-full bg-black/35 backdrop-blur text-white text-[11px] px-2.5 py-1">{user.avatar.photoType === 'masked' ? t('얼굴 비공개') : t('뒷모습')}</span>}
-        {liked && <span className="absolute top-6 right-3 h-8 w-8 rounded-full bg-primary text-white grid place-items-center"><Heart size={15} fill="currentColor" /></span>}
       </div>
       <button onClick={onOpen} className="flex-1 min-h-0 p-6 pt-5 text-left flex flex-col">
         <div className="flex items-center gap-2"><h2 className="font-display text-[34px] leading-none font-bold">{user.nickname}, {new Date().getFullYear() - user.birthYear + 1}</h2>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={20} />}</div>
