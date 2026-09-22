@@ -1,27 +1,27 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, UserPlus, Coffee, Heart, MessageCircle, CheckCircle2, Clock } from 'lucide-react';
+import { SlidersHorizontal, Heart, MessageCircle, Coffee, X, Bell, Search } from 'lucide-react';
 import { t, lang } from '@/i18n';
-import { TopBar } from '@/components/layout/TopBar';
+import { useUnreadCounts } from '@/components/layout/TopBar';
 import { LAST_SEEN_KEY } from '@/components/layout/BottomNav';
-import { Chip, ChipRow, CardSkeleton, EmptyState, ErrorState, Button, Portrait, VerifiedBadge, Avatar, BottomSheet } from '@/components/ui';
-import { affiliationText } from '@/components/cards/PersonCard';
+import { CardSkeleton, EmptyState, ErrorState, Button, VerifiedBadge, Avatar, BottomSheet, Chip, IconButton } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { INTEREST_EMOJI, INTEREST_LABELS } from '@/lib/labels';
-import { commonInterests, friendsOf } from '@/lib/relations';
+import { INTEREST_EMOJI, INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@/lib/labels';
+import { commonInterests } from '@/lib/relations';
 import { matchScore, type Reason } from '@/lib/recommend';
-import { availabilityText } from '@/lib/timetable';
+import { statusNow, availabilityText } from '@/lib/timetable';
+import { assetUrl } from '@/lib/assets';
 import { cn } from '@/lib/cn';
-import type { User } from '@/types';
+import type { User, Interest, Goal } from '@/types';
 
-const FILTERS = [
-  { key: 'all', label: '전체' }, { key: 'friends', label: '친구' }, { key: 'food', label: '밥·카페' }, { key: 'study', label: '공부' }, { key: 'exercise', label: '운동' }, { key: 'hobby', label: '취미' }, { key: 'startup', label: '창업·프로젝트' },
-] as const;
-type Filter = typeof FILTERS[number]['key'];
+type Mode = 'foryou' | 'nearby';
+interface Filters { years: number[]; sameDept: boolean; sameClass: boolean; freeNow: boolean; interests: Interest[]; goals: Goal[]; verified: boolean }
+const EMPTY: Filters = { years: [], sameDept: false, sameClass: false, freeNow: false, interests: [], goals: [], verified: false };
+const yearOf = (u: User) => (u.affiliation.type === 'university' ? Math.min(4, Math.max(1, new Date().getFullYear() - u.affiliation.year + 1)) : 0);
 
-/** 첫 번째 탭: 사람 — 한 번에 한 명, 옆으로 넘겨 본다. 넘기기·거절은 없다 */
+/** 첫 번째 탭: 사람 — 전체 화면 카드, 옆으로 넘겨 보기. 거절·넘기기는 없다 */
 export function HomePage() {
   const nav = useNavigate();
   const status = useAppStore((s) => s.status);
@@ -31,77 +31,99 @@ export function HomePage() {
   const showToast = useAppStore((s) => s.showToast);
   const opps = useAppStore((s) => s.opportunities);
   const intents = useAppStore((s) => s.opportunityIntents);
+  const counts = useUnreadCounts();
   const v = useViewer();
   const me = v.me;
-  const [filter, setFilter] = useState<Filter>('all');
+  const [mode, setMode] = useState<Mode>('foryou');
+  const [f, setF] = useState<Filters>(EMPTY);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const [matched, setMatched] = useState<User | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
-  const friendIds = useMemo(() => new Set(friendsOf(v.snap, me.id)), [v.snap, me.id]);
+  const myDept = me.affiliation.type === 'university' ? me.affiliation.department : '';
+  const mySchool = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
 
   const scored = useMemo(() => v.visibleUsers
     .map((u) => ({ u, ...matchScore(me, u, { opportunities: opps, opportunityIntents: intents }, v.canSeeField(u, 'timetable')) }))
     .map((x) => ({ ...x, score: x.score + commonInterests(me, x.u).length * 0.5 })), [v, me, opps, intents]);
   const passes = (u: User) => {
-    const has = (...i: User['interests']) => u.interests.some((x) => i.includes(x));
-    switch (filter) {
-      case 'friends': return friendIds.has(u.id);
-      case 'food': return has('meal', 'coffee') || u.goals.includes('lunch');
-      case 'study': return has('study', 'research') || u.goals.includes('lab') || u.timetable.some((c) => me.timetable.some((m) => m.name === c.name));
-      case 'exercise': return has('exercise', 'cycling', 'walk') || u.goals.includes('hobby');
-      case 'hobby': return has('exhibition', 'club', 'shopping', 'walk');
-      case 'startup': return has('startup', 'networking') || u.goals.some((g) => ['startup', 'cofounder', 'hackathon'].includes(g));
-      default: return true;
-    }
+    if (mode === 'nearby' && !(u.affiliation.type === 'university' && u.affiliation.schoolId === mySchool)) return false;
+    if (f.years.length && !f.years.includes(yearOf(u))) return false;
+    if (f.sameDept && !(u.affiliation.type === 'university' && u.affiliation.department === myDept)) return false;
+    if (f.sameClass && !u.timetable.some((c) => me.timetable.some((m) => m.name === c.name))) return false;
+    if (f.freeNow && !((u.timetable.length && v.canSeeField(u, 'timetable')) ? statusNow(u.timetable).kind === 'free' : u.availability === 'now')) return false;
+    if (f.interests.length && !f.interests.some((i) => u.interests.includes(i))) return false;
+    if (f.goals.length && !f.goals.some((g) => u.goals.includes(g))) return false;
+    if (f.verified && !(u.identityVerified && u.affiliation.emailVerified)) return false;
+    return true;
   };
-  const cards = scored.filter((x) => passes(x.u)).sort((a, b) => b.score - a.score).slice(0, 20);
-  const current = cards[Math.min(idx, cards.length - 1)];
+  const cards = scored.filter((x) => passes(x.u)).sort((a, b) => (mode === 'nearby' ? Number(b.u.living?.zone === me.living?.zone) - Number(a.u.living?.zone === me.living?.zone) : 0) || b.score - a.score).slice(0, 20);
+  const current = cards[Math.min(idx, Math.max(0, cards.length - 1))];
   try { if (current) localStorage.setItem(LAST_SEEN_KEY, current.u.id); } catch { /* */ }
 
   const like = async (u: User) => {
-    try { const res = await run(() => api.relationships.toggleLike(me.id, u.id)); if (res.mutual) setMatched(u); else if (!v.iLike(u.id)) showToast(`${u.nickname}${t('님에게 관심을 표시했어요. 상대에게는 보이지 않아요.')}`); } catch { /* */ }
-  };
-  const friend = async (u: User) => {
-    if (v.isFriend(u.id) || v.pendingOut(u.id)) return;
-    try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
+    try { const res = await run(() => api.relationships.toggleLike(me.id, u.id)); if (res.mutual) setMatched(u); else if (!v.iLike(u.id)) showToast(`${u.nickname} ♥`); } catch { /* */ }
   };
   const openChat = async (u: User) => { try { const res = await run(() => api.chats.openDirect(me.id, u.id)); setMatched(null); nav(`/chats/${res.room.id}`); } catch { /* */ } };
-  const changeFilter = (f: Filter) => { setFilter(f); setIdx(0); scroller.current?.scrollTo({ left: 0 }); };
+  const reset = () => { setIdx(0); scroller.current?.scrollTo({ left: 0 }); };
+  const chips: { key: string; label: string; clear: () => void }[] = [
+    ...f.years.map((y) => ({ key: `y${y}`, label: `${y}${t('학년')}`, clear: () => setF({ ...f, years: f.years.filter((x) => x !== y) }) })),
+    ...(f.sameDept ? [{ key: 'dept', label: t('같은 학과'), clear: () => setF({ ...f, sameDept: false }) }] : []),
+    ...(f.sameClass ? [{ key: 'class', label: t('같은 수업'), clear: () => setF({ ...f, sameClass: false }) }] : []),
+    ...(f.freeNow ? [{ key: 'free', label: t('지금 공강'), clear: () => setF({ ...f, freeNow: false }) }] : []),
+    ...(f.verified ? [{ key: 'ver', label: t('인증됨'), clear: () => setF({ ...f, verified: false }) }] : []),
+    ...f.interests.map((i) => ({ key: `i${i}`, label: INTEREST_LABELS[i], clear: () => setF({ ...f, interests: f.interests.filter((x) => x !== i) }) })),
+    ...f.goals.map((g) => ({ key: `g${g}`, label: GOAL_LABELS[g], clear: () => setF({ ...f, goals: f.goals.filter((x) => x !== g) }) })),
+  ];
+  const tog = <T,>(arr: T[], x: T) => (arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]);
 
   return (
-    <div className="min-h-full pb-6">
-      <TopBar
-        title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : t('학교 선택')} <ChevronDown size={16} className="text-ink-3" /></button>}
-        bell messages right={<button onClick={() => nav('/search?tab=people')} className="h-10 w-10 grid place-items-center rounded-full" aria-label={t('검색')}><Search size={21} /></button>}
-      />
+    <div className="h-full flex flex-col bg-bg">
+      <header className="shrink-0 flex items-center gap-1 h-14 px-2">
+        <IconButton onClick={() => nav('/search?tab=people')} aria-label={t('검색')}><Search size={21} /></IconButton>
+        <div className="flex-1 flex justify-center">
+          <div className="flex bg-surface-2 rounded-full p-1">
+            {(['foryou', 'nearby'] as Mode[]).map((m) => <button key={m} onClick={() => { setMode(m); reset(); }} className={cn('h-8 px-4 rounded-full text-[12px] font-bold tracking-wide transition', mode === m ? 'bg-ink text-white shadow' : 'text-ink-2')}>{m === 'foryou' ? (lang === 'en' ? 'FOR YOU' : '추천') : (lang === 'en' ? 'NEARBY' : '근처')}</button>)}
+          </div>
+        </div>
+        <IconButton onClick={() => nav('/notifications')} badge={counts.bell} aria-label={t('알림')}><Bell size={21} /></IconButton>
+        <IconButton onClick={() => setFilterOpen(true)} aria-label={t('조건')} className={cn(chips.length > 0 && 'bg-ink text-white')}><SlidersHorizontal size={19} /></IconButton>
+      </header>
+      {chips.length > 0 && (
+        <div className="shrink-0 flex gap-1.5 overflow-x-auto hide-scrollbar px-4 pb-2">{chips.map((c) => <button key={c.key} onClick={() => { c.clear(); reset(); }} className="h-7 pl-2 pr-2.5 rounded-full bg-surface border border-line text-[12px] font-semibold flex items-center gap-1 shrink-0"><X size={12} />{c.label}</button>)}</div>
+      )}
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
-      {status === 'ready' && (
-        <div className="pt-1">
-          <div className="px-4"><ChipRow className="py-0 mb-3">{FILTERS.map((f) => <Chip key={f.key} size="sm" active={filter === f.key} onClick={() => changeFilter(f.key)}>{t(f.label)}</Chip>)}</ChipRow></div>
-          {!current ? (
-            <EmptyState emoji="🙋" title={t('이 조건에 맞는 사람이 아직 없어요')} description={t('필터를 바꾸거나 목표·시간표를 채우면 추천이 늘어나요.')} action={<Button size="sm" onClick={() => nav('/discover')}>{t('활동 둘러보기')}</Button>} />
-          ) : (
-            <>
-              <div ref={scroller} className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 px-4" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 32 + 12))); }}>
-                {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} onOpen={() => nav(`/users/${c.u.id}`)} liked={v.iLike(c.u.id)} />)}
-              </div>
-              <div className="px-4 mt-3 grid grid-cols-3 gap-2">
-                <ActionButton icon={<Heart size={19} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} />} label={t('관심')} tone={v.iLike(current.u.id) ? 'bg-heart text-white' : 'bg-heart-soft text-heart'} onClick={() => like(current.u)} />
-                <ActionButton icon={<UserPlus size={19} />} label={v.isFriend(current.u.id) ? t('친구') : v.pendingOut(current.u.id) ? t('요청됨') : t('친구로 연결')} tone="bg-primary-soft text-primary" onClick={() => friend(current.u)} />
-                <ActionButton icon={<Coffee size={19} />} label={t('커피 제안')} tone="bg-gold-soft text-[#B57A0E]" onClick={() => nav(`/users/${current.u.id}?propose=1&cat=coffee`)} />
-              </div>
-              <div className="mt-2 text-center text-[12px] text-ink-3">{Math.min(idx, cards.length - 1) + 1} / {cards.length}</div>
-            </>
-          )}
+      {status === 'ready' && (!current ? (
+        <EmptyState emoji="🙋" title={t('이 조건에 맞는 사람이 아직 없어요')} action={<Button size="sm" variant="outline" onClick={() => { setF(EMPTY); reset(); }}>{t('조건 지우기')}</Button>} />
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div ref={scroller} className="flex-1 min-h-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-2 px-3" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 24 + 8))); }}>
+            {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} liked={v.iLike(c.u.id)} onOpen={() => nav(`/users/${c.u.id}`)} />)}
+          </div>
+          <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-2">
+            <button onClick={() => like(current.u)} aria-label={t('관심')} className={cn('flex-1 h-[54px] rounded-full grid place-items-center press shadow-[var(--shadow-card)]', v.iLike(current.u.id) ? 'bg-primary text-white' : 'bg-surface text-primary border border-line')}><Heart size={24} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} /></button>
+            <button onClick={() => nav(`/users/${current.u.id}?propose=1&cat=coffee`)} aria-label={t('커피 제안')} className="h-[54px] w-[54px] rounded-full bg-ink text-white grid place-items-center press"><Coffee size={22} /></button>
+            <button onClick={() => (v.canMessage(current.u.id).ok ? openChat(current.u) : nav(`/users/${current.u.id}?propose=1`))} aria-label={t('메시지')} className="flex-1 h-[54px] rounded-full bg-[linear-gradient(90deg,#FF6F61,#FBBE02)] text-white grid place-items-center press shadow-[var(--shadow-float)]"><MessageCircle size={24} /></button>
+          </div>
         </div>
-      )}
+      ))}
+
+      <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('조건')} tall>
+        <div className="space-y-4">
+          <div><div className="text-[12px] font-bold text-ink-3 mb-1.5">{t('학년')}</div><div className="flex gap-1.5">{[1, 2, 3, 4].map((y) => <Chip key={y} size="sm" active={f.years.includes(y)} onClick={() => setF({ ...f, years: tog(f.years, y) })}>{y}{t('학년')}</Chip>)}</div></div>
+          <div><div className="text-[12px] font-bold text-ink-3 mb-1.5">{t('관계')}</div><div className="flex flex-wrap gap-1.5"><Chip size="sm" active={f.sameDept} onClick={() => setF({ ...f, sameDept: !f.sameDept })}>{t('같은 학과')}</Chip><Chip size="sm" active={f.sameClass} onClick={() => setF({ ...f, sameClass: !f.sameClass })}>{t('같은 수업')}</Chip><Chip size="sm" active={f.freeNow} onClick={() => setF({ ...f, freeNow: !f.freeNow })}>{t('지금 공강')}</Chip><Chip size="sm" active={f.verified} onClick={() => setF({ ...f, verified: !f.verified })}>{t('인증됨')}</Chip></div></div>
+          <div><div className="text-[12px] font-bold text-ink-3 mb-1.5">{t('관심사')}</div><div className="flex flex-wrap gap-1.5">{ALL_INTERESTS.map((i) => <Chip key={i} size="sm" active={f.interests.includes(i)} onClick={() => setF({ ...f, interests: tog(f.interests, i) })}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div></div>
+          <div><div className="text-[12px] font-bold text-ink-3 mb-1.5">{t('이번 학기 목표')}</div><div className="flex flex-wrap gap-1.5">{ALL_GOALS.map((g) => <Chip key={g} size="sm" active={f.goals.includes(g)} onClick={() => setF({ ...f, goals: tog(f.goals, g) })}>{GOAL_LABELS[g]}</Chip>)}</div></div>
+          <div className="flex gap-2 pt-1"><Button variant="outline" onClick={() => setF(EMPTY)}>{t('초기화')}</Button><Button full onClick={() => { setFilterOpen(false); reset(); }}>{lang === 'en' ? `Show ${scored.filter((x) => passes(x.u)).length}` : `${scored.filter((x) => passes(x.u)).length}명 보기`}</Button></div>
+        </div>
+      </BottomSheet>
 
       <BottomSheet open={!!matched} onClose={() => setMatched(null)} title={t('서로 관심이 있어요')}>
         {matched && (
           <div className="text-center">
             <div className="flex justify-center -space-x-3 mb-3"><Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={64} ring /><Avatar emoji={matched.avatar.emoji} hue={matched.avatar.hue} url={matched.avatar.url} size={64} ring /></div>
-            <p className="text-[15px] font-bold">{matched.nickname}{t('님과 서로의 스타일이 마음에 들었어요.')}</p>
+            <p className="text-[17px] font-bold font-display">{matched.nickname}{t('님과 서로의 스타일이 마음에 들었어요.')}</p>
             <div className="flex gap-2 mt-4"><Button full variant="outline" onClick={() => { setMatched(null); nav(`/users/${matched.id}?propose=1&cat=coffee`); }}>{t('커피 제안')}</Button><Button full icon={<MessageCircle size={16} />} onClick={() => openChat(matched)}>{t('메시지')}</Button></div>
           </div>
         )}
@@ -110,33 +132,43 @@ export function HomePage() {
   );
 }
 
-function ActionButton({ icon, label, tone, onClick }: { icon: React.ReactNode; label: string; tone: string; onClick: () => void }) {
-  return <button onClick={onClick} className={cn('h-[56px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold press', tone)}>{icon}<span className="truncate max-w-full px-1">{label}</span></button>;
-}
-
-/** 한 장의 사람 카드 — 큰 사진, 이름·소속, 공통 관심사, 추천 이유 2개, 지금 하고 싶은 것 */
-function PersonSlide({ user, reasons, onOpen, liked }: { user: User; reasons: Reason[]; onOpen: () => void; liked: boolean }) {
+/** 전체 화면 사진 카드 — 위쪽 흰 바는 사진 장수, 탭하면 다음 사진 */
+export function PersonSlide({ user, reasons, liked, onOpen }: { user: User; reasons: Reason[]; liked: boolean; onOpen: () => void }) {
   const v = useViewer();
+  const [pi, setPi] = useState(0);
+  const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
   const common = commonInterests(v.me, user);
   const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
   const want = v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? user.prompts[0].answer : user.nowWant;
-  const shown = reasons.filter((r) => r.kind !== 'school').slice(0, 2);
+  const reason = reasons.filter((r) => r.kind !== 'school')[0];
+  const year = yearOf(user);
+  const dept = user.affiliation.type === 'university' && user.affiliation.showDepartment ? user.affiliation.department : '';
+  const tap = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect(); const x = e.clientX - r.left;
+    if (photos.length > 1 && x < r.width * 0.3) setPi((p) => (p - 1 + photos.length) % photos.length);
+    else if (photos.length > 1 && x > r.width * 0.7) setPi((p) => (p + 1) % photos.length);
+    else onOpen();
+  };
   return (
-    <article className="card overflow-hidden w-[calc(100%-32px)] shrink-0 snap-center flex flex-col" style={{ minWidth: 'calc(100% - 32px)' }}>
-      <button onClick={onOpen} className="relative text-left">
-        <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className="h-[320px]" />
-        <div className="absolute inset-x-0 bottom-0 p-4 pt-14 bg-[linear-gradient(to_top,rgba(0,0,0,.72),rgba(0,0,0,0))] text-white">
-          <div className="flex items-center gap-1.5"><h2 className="text-[22px] font-extrabold">{user.nickname}</h2><span className="text-[15px] font-semibold opacity-90">{new Date().getFullYear() - user.birthYear + 1}</span>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={16} />}{liked && <Heart size={16} fill="currentColor" className="text-heart ml-auto" />}</div>
-          <div className="text-[12px] opacity-90 truncate">{affiliationText(user)}</div>
-          <div className="mt-1.5 flex flex-wrap gap-1">{(common.length ? common : user.interests.slice(0, 3)).slice(0, 4).map((i) => <span key={i} className={cn('rounded-lg px-2 h-6 inline-flex items-center text-[11px] font-semibold backdrop-blur', common.includes(i) ? 'bg-white/90 text-primary' : 'bg-white/25')}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</span>)}</div>
+    <article className="relative h-full shrink-0 snap-center rounded-[28px] overflow-hidden bg-ink text-white select-none" style={{ width: 'calc(100% - 24px)' }}>
+      <div className="absolute inset-0" onClick={tap} style={{ background: `linear-gradient(135deg, hsl(${user.avatar.hue} 60% 75%), hsl(${(user.avatar.hue + 40) % 360} 55% 60%))` }}>
+        {photos.length > 0 ? <img src={assetUrl(photos[pi])} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} /> : <span className="absolute inset-0 grid place-items-center text-[120px]">{user.avatar.emoji}</span>}
+        <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(to_bottom,rgba(0,0,0,.45),rgba(0,0,0,0))]" />
+        <div className="absolute inset-x-0 bottom-0 h-[60%] bg-[linear-gradient(to_top,rgba(20,14,10,.85),rgba(20,14,10,.35)_55%,rgba(0,0,0,0))]" />
+      </div>
+      {photos.length > 1 && <div className="absolute top-3 inset-x-3 flex gap-1">{photos.map((_, i) => <span key={i} className={cn('h-[3px] flex-1 rounded-full', i === pi ? 'bg-white' : 'bg-white/40')} />)}</div>}
+      {liked && <span className="absolute top-6 right-4 h-8 w-8 rounded-full bg-primary grid place-items-center"><Heart size={15} fill="currentColor" /></span>}
+      {user.avatar.photoType !== 'face' && <span className="absolute top-6 left-4 rounded-full bg-black/35 backdrop-blur text-[11px] px-2.5 py-1">{user.avatar.photoType === 'masked' ? t('얼굴 비공개') : t('뒷모습')}</span>}
+      <div className="absolute inset-x-0 bottom-0 p-5 pointer-events-none">
+        {reason && <div className="inline-flex items-center gap-1 rounded-full bg-white/90 text-ink text-[11px] font-bold px-2.5 py-1 mb-2">✦ {reason.text}</div>}
+        <div className="flex items-end gap-2"><h2 className="font-display text-[38px] leading-none font-bold">{user.nickname}</h2><span className="text-[22px] font-display opacity-80 leading-none pb-0.5">{new Date().getFullYear() - user.birthYear + 1}</span>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <span className="pb-1"><VerifiedBadge kind="school" size={18} /></span>}</div>
+        <div className="mt-1 text-[13px] opacity-90">{[user.affiliation.type === 'university' && user.affiliation.showSchool ? user.affiliation.schoolName : '', dept, year ? `${year}${t('학년')}` : ''].filter(Boolean).join(' · ')}</div>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <span className="rounded-full bg-white/20 backdrop-blur px-2.5 h-7 inline-flex items-center text-[12px] font-semibold">⏱ {avail.text}</span>
+          {(common.length ? common : user.interests).slice(0, 3).map((i) => <span key={i} className={cn('rounded-full backdrop-blur px-2.5 h-7 inline-flex items-center text-[12px] font-semibold', common.includes(i) ? 'bg-accent text-ink' : 'bg-white/20')}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</span>)}
         </div>
-      </button>
-      <button onClick={onOpen} className="p-3.5 flex-1 flex flex-col gap-2 bg-surface text-left">
-        {shown.length > 0 ? <ul className="space-y-0.5">{shown.map((r) => <li key={r.text} className="text-[13px] text-ink-2 flex items-start gap-1.5"><CheckCircle2 size={14} className="text-primary shrink-0 mt-0.5" /><span className="line-clamp-1">{r.text}</span></li>)}</ul>
-          : <p className="text-[13px] text-ink-3">{lang === 'en' ? 'Someone outside your usual circle.' : '평소와 다른 분야의 사람이에요.'}</p>}
-        <div className="text-[12px] text-ink-2 flex items-center gap-1"><Clock size={12} className="text-ink-3" />{avail.text}</div>
-        {want && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 line-clamp-2">“{want}”</div>}
-      </button>
+        {want && <p className="mt-2.5 text-[14px] font-display italic opacity-95 line-clamp-2">“{want}”</p>}
+      </div>
     </article>
   );
 }

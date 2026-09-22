@@ -4,33 +4,41 @@
 @theme {
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 
-  --color-bg: #F6F7FB;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F1F3F8;
-  --color-line: #E6E8EF;
-  --color-ink: #14161F;
-  --color-ink-2: #4B5060;
-  --color-ink-3: #8A8F9E;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Noto Serif KR", "Apple SD Gothic Neo", serif;
 
-  --color-primary: #3D5AFE;
-  --color-primary-deep: #2E46D8;
-  --color-primary-soft: #E9EDFF;
-  --color-accent: #FF7A45;
-  --color-accent-soft: #FFEDE5;
-  --color-mint: #12B886;
-  --color-mint-soft: #E1F7F0;
-  --color-gold: #F5A524;
-  --color-gold-soft: #FFF4DE;
+  /* Wes Anderson palette: coral · mustard · blush · powder blue · sage · peach on cream */
+  --color-bg: #FBF5EC;
+  --color-surface: #FFFDF9;
+  --color-surface-2: #F5EBDD;
+  --color-line: #EADFCF;
+  --color-ink: #2B2420;
+  --color-ink-2: #5E534B;
+  --color-ink-3: #9A8E83;
+
+  --color-primary: #FF6F61;
+  --color-primary-deep: #E85B4E;
+  --color-primary-soft: #FFD2B5;
+  --color-accent: #FBBE02;
+  --color-accent-soft: #FFF0C2;
+  --color-mint: #6F9A6B;
+  --color-mint-soft: #C7D8B8;
+  --color-gold: #FBBE02;
+  --color-gold-soft: #FFE9A8;
   --color-danger: #E5484D;
   --color-danger-soft: #FDE8E9;
-  --color-heart: #F04E7A;
-  --color-heart-soft: #FEE7EE;
-  --color-verify: #2F80ED;
+  --color-heart: #FF6F61;
+  --color-heart-soft: #F1A7A1;
+  --color-verify: #5A8FD6;
+  --color-sky: #A7C6ED;
+  --color-sky-soft: #DCE8F8;
+  --color-blush: #F1A7A1;
+  --color-peach: #FFD2B5;
+  --color-sage: #C7D8B8;
 
   --radius-xl2: 20px;
   --radius-xl3: 28px;
-  --shadow-card: 0 1px 2px rgba(20, 22, 31, 0.04), 0 8px 24px rgba(20, 22, 31, 0.06);
-  --shadow-float: 0 12px 32px rgba(61, 90, 254, 0.28);
+  --shadow-card: 0 1px 2px rgba(43, 36, 32, 0.04), 0 8px 24px rgba(120, 90, 60, 0.08);
+  --shadow-float: 0 12px 32px rgba(255, 111, 97, 0.32);
   --shadow-sheet: 0 -8px 40px rgba(20, 22, 31, 0.14);
 }
 
@@ -44,7 +52,7 @@ body {
   overscroll-behavior-y: none;
 }
 @media (min-width: 640px) {
-  body { background: #E9EBF2; }
+  body { background: #EFE3D2; }
 }
 
 * { box-sizing: border-box; }
@@ -63,6 +71,10 @@ input, textarea, select { font: inherit; }
   background: var(--color-surface);
   border-radius: var(--radius-xl2);
   box-shadow: var(--shadow-card);
+}
+@utility font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 @utility press {
   transition: transform 120ms ease, opacity 120ms ease;
@@ -84,7 +96,7 @@ input, textarea, select { font: inherit; }
 .animate-fade-in { animation: fade-in 180ms ease; }
 .animate-toast-in { animation: toast-in 200ms ease; }
 .skeleton {
-  background: linear-gradient(90deg, #EEF0F5 0%, #F7F8FB 40%, #EEF0F5 80%);
+  background: linear-gradient(90deg, #F1E7DA 0%, #FBF5EC 40%, #F1E7DA 80%);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 10px;

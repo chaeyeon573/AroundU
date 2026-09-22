@@ -84,6 +84,8 @@ export interface User {
   birthYear: number;
   gender: Gender;
   avatar: { emoji: string; hue: number; photoType: 'face' | 'masked' | 'back'; url?: string };
+  /** 프로필 사진 여러 장 (첫 장은 avatar.url) */
+  photos?: string[];
   identityVerified: boolean;
   affiliation: Affiliation;
   bio: string;

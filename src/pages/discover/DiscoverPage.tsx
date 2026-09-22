@@ -101,13 +101,11 @@ function NowTab() {
     <div className="space-y-5">
       <section>
         <div className="flex items-end justify-between mb-1"><h2 className="text-[17px] font-bold">{t('지금 열려 있는 활동')}</h2><span className="text-[12px] text-ink-3">{shown.length}{t('개')}</span></div>
-        <p className="text-[12px] text-ink-3 mb-2">{t('혼밥 싫을 때, 커피 한 잔, 산책 30분 — 얼굴보다 활동이 먼저 보여요.')}</p>
         <ChipRow className="py-0 mb-1.5">{NOW_TIME_CHIPS.map((c) => <Chip key={c.key} size="sm" active={time === c.key} onClick={() => setTime(c.key)}>{c.label}</Chip>)}</ChipRow>
         <ChipRow className="py-0 mb-3">{NOW_CAT_CHIPS.map((c) => <Chip key={c.key} size="sm" active={cat === c.key} onClick={() => setCat(c.key)}>{c.label}</Chip>)}</ChipRow>
         {shown.length === 0 ? (
           <EmptyState emoji="🕐" title={t('이 시간에 열린 활동이 없어요')} description={t('시간 범위를 넓히거나 직접 열어보세요. 30분 뒤 밥 한 끼도 충분해요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal&now=1')}>{t('지금 만날 사람 찾기')}</Button>} />
         ) : <div className="space-y-2">{shown.map((x) => <NowActivityRow key={x.a.id} activity={x.a} inMin={x.inMin} />)}</div>}
-        <p className="text-[11px] text-ink-3 mt-2 px-1">{t('승인제 활동은 승인 전까지 대략적인 위치만 보여요.')}</p>
       </section>
       <WhosFreeSection limit={3} compact />
       <DailyQuestionSection />
@@ -125,7 +123,6 @@ function NowTab() {
           {pulse.topOpp && <li>• {lang === 'en' ? `${pulse.topCount} interested in ${pulse.topOpp.title}` : `${pulse.topCount}명이 ${pulse.topOpp.title}에 관심 있음`}</li>}
           <li>• {lang === 'en' ? `${pulse.teams} teams looking for members` : `${pulse.teams}개 팀이 팀원을 찾는 중`}</li>
         </ul>
-        <p className="text-[11px] text-ink-3 mt-2">{t('누가 어디에 있는지는 공개하지 않고 집계된 움직임만 보여줘요.')}</p>
       </section>
     </div>
   );
@@ -150,7 +147,6 @@ function ActivitiesTab({ mySchool }: { mySchool: string }) {
   return (
     <div>
       <ChipRow className="py-0 mb-3">{ACTIVITY_CHIPS.map((c) => <Chip key={c.key} size="sm" active={chip === c.key} onClick={() => setChip(c.key)}>{c.label}</Chip>)}</ChipRow>
-      <p className="text-[12px] text-ink-3 mb-2 px-1">{t('사진 없이 글만 보여요. 언제·어디서·누가가 먼저.')}</p>
       {items.length === 0 ? <EmptyState emoji="🗓️" title={t('예정된 활동이 없어요')} description={t('첫 활동을 열어보세요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=group')}>{t('활동 만들기')}</Button>} />
         : <div className="space-y-3">{items.map((i) => i.node)}</div>}
     </div>
@@ -177,7 +173,6 @@ function TeamsTab() {
       {myFit > 0 && purpose === 'all' && role === 'all' && <p className="text-[12px] text-primary font-semibold mb-2 px-1">✓ {lang === 'en' ? `${myFit} teams need a role you can offer` : `내가 제공할 수 있는 역할을 찾는 팀 ${myFit}개`}</p>}
       {shown.length === 0 ? <EmptyState emoji="🧩" title={t('조건에 맞는 팀이 없어요')} description={t('역할이나 목적 필터를 바꿔보세요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=group&team=1')}>{t('팀원 모집하기')}</Button>} />
         : <div className="space-y-3">{shown.map((i) => i.kind === 'activity' ? <TeamCard key={i.id} activity={i.activity} /> : i.kind === 'opp' ? <OpportunityCard key={i.id} o={i.opp} variant="row" /> : <OrgCard key={i.id} org={i.org} />)}</div>}
-      <p className="text-[11px] text-ink-3 mt-3 text-center">{t('Study Crew는 같은 수업 학생에게만 보여요. 시간표에서 수업을 누르면 만들 수 있어요.')}</p>
     </div>
   );
 }

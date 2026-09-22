@@ -11,7 +11,7 @@ import { ShareOpportunitySheet } from '@/components/create/ShareOpportunitySheet
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { opportunityScore, daysUntil, isTogetherType } from '@/lib/recommend';
-import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI, TOPIC_TAGS, ORG_TYPE_LABELS } from '@/lib/labels';
+import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI, TOPIC_TAGS } from '@/lib/labels';
 import type { OpportunityType, OrganizationType, PostType } from '@/types';
 
 type Tab = 'feed' | 'opportunities' | 'clubs';
@@ -101,7 +101,6 @@ function OpportunitiesTab() {
       {list.length === 0 ? <EmptyState emoji="🔭" title={sub === 'saved' ? t('저장하거나 지원 예정인 기회가 없어요') : t('아직 등록된 기회가 없어요')} description={sub === 'saved' ? t('관심 있는 기회를 저장하면 마감 전에 알려드려요.') : t('링크만 있으면 누구나 기회를 공유할 수 있어요.')} action={sub === 'saved' ? <Button onClick={() => setSub('foryou')}>{t('기회 둘러보기')}</Button> : undefined} />
         : sub === 'notices' ? <><p className="text-[12px] text-ink-3">{t('장학금·인턴·연구실 공고는 간단히 알려드려요. 저장하면 마감 전에 알림을 보내요.')}</p>{list.map((x) => <OpportunityCard key={x.o.id} o={x.o} variant="row" />)}</>
         : list.map((x) => <OpportunityCard key={x.o.id} o={x.o} reasons={sub === 'foryou' ? x.reasons : undefined} variant={isTogetherType(x.o.type) ? 'feed' : 'row'} />)}
-      <p className="text-[11px] text-ink-3 text-center">{t('마감일은 출처 기준이며 "마지막 확인" 날짜를 상세에서 볼 수 있어요. 잘못된 정보는 신고해주세요.')}</p>
     </div>
   );
 }
@@ -118,14 +117,11 @@ function ClubsTab() {
   const mine = (o: typeof orgs[number]) => o.memberIds.includes(v.me.id) || o.adminIds.includes(v.me.id) || o.followerIds.includes(v.me.id);
   const list = orgs.filter((o) => chip === 'mine' ? mine(o) : (o.schoolId === mySchool || mine(o)) && (chip === 'all' || o.type === chip))
     .sort((a, b) => Number(!!b.recruitment?.open) - Number(!!a.recruitment?.open) || b.followerIds.length - a.followerIds.length);
-  const recruiting = list.filter((o) => o.recruitment?.open).length;
   return (
     <div className="space-y-3">
       <ChipRow className="py-0">{CLUB_CHIPS.map((c) => <Chip key={c.key} size="sm" active={chip === c.key} onClick={() => setChip(c.key)}>{c.label}</Chip>)}</ChipRow>
-      {recruiting > 0 && chip === 'all' && <p className="text-[12px] text-ink-3 px-1">{t('모집 중인 조직')} {recruiting} · {t('모집 글은 발견 › 팀에도 보여요')}</p>}
       {list.length === 0 ? <EmptyState emoji="🏛️" title={t('아직 조직이 없어요')} description={chip === 'mine' ? t('동아리를 팔로우하거나 가입하면 여기에 모여요.') : t('동아리·학회가 페이지를 만들면 여기에 보여요.')} />
         : list.map((o) => <OrgCard key={o.id} org={o} />)}
-      <p className="text-[11px] text-ink-3 text-center">{ORG_TYPE_LABELS.club} · {ORG_TYPE_LABELS.council} · {ORG_TYPE_LABELS.lab} · {ORG_TYPE_LABELS.greek} — {t('학생 동아리의 페이지·행사 등록은 무료예요.')}</p>
     </div>
   );
 }

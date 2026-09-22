@@ -36,7 +36,7 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
 
 export const users: User[] = [
   mk({
-    id: DEMO_USER_ID, nickname: 'Alex', birthYear: 2003, avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' , url: photo('p_me') }, identityVerified: true,
+    id: DEMO_USER_ID, nickname: 'Alex', birthYear: 2003, avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' , url: photo('p_me') }, photos: [photo('p_me'), photo('c_cafe_laptop'), photo('c_espresso')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Computer Science', year: 2022, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Junior in CS. Building side projects and always down for coffee with new people.', likes: 'Specialty coffee, indie music, museum days', freeTime: 'Coding at a café or walking through Memorial Glade',
     interests: ['coffee', 'study', 'startup', 'exhibition', 'exercise'], purposes: ['friend', 'study', 'networking'], nowWant: 'Coffee on Southside tonight?',
@@ -47,7 +47,7 @@ export const users: User[] = [
     goals: ['startup', 'hackathon', 'friends'], lookingFor: ['designer', 'teammate', 'cofounder'], canOffer: ['developer', 'planning'], living: { residence: 'offcampus', zone: 'Northside' }, interestedOrgIds: ['o_ailab', 'o_startup'], meetPreference: ['same_goal', 'same_class', 'same_hobby'], openToNew: true,
   }),
   mk({
-    id: 'u_jimin', nickname: 'Maya', birthYear: 2003, gender: 'female', avatar: { emoji: '👩‍🎨', hue: 20, photoType: 'face' , url: photo('p_jimin') }, identityVerified: true,
+    id: 'u_jimin', nickname: 'Maya', birthYear: 2003, gender: 'female', avatar: { emoji: '👩‍🎨', hue: 20, photoType: 'face' , url: photo('p_jimin') }, photos: [photo('p_jimin'), photo('p_x2'), photo('c_road_sunset'), photo('c_stage')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Business (Haas)', year: 2022, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Cafés, galleries and morning runs. Marketing lead at the startup club.', likes: 'Pour-over, museum dates, running by the Marina', freeTime: 'Gallery hopping or finding new cafés', availability: 'after18',
     interests: ['coffee', 'exhibition', 'exercise', 'startup', 'networking'], purposes: ['friend', 'networking', 'dating'], nowWant: 'Coffee on Southside today?',
@@ -59,7 +59,7 @@ export const users: User[] = [
     openToNew: true, dailyAnswer: { questionId: 'd_free2h', answer: 'coffee', date: T },
   }),
   mk({
-    id: 'u_dohyun', nickname: 'Daniel', birthYear: 2001, gender: 'male', avatar: { emoji: '🧑‍🔬', hue: 160, photoType: 'face' , url: photo('p_dohyun') }, identityVerified: true,
+    id: 'u_dohyun', nickname: 'Daniel', birthYear: 2001, gender: 'male', avatar: { emoji: '🧑‍🔬', hue: 160, photoType: 'face' , url: photo('p_dohyun') }, photos: [photo('p_dohyun'), photo('c_desktop'), photo('c_abstract1')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'graduate', department: 'EECS (MS)', year: 2025, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'First-year MS in the AI lab. Happy to run a paper reading group.', likes: 'Reading papers, board games, bouldering', freeTime: 'Bouldering near campus', availability: 'afternoon',
     interests: ['research', 'study', 'exercise', 'coffee'], purposes: ['study', 'networking'], nowWant: 'Anyone want to read LLM papers together?',
@@ -69,7 +69,7 @@ export const users: User[] = [
     goals: ['lab', 'hackathon'], lookingFor: ['teammate', 'study_partner'], canOffer: ['research', 'data', 'developer'], living: { residence: 'offcampus', zone: 'Near Soda Hall' }, interestedOrgIds: ['o_ailab'],
   }),
   mk({
-    id: 'u_seoyeon', nickname: 'Sofia', birthYear: 2004, gender: 'female', avatar: { emoji: '🎸', hue: 290, photoType: 'masked' , url: photo('p_seoyeon') },
+    id: 'u_seoyeon', nickname: 'Sofia', birthYear: 2004, gender: 'female', avatar: { emoji: '🎸', hue: 290, photoType: 'masked' , url: photo('p_seoyeon') }, photos: [photo('p_seoyeon'), photo('p_x4'), photo('c_tabby'), photo('c_eguitar')],
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Psychology', year: 2023, emailVerified: true, showSchool: true, showDepartment: false },
     bio: 'Guitar in the campus band. Weekends are for shows in the city.', likes: 'Rock, tacos, cats', freeTime: 'Rehearsal room', availability: 'weekend',
     interests: ['club', 'exhibition', 'meal', 'walk'], purposes: ['friend', 'hobby', 'club'], nowWant: 'Anyone for a show this weekend?',
@@ -79,7 +79,7 @@ export const users: User[] = [
     goals: ['friends', 'hobby', 'join_club'], lookingFor: ['friend'], canOffer: ['video', 'club_ops'], living: { residence: 'dorm', zone: 'Northside' }, interestedOrgIds: ['o_band'],
   }),
   mk({
-    id: 'u_minjun', nickname: 'Marcus', birthYear: 2002, gender: 'male', avatar: { emoji: '🏃', hue: 120, photoType: 'back' , url: photo('p_minjun') }, identityVerified: true,
+    id: 'u_minjun', nickname: 'Marcus', birthYear: 2002, gender: 'male', avatar: { emoji: '🏃', hue: 120, photoType: 'back' , url: photo('p_minjun') }, photos: [photo('p_minjun'), photo('c_road_sunset'), photo('c_basketball')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_sfsu', schoolName: 'San Francisco State', role: 'undergraduate', department: 'Economics', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Runs every morning. Organizes the Bay Area run crew.', likes: 'Running, protein shakes, cycling', freeTime: 'Bike rides along the Bay Trail', availability: 'now',
     interests: ['exercise', 'cycling', 'walk', 'meal'], purposes: ['friend', 'hobby'], nowWant: '7pm run, join us',
@@ -89,7 +89,7 @@ export const users: User[] = [
     openToNew: true, dailyAnswer: { questionId: 'd_free2h', answer: 'exercise', date: T },
   }),
   mk({
-    id: 'u_yuna', nickname: 'Emma', birthYear: 2003, gender: 'female', avatar: { emoji: '📚', hue: 45, photoType: 'face' , url: photo('p_yuna') }, identityVerified: true,
+    id: 'u_yuna', nickname: 'Emma', birthYear: 2003, gender: 'female', avatar: { emoji: '📚', hue: 45, photoType: 'face' , url: photo('p_yuna') }, photos: [photo('p_yuna'), photo('p_x3'), photo('c_library')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Statistics', year: 2022, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Starting a stats study group. Quiet cafés are my happy place.', likes: 'R, croissants, long walks', freeTime: 'Cafés near the library', availability: 'afternoon',
     interests: ['study', 'coffee', 'walk', 'research'], purposes: ['study', 'friend'], nowWant: 'Study session at Doe?',
@@ -98,7 +98,7 @@ export const users: User[] = [
     openToNew: true, dailyAnswer: { questionId: 'd_free2h', answer: 'lunch', date: T },
   }),
   mk({
-    id: 'u_taeho', nickname: 'Ethan', birthYear: 2000, gender: 'male', avatar: { emoji: '🚀', hue: 10, photoType: 'face' , url: photo('p_taeho') }, identityVerified: true,
+    id: 'u_taeho', nickname: 'Ethan', birthYear: 2000, gender: 'male', avatar: { emoji: '🚀', hue: 10, photoType: 'face' , url: photo('p_taeho') }, photos: [photo('p_taeho'), photo('p_x5'), photo('c_city')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'alumni', department: 'EECS', year: 2024, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Founded a startup after graduating. Always up for coffee chats with students.', likes: 'Product, hiking, whiskey', freeTime: 'Coffee chats on Southside', availability: 'after18',
     interests: ['startup', 'networking', 'coffee'], purposes: ['networking'], nowWant: 'Coffee chat if you’re into startups',
@@ -107,7 +107,7 @@ export const users: User[] = [
     goals: ['startup', 'cofounder'], lookingFor: ['developer', 'designer', 'cofounder'], canOffer: ['planning', 'marketing'], living: { residence: 'offcampus', zone: 'Southside' }, interestedOrgIds: ['o_startup'],
   }),
   mk({
-    id: 'u_hana', nickname: 'Hannah', birthYear: 2004, gender: 'female', avatar: { emoji: '🎨', hue: 340, photoType: 'face' , url: photo('p_hana') },
+    id: 'u_hana', nickname: 'Hannah', birthYear: 2004, gender: 'female', avatar: { emoji: '🎨', hue: 340, photoType: 'face' , url: photo('p_hana') }, photos: [photo('p_hana'), photo('p_x1'), photo('c_art'), photo('c_daisy')],
     affiliation: { type: 'university', schoolId: 's_stanford', schoolName: 'Stanford University', role: 'undergraduate', department: 'Art Practice', year: 2023, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Exhibits and flea markets. Looking for people to wander with!', likes: 'Drawing, vintage shops, iced lattes', freeTime: 'Wandering around the Mission', availability: 'weekend',
     interests: ['exhibition', 'shopping', 'walk', 'coffee'], purposes: ['friend', 'hobby'], nowWant: 'Exhibit this weekend?',
@@ -116,7 +116,7 @@ export const users: User[] = [
     goals: ['hackathon', 'friends', 'hobby'], lookingFor: ['developer', 'teammate', 'friend'], canOffer: ['designer', 'video'], living: { residence: 'commute', zone: 'Palo Alto' },
   }),
   mk({
-    id: 'u_junho', nickname: 'Jordan', birthYear: 2002, gender: 'male', avatar: { emoji: '🎤', hue: 265, photoType: 'face' , url: photo('p_junho') }, identityVerified: true,
+    id: 'u_junho', nickname: 'Jordan', birthYear: 2002, gender: 'male', avatar: { emoji: '🎤', hue: 265, photoType: 'face' , url: photo('p_junho') }, photos: [photo('p_junho'), photo('p_x6'), photo('c_drum')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Computer Science', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'President of the campus band. Prepping our fall show at the student union.', likes: 'Guitar, ramen, movies', freeTime: 'Rehearsal or a movie', availability: 'in_class',
     interests: ['club', 'exhibition', 'meal', 'coffee'], purposes: ['club', 'friend'],
@@ -125,7 +125,7 @@ export const users: User[] = [
     goals: ['join_club', 'friends', 'internship'], lookingFor: ['teammate'], canOffer: ['developer', 'club_ops'], living: { residence: 'offcampus', zone: 'Southside' }, interestedOrgIds: ['o_band', 'o_frat'],
   }),
   mk({
-    id: 'u_sua', nickname: 'Lily', birthYear: 2005, gender: 'female', avatar: { emoji: '🌱', hue: 95, photoType: 'face' , url: photo('p_sua') }, identityVerified: true,
+    id: 'u_sua', nickname: 'Lily', birthYear: 2005, gender: 'female', avatar: { emoji: '🌱', hue: 95, photoType: 'face' , url: photo('p_sua') }, photos: [photo('p_sua'), photo('c_meadow'), photo('c_bookshop')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Computer Science', year: 2024, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Sophomore. Looking for a coding study group and walking buddies.', likes: 'Algorithms, sushi burritos, walks', freeTime: 'Walking through Memorial Glade', availability: 'now',
     interests: ['study', 'walk', 'coffee', 'startup'], purposes: ['study', 'friend'], nowWant: 'Walk through the Glade right now?',
@@ -136,7 +136,7 @@ export const users: User[] = [
     openToNew: true, dailyAnswer: { questionId: 'd_free2h', answer: 'new_people', date: T },
   }),
   mk({
-    id: 'u_woojin', nickname: 'Will', birthYear: 2002, gender: 'male', avatar: { emoji: '🧗', hue: 200, photoType: 'face' , url: photo('p_woojin') }, identityVerified: true,
+    id: 'u_woojin', nickname: 'Will', birthYear: 2002, gender: 'male', avatar: { emoji: '🧗', hue: 200, photoType: 'face' , url: photo('p_woojin') }, photos: [photo('p_woojin'), photo('c_cliffroad'), photo('c_beaker')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_berkeley', schoolName: 'UC Berkeley', role: 'undergraduate', department: 'Statistics', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'Stats student association. Runs the study groups.', likes: 'Math, climbing, pho', freeTime: 'The climbing gym', availability: 'after18',
     interests: ['study', 'exercise', 'research'], purposes: ['study', 'club'],

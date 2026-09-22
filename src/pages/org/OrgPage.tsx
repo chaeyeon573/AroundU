@@ -112,7 +112,6 @@ export function OrgPage() {
             {recruits.map((a) => <TeamCard key={a.id} activity={a} />)}
             {orgOpps.map((o) => <OpportunityCard key={o.id} o={o} variant="row" />)}
             {!org.recruitment && recruits.length === 0 && orgOpps.length === 0 && <EmptyState emoji="📣" title={t('진행 중인 모집이 없어요')} action={isAdmin ? <Button size="sm" onClick={() => nav(`/create/activity?kind=org_event&org=${org.id}&team=1&cat=club`)}>{t('부원 모집 올리기')}</Button> : undefined} />}
-            <p className="text-[11px] text-ink-3 text-center">{t('모집 글은 발견 › 팀에도 함께 보여요.')}</p>
           </div>
         )}
         {tab === 'members' && (
@@ -126,7 +125,6 @@ export function OrgPage() {
             <div className="px-3.5 py-3 text-[12px] text-ink-3">{t('팔로워')} {org.followerIds.length} · {t('회원 목록은 조직 설정에 따라 비공개일 수 있어요.')}</div>
           </div>
         )}
-        <p className="text-[11px] text-ink-3 mt-4 text-center">{t('학생 동아리의 기본 행사 등록과 홍보는 무료예요.')}</p>
       </div>
       <OrgPostTypeSheet open={post} onClose={() => setPost(false)} org={org} />
     </div>

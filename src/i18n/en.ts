@@ -1212,4 +1212,11 @@ export const en: Record<string, string> = {
   '투표 취소': 'Cancel poll',
   '선택 저장': 'Save selection',
   '시간을 추가했어요.': 'Time added.',
+  '학년': 'yr',
+  '같은 학과': 'Same major',
+  '지금 공강': 'Free now',
+  '인증됨': 'Verified',
+  '조건': 'Filters',
+  '조건 지우기': 'Clear filters',
+  '관계': 'Connection',
 };

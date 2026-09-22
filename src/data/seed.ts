@@ -60,7 +60,7 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
 export const users: User[] = [
   mk({
     id: DEMO_USER_ID, nickname: '하늘', birthYear: 2001, gender: 'private',
-    avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' , url: photo('p_me') }, identityVerified: true,
+    avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' , url: photo('p_me') }, photos: [photo('p_me'), photo('c_cafe_laptop'), photo('c_espresso')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '사이드 프로젝트와 커피를 좋아하는 4학년. 새로운 사람과 이야기하는 걸 좋아해요.',
     likes: '스페셜티 커피, 인디 음악, 전시 보기',
@@ -78,7 +78,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_jimin', nickname: '지민', birthYear: 2002, gender: 'female',
-    avatar: { emoji: '👩‍🎨', hue: 20, photoType: 'face' , url: photo('p_jimin') }, identityVerified: true,
+    avatar: { emoji: '👩‍🎨', hue: 20, photoType: 'face' , url: photo('p_jimin') }, photos: [photo('p_jimin'), photo('p_x2'), photo('c_road_sunset'), photo('c_stage')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '경영학과', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '카페, 전시회, 러닝을 좋아해요. 창업 동아리에서 마케팅을 맡고 있어요.',
     likes: '핸드드립, 미술관 데이트, 한강 러닝',
@@ -96,7 +96,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_dohyun', nickname: '도현', birthYear: 2000, gender: 'male',
-    avatar: { emoji: '🧑‍🔬', hue: 160, photoType: 'face' , url: photo('p_dohyun') }, identityVerified: true,
+    avatar: { emoji: '🧑‍🔬', hue: 160, photoType: 'face' , url: photo('p_dohyun') }, photos: [photo('p_dohyun'), photo('c_desktop'), photo('c_abstract1')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'graduate', department: '인공지능학과', year: 2024, emailVerified: true, showSchool: true, showDepartment: true },
     bio: 'AI 연구실 석사 1년차. 논문 스터디 같이 하실 분 환영합니다.',
     likes: '논문 읽기, 보드게임, 클라이밍',
@@ -112,7 +112,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_seoyeon', nickname: '서연', birthYear: 2003, gender: 'female',
-    avatar: { emoji: '🎸', hue: 290, photoType: 'masked' , url: photo('p_seoyeon') }, identityVerified: false,
+    avatar: { emoji: '🎸', hue: 290, photoType: 'masked' , url: photo('p_seoyeon') }, photos: [photo('p_seoyeon'), photo('p_x4'), photo('c_tabby'), photo('c_eguitar')], identityVerified: false,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '심리학과', year: 2022, emailVerified: true, showSchool: true, showDepartment: false },
     bio: '밴드 동아리 기타. 주말엔 홍대 공연 보러 다녀요.',
     likes: '록 음악, 떡볶이, 고양이',
@@ -128,7 +128,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_minjun', nickname: '민준', birthYear: 2001, gender: 'male',
-    avatar: { emoji: '🏃', hue: 120, photoType: 'back' , url: photo('p_minjun') }, identityVerified: true,
+    avatar: { emoji: '🏃', hue: 120, photoType: 'back' , url: photo('p_minjun') }, photos: [photo('p_minjun'), photo('c_road_sunset'), photo('c_basketball')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_sogang', schoolName: '서강대학교', role: 'undergraduate', department: '경제학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '매일 아침 러닝. 신촌 러닝 크루 운영 중입니다.',
     likes: '러닝, 단백질 쉐이크, 자전거',
@@ -144,7 +144,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_yuna', nickname: '유나', birthYear: 2002, gender: 'female',
-    avatar: { emoji: '📚', hue: 45, photoType: 'face' , url: photo('p_yuna') }, identityVerified: true,
+    avatar: { emoji: '📚', hue: 45, photoType: 'face' , url: photo('p_yuna') }, photos: [photo('p_yuna'), photo('p_x3'), photo('c_library')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_ewha', schoolName: '이화여자대학교', role: 'undergraduate', department: '통계학과', year: 2021, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '통계 스터디 모집 중. 조용한 카페에서 공부하는 걸 좋아해요.',
     likes: 'R, 크로플, 산책',
@@ -159,7 +159,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_taeho', nickname: '태호', birthYear: 1999, gender: 'male',
-    avatar: { emoji: '🚀', hue: 10, photoType: 'face' , url: photo('p_taeho') }, identityVerified: true,
+    avatar: { emoji: '🚀', hue: 10, photoType: 'face' , url: photo('p_taeho') }, photos: [photo('p_taeho'), photo('p_x5'), photo('c_city')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'alumni', department: '전기전자공학부', year: 2023, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '졸업 후 스타트업 창업. 후배들과 커피챗 환영해요.',
     likes: '프로덕트, 등산, 위스키',
@@ -174,7 +174,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_hana', nickname: '하나', birthYear: 2003, gender: 'female',
-    avatar: { emoji: '🎨', hue: 340, photoType: 'face' , url: photo('p_hana') }, identityVerified: false,
+    avatar: { emoji: '🎨', hue: 340, photoType: 'face' , url: photo('p_hana') }, photos: [photo('p_hana'), photo('p_x1'), photo('c_art'), photo('c_daisy')], identityVerified: false,
     affiliation: { type: 'university', schoolId: 's_hongik', schoolName: '홍익대학교', role: 'undergraduate', department: '시각디자인과', year: 2022, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '전시랑 플리마켓 좋아해요. 같이 다닐 친구 찾는 중!',
     likes: '드로잉, 빈티지 샵, 아이스 라떼',
@@ -189,7 +189,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_junho', nickname: '준호', birthYear: 2000, gender: 'male',
-    avatar: { emoji: '🎤', hue: 265, photoType: 'face' , url: photo('p_junho') }, identityVerified: true,
+    avatar: { emoji: '🎤', hue: 265, photoType: 'face' , url: photo('p_junho') }, photos: [photo('p_junho'), photo('p_x6'), photo('c_drum')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2019, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '밴드 동아리 회장. 학생회관 공연 준비 중이에요.',
     likes: '기타, 라멘, 영화',
@@ -203,7 +203,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_sua', nickname: '수아', birthYear: 2004, gender: 'female',
-    avatar: { emoji: '🌱', hue: 95, photoType: 'face' , url: photo('p_sua') }, identityVerified: true,
+    avatar: { emoji: '🌱', hue: 95, photoType: 'face' , url: photo('p_sua') }, photos: [photo('p_sua'), photo('c_meadow'), photo('c_bookshop')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '컴퓨터과학과', year: 2023, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '2학년. 코딩 스터디랑 산책 친구 구해요.',
     likes: '알고리즘, 김밥, 산책',
@@ -220,7 +220,7 @@ export const users: User[] = [
   }),
   mk({
     id: 'u_woojin', nickname: '우진', birthYear: 2001, gender: 'male',
-    avatar: { emoji: '🧗', hue: 200, photoType: 'face' , url: photo('p_woojin') }, identityVerified: true,
+    avatar: { emoji: '🧗', hue: 200, photoType: 'face' , url: photo('p_woojin') }, photos: [photo('p_woojin'), photo('c_cliffroad'), photo('c_beaker')], identityVerified: true,
     affiliation: { type: 'university', schoolId: 's_yonsei', schoolName: '연세대학교', role: 'undergraduate', department: '통계학과', year: 2020, emailVerified: true, showSchool: true, showDepartment: true },
     bio: '통계학과 학생회. 스터디 운영 중.',
     likes: '수학, 클라이밍, 국밥',
