@@ -1,12 +1,12 @@
 import type { Snapshot } from '@/api/types';
-import type { Activity, ID, User, ActivityCategory } from '@/types';
+import type { Activity, ID, User, ActivityCategory, TimePoll } from '@/types';
 import { t } from '@/i18n';
 import { statusNow, todayIdx, nowMin, toHHMM } from './timetable';
 import { friendsOf } from './relations';
 import { AVAILABILITY_LABELS, CATEGORY_LABELS, DAILY_QUESTIONS } from './labels';
 import { todayISO } from './format';
 
-type Snap = Pick<Snapshot, 'users' | 'relationships' | 'participations' | 'proposals' | 'activities' | 'opportunities' | 'opportunityIntents' | 'organizations'>;
+type Snap = Pick<Snapshot, 'users' | 'relationships' | 'participations' | 'proposals' | 'activities' | 'opportunities' | 'opportunityIntents' | 'organizations'> & { timePolls?: TimePoll[] };
 
 /** Who's free 노출 조건: 친구 / 같은 기회 관심 / 같은 조직 / 새로운 사람에게 공개 */
 export function whosFreeEligible(snap: Snap, me: User, u: User): { ok: boolean; why: string } {
@@ -55,7 +55,8 @@ export type PlanItem =
   | { kind: 'rsvp'; id: string; user: User; oppId: ID; title: string; intent: string; when: string }
   | { kind: 'open_slot'; id: string; user: User; activity: Activity; joined: number; when: string }
   | { kind: 'goal'; id: string; user: User; text: string; when: string }
-  | { kind: 'saved'; id: string; user: User; oppId: ID; title: string; when: string };
+  | { kind: 'saved'; id: string; user: User; oppId: ID; title: string; when: string }
+  | { kind: 'poll'; id: string; user: User; poll: TimePoll; voted: boolean; when: string };
 
 /** 친구들의 계획 피드: 사진 대신 의도와 계획 */
 export function planFeed(snap: Snap, me: User, visibleActivities: Activity[]): PlanItem[] {
@@ -75,6 +76,11 @@ export function planFeed(snap: Snap, me: User, visibleActivities: Activity[]): P
     const u = snap.users.find((x) => x.id === a.hostId);
     if (!u || !eligible(u) || a.date < todayISO()) continue;
     if (a.kind === 'personal' || a.openSlot) items.push({ kind: 'open_slot', id: a.id, user: u, activity: a, joined: snap.participations.filter((p) => p.activityId === a.id && p.status === 'approved').length, when: a.createdAt });
+  }
+  for (const p of snap.timePolls ?? []) {
+    if (p.status !== 'open' || p.hostId === me.id || !p.inviteeIds.includes(me.id)) continue;
+    const u = snap.users.find((x) => x.id === p.hostId); if (!u) continue;
+    items.push({ kind: 'poll', id: p.id, user: u, poll: p, voted: !!p.votes[me.id], when: p.createdAt });
   }
   for (const u of snap.users) {
     if (u.id === me.id || !friends.has(u.id)) continue;

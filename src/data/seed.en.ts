@@ -1,6 +1,6 @@
 /** English demo: a US campus (UC Berkeley) with Greek life, .edu verification and US-style opportunities */
 import type {
-  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord,
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll,
 } from '@/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
 import { photo } from '@/lib/assets';
@@ -437,4 +437,18 @@ export const opportunityIntents: OpportunityIntentRecord[] = [
   { id: 'oi17', opportunityId: 'op_sorority', userId: 'u_sua', intent: 'interested', saved: false, createdAt: isoHoursAgo(3) },
   { id: 'oi18', opportunityId: 'op_frat', userId: 'u_junho', intent: 'going', saved: true, createdAt: isoHoursAgo(7) },
   { id: 'oi19', opportunityId: 'op_frat', userId: 'u_dohyun', intent: 'interested', saved: false, createdAt: isoHoursAgo(9) },
+];
+
+export const timePolls: TimePoll[] = [
+  {
+    id: 'tp_dinner', hostId: 'u_seoyeon', title: 'Post-midterm tacos', category: 'meal', place: { name: 'Taqueria on Durant', lat: 37.8677, lng: -122.2585 },
+    inviteeIds: [DEMO_USER_ID, 'u_junho', 'u_jimin'],
+    options: [
+      { id: 'to1', date: T1, startTime: '18:30', endTime: '20:00', suggested: true },
+      { id: 'to2', date: T2, startTime: '19:00', endTime: '20:30', suggested: true },
+      { id: 'to3', date: addDaysISO(3), startTime: '12:00', endTime: '13:30' },
+    ],
+    votes: { u_seoyeon: ['to1', 'to2', 'to3'], u_junho: ['to2', 'to3'], u_jimin: ['to1', 'to2'] },
+    status: 'open', closesAt: new Date(Date.now() + 36 * 3600000).toISOString(), createdAt: isoHoursAgo(2),
+  },
 ];

@@ -21,7 +21,7 @@ export function useOppState(o: Opportunity) {
   return { mine, others, matchCount };
 }
 
-export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o: Opportunity; reasons?: string[]; variant?: 'feed' | 'row'; className?: string }) {
+export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o: Opportunity; reasons?: string[]; /** text: 사진 없이 글만 */ variant?: 'feed' | 'row' | 'text'; className?: string }) {
   const nav = useNavigate();
   const run = useAppStore((s) => s.run);
   const v = useViewer();
@@ -43,8 +43,17 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
     );
   }
 
+  const textMode = variant === 'text';
   return (
     <article className={cn('card overflow-hidden', className)}>
+      {textMode ? (
+        <button onClick={() => nav(`/opportunities/${o.id}`)} className="w-full flex items-center gap-2 px-3.5 pt-3.5 text-left">
+          <span className="h-9 w-9 rounded-xl grid place-items-center text-[18px] shrink-0" style={{ background: `${color}1A` }}>{OPP_TYPE_EMOJI[o.type]}</span>
+          <span className="text-[11px] font-bold" style={{ color }}>{OPP_TYPE_LABELS[o.type]}</span>
+          {o.official && <Tag tone="gold" className="h-5"><BadgeCheck size={11} /> {t('공식')}</Tag>}
+          {o.deadline && <Tag tone={urgent ? 'danger' : 'neutral'} className="h-5 ml-auto"><AlarmClock size={11} /> {dday(o.deadline)}</Tag>}
+        </button>
+      ) : (
       <button onClick={() => nav(`/opportunities/${o.id}`)} className="block w-full text-left">
         <div className="relative">
           <Cover emoji={o.cover.emoji} hue={o.cover.hue} url={o.cover.url} className="h-[120px]" size={48} />
@@ -55,7 +64,8 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
           {o.deadline && <span className={cn('absolute top-3 right-3 rounded-lg px-2 h-6 inline-flex items-center gap-1 text-[11px] font-bold', urgent ? 'bg-danger text-white' : 'bg-white/90 text-ink')}><AlarmClock size={11} />{dday(o.deadline)}</span>}
         </div>
       </button>
-      <div className="p-3.5">
+      )}
+      <div className={cn('p-3.5', textMode && 'pt-2')}>
         <button onClick={() => nav(`/opportunities/${o.id}`)} className="text-left"><h3 className="text-[16px] font-bold leading-snug">{o.title}</h3></button>
         <div className="text-[12px] text-ink-3 mt-0.5">{o.host}</div>
         {reasons && reasons.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{reasons.slice(0, 2).map((r) => <Tag key={r} tone="primary">{r}</Tag>)}</div>}

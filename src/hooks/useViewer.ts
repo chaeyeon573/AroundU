@@ -16,10 +16,11 @@ export function useViewer() {
   const organizations = useAppStore((s) => s.organizations);
   const opportunities = useAppStore((s) => s.opportunities);
   const opportunityIntents = useAppStore((s) => s.opportunityIntents);
+  const timePolls = useAppStore((s) => s.timePolls);
   const currentUserId = useAppStore((s) => s.currentUserId);
 
   return useMemo(() => {
-    const snap = { users, relationships, participations, proposals, activities, opportunities, opportunityIntents };
+    const snap = { users, relationships, participations, proposals, activities, opportunities, opportunityIntents, timePolls };
     const me = users.find((u) => u.id === currentUserId) as User;
     const userById = (id: ID) => users.find((u) => u.id === id);
     const orgById = (id: ID) => organizations.find((o) => o.id === id);
@@ -50,5 +51,5 @@ export function useViewer() {
       hasBlocked: (to: ID) => hasBlocked(snap, me.id, to),
       isBlocked: (to: ID) => isBlocked(snap, me.id, to),
     };
-  }, [users, relationships, participations, proposals, activities, posts, organizations, opportunities, opportunityIntents, currentUserId]);
+  }, [users, relationships, participations, proposals, activities, posts, organizations, opportunities, opportunityIntents, timePolls, currentUserId]);
 }

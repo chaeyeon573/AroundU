@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Clock, BookOpen, Wifi, MapPin } from 'lucide-react';
 import { t } from '@/i18n';
 import type { Activity } from '@/types';
-import { Avatar, Tag, Cover } from '@/components/ui';
+import { Avatar, Tag } from '@/components/ui';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
 import { PERSON_ROLE_LABELS, CREW_TYPE_LABELS, CREW_TYPE_EMOJI, MODE_LABELS } from '@/lib/labels';
@@ -19,7 +19,7 @@ export function TeamCard({ activity: a }: { activity: Activity }) {
   return (
     <div className="card p-3.5">
       <div className="flex gap-3">
-        <Cover emoji={a.cover.emoji} hue={a.cover.hue} url={a.cover.url} className="h-[64px] w-[64px] rounded-xl shrink-0" size={26} />
+        <span className="h-[52px] w-[52px] rounded-xl grid place-items-center text-[24px] shrink-0 bg-surface-2">{a.cover.emoji}</span>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1">
             {a.courseName ? <Tag tone="primary" className="h-5"><BookOpen size={10} /> {a.courseName}</Tag> : <Tag tone="gold" className="h-5">{t('팀원 모집')}</Tag>}

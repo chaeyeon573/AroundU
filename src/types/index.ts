@@ -357,6 +357,35 @@ export interface ActivityProposal {
   expiresAt: string;
 }
 
+// ─── Plan Together (단체 약속 시간 투표) ──────────────────────────────────
+export interface TimeOption {
+  id: ID;
+  date: string;
+  startTime: string;
+  endTime: string;
+  /** 공강 겹침으로 자동 제안된 시간 */
+  suggested?: boolean;
+}
+
+export interface TimePoll {
+  id: ID;
+  hostId: ID;
+  title: string;
+  category: ActivityCategory;
+  place?: Place;
+  /** 투표 요청 받은 사람 (주최자 제외) */
+  inviteeIds: ID[];
+  options: TimeOption[];
+  /** userId → 가능한 optionId 목록 */
+  votes: Record<ID, ID[]>;
+  status: 'open' | 'decided' | 'cancelled';
+  decidedOptionId?: ID;
+  /** 확정되면 생성된 활동 */
+  activityId?: ID;
+  closesAt: string;
+  createdAt: string;
+}
+
 // ─── 채팅 ─────────────────────────────────────────────────────────────────
 export type ChatRoomType = 'direct' | 'activity' | 'org';
 
@@ -384,7 +413,7 @@ export interface ChatRoom {
 export type NotificationType =
   | 'friend_accepted' | 'mutual_like' | 'participation_approved' | 'participation_rejected'
   | 'participation_request' | 'activity_reminder' | 'comment' | 'like' | 'follow'
-  | 'org_event' | 'nearby_activity' | 'proposal' | 'proposal_result' | 'deadline' | 'opportunity_match';
+  | 'org_event' | 'nearby_activity' | 'proposal' | 'proposal_result' | 'deadline' | 'opportunity_match' | 'plan_vote' | 'plan_decided';
 
 export interface Notification {
   id: ID;

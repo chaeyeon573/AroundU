@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { t } from '@/i18n';
-import { UserCheck, Heart, CalendarCheck, CalendarX, Inbox, Clock, MessageSquare, ThumbsUp, UserPlus, Megaphone, MapPin, Sparkles, CheckCheck, AlarmClock, Users } from 'lucide-react';
+import { UserCheck, Heart, CalendarCheck, CalendarX, Inbox, Clock, MessageSquare, ThumbsUp, UserPlus, Megaphone, MapPin, Sparkles, CheckCheck, AlarmClock, Users, Vote } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, EmptyState, CardSkeleton, ErrorState } from '@/components/ui';
 import { useAppStore } from '@/store/useAppStore';
@@ -25,6 +25,8 @@ const ICONS: Record<NotificationType, { Icon: typeof Heart; cls: string }> = {
   proposal_result: { Icon: Sparkles, cls: 'bg-mint-soft text-mint' },
   deadline: { Icon: AlarmClock, cls: 'bg-danger-soft text-danger' },
   opportunity_match: { Icon: Users, cls: 'bg-primary-soft text-primary' },
+  plan_vote: { Icon: Vote, cls: 'bg-accent-soft text-accent' },
+  plan_decided: { Icon: CalendarCheck, cls: 'bg-mint-soft text-mint' },
 };
 
 export function NotificationsPage() {

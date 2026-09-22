@@ -144,12 +144,13 @@ function ActivitiesTab({ mySchool }: { mySchool: string }) {
     .map((o) => ({ o, ...opportunityScore(v.me, o, intents) })).sort((a, b) => b.score - a.score);
   type Item = { when: string; node: React.ReactNode };
   const items: Item[] = [
-    ...acts.map((a) => ({ when: a.date + a.startTime, node: <ActivityCard key={`a_${a.id}`} activity={a} badge={v.isFriend(a.hostId) ? t('친구') : undefined} /> })),
-    ...together.map((x) => ({ when: (x.o.date ?? x.o.deadline ?? '9') + (x.o.startTime ?? ''), node: <OpportunityCard key={`o_${x.o.id}`} o={x.o} reasons={x.reasons} /> })),
+    ...acts.map((a) => ({ when: a.date + a.startTime, node: <ActivityCard key={`a_${a.id}`} activity={a} variant="text" badge={v.isFriend(a.hostId) ? t('친구') : undefined} /> })),
+    ...together.map((x) => ({ when: (x.o.date ?? x.o.deadline ?? '9') + (x.o.startTime ?? ''), node: <OpportunityCard key={`o_${x.o.id}`} o={x.o} reasons={x.reasons} variant="text" /> })),
   ].sort((a, b) => a.when.localeCompare(b.when));
   return (
     <div>
       <ChipRow className="py-0 mb-3">{ACTIVITY_CHIPS.map((c) => <Chip key={c.key} size="sm" active={chip === c.key} onClick={() => setChip(c.key)}>{c.label}</Chip>)}</ChipRow>
+      <p className="text-[12px] text-ink-3 mb-2 px-1">{t('사진 없이 글만 보여요. 언제·어디서·누가가 먼저.')}</p>
       {items.length === 0 ? <EmptyState emoji="🗓️" title={t('예정된 활동이 없어요')} description={t('첫 활동을 열어보세요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=group')}>{t('활동 만들기')}</Button>} />
         : <div className="space-y-3">{items.map((i) => i.node)}</div>}
     </div>

@@ -1,5 +1,5 @@
 import type {
-  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord,
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll,
 } from '@/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
 import { photo } from '@/lib/assets';
@@ -716,4 +716,19 @@ export const opportunityIntents: OpportunityIntentRecord[] = [
   { id: 'oi13', opportunityId: 'op_intern', userId: 'u_minjun', intent: 'interested', saved: false, createdAt: isoHoursAgo(45) },
   { id: 'oi14', opportunityId: 'op_scholarship', userId: DEMO_USER_ID, intent: 'interested', saved: true, createdAt: isoHoursAgo(20) },
   { id: 'oi15', opportunityId: 'op_lunch', userId: 'u_jimin', intent: 'interested', saved: false, createdAt: isoMinutesAgo(30) },
+];
+
+/** Plan Together — 서연이 마라탕 시간을 정하는 중. 준호는 이미 투표했고 나는 아직 */
+export const timePolls: TimePoll[] = [
+  {
+    id: 'tp_dinner', hostId: 'u_seoyeon', title: '시험 끝 기념 마라탕', category: 'meal', place: { name: '신촌 마라공방', lat: 37.5563, lng: 126.9382 },
+    inviteeIds: [DEMO_USER_ID, 'u_junho', 'u_jimin'],
+    options: [
+      { id: 'to1', date: T1, startTime: '18:30', endTime: '20:00', suggested: true },
+      { id: 'to2', date: T2, startTime: '19:00', endTime: '20:30', suggested: true },
+      { id: 'to3', date: addDaysISO(3), startTime: '12:00', endTime: '13:30' },
+    ],
+    votes: { u_seoyeon: ['to1', 'to2', 'to3'], u_junho: ['to2', 'to3'], u_jimin: ['to1', 'to2'] },
+    status: 'open', closesAt: new Date(Date.now() + 36 * 3600000).toISOString(), createdAt: isoHoursAgo(2),
+  },
 ];

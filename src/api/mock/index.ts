@@ -1,8 +1,9 @@
 import type { AroundUApi, Patch, Snapshot } from '../types';
 import { t } from '@/i18n';
 import type {
-  Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User, Opportunity,
+  Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User, Opportunity, TimePoll,
 } from '@/types';
+import { freeBlocks, jsDayToIdx, toMin } from '@/lib/timetable';
 import { loadDB, resetDB, saveDB, getSession, setSession, type MockDB } from './db';
 import { DEMO_USER_ID } from '@/data/seed';
 import { uid, pairKey } from '@/lib/format';
@@ -502,6 +503,79 @@ export const mockApi: AroundUApi = {
         room.messages.push({ id: uid('m'), senderId: p.toId, text: t('활동 제안을 수락했어요. 세부 일정 이야기해요!'), createdAt: new Date().toISOString(), system: true });
         return { proposals: [p], chatRooms: [room] };
       });
+    },
+  },
+
+  together: {
+    async create(hostId, input) {
+      return request(() => {
+        const host = find(db.users, hostId);
+        const poll: TimePoll = {
+          id: uid('tp'), hostId, title: input.title, category: input.category, place: input.place, inviteeIds: input.inviteeIds,
+          options: input.options.map((o) => ({ ...o, id: uid('to') })), votes: {}, status: 'open', closesAt: input.closesAt, createdAt: new Date().toISOString(),
+        };
+        // 주최자는 모든 옵션에 가능한 것으로 시작
+        poll.votes[hostId] = poll.options.map((o) => o.id);
+        db.timePolls.unshift(poll);
+        const nts: Notification[] = [];
+        input.inviteeIds.forEach((uid2) => { if (uid2 === DEMO_USER_ID) nts.push(notify(DEMO_USER_ID, { type: 'plan_vote', title: t('언제 만날지 골라주세요'), body: `${host.nickname}${t('님이 "')}${poll.title}${t('" 시간을 정하고 있어요.')}`, link: `/together/${poll.id}` })); });
+        // 데모: 초대받은 사람은 잠시 후 자기 시간표의 공강과 겹치는 시간에 자동 투표
+        input.inviteeIds.filter((u) => u !== DEMO_USER_ID).forEach((uid2, i) => {
+          setTimeout(() => {
+            if (poll.status !== 'open') return;
+            const u = db.users.find((x) => x.id === uid2); if (!u) return;
+            const ok = poll.options.filter((o) => {
+              if (!u.timetable.length) return Math.random() < 0.6;
+              const day = jsDayToIdx(new Date(o.date).getDay());
+              return freeBlocks(u.timetable, day).some((b) => b.start <= toMin(o.startTime) && b.end >= toMin(o.endTime));
+            }).map((o) => o.id);
+            poll.votes[uid2] = ok.length ? ok : [poll.options[0].id];
+            push({ timePolls: [poll] });
+          }, 3500 + i * 1800);
+        });
+        return { poll, patch: { timePolls: [poll], notifications: nts } };
+      });
+    },
+    async vote(pollId, userId, optionIds) {
+      return request(() => { const p = find(db.timePolls, pollId); p.votes[userId] = optionIds; return { timePolls: [p] }; });
+    },
+    async addOption(pollId, userId, option) {
+      return request(() => {
+        const p = find(db.timePolls, pollId);
+        const o = { ...option, id: uid('to') };
+        p.options.push(o);
+        p.votes[userId] = [...new Set([...(p.votes[userId] ?? []), o.id])];
+        return { timePolls: [p] };
+      });
+    },
+    async decide(pollId, optionId) {
+      return request(() => {
+        const p = find(db.timePolls, pollId);
+        const opt = p.options.find((o) => o.id === optionId);
+        if (!opt) throw new Error(t('항목을 찾을 수 없어요.'));
+        const goers = [...new Set([p.hostId, ...Object.entries(p.votes).filter(([, ids]) => ids.includes(optionId)).map(([u]) => u)])];
+        const host = find(db.users, p.hostId);
+        const activity: Activity = {
+          id: uid('a'), kind: 'group', category: p.category, title: p.title, description: `${t('Plan Together로 정한 약속이에요. ')}${goers.length}${t('명이 이 시간에 가능하다고 했어요.')}`,
+          cover: { emoji: { coffee: '☕', meal: '🍽️', study: '📖', exercise: '🏃', club: '🎸', performance: '🎤', school_event: '🎓', seminar: '🧪', networking: '🤝', store_deal: '🏷️', etc: '✨' }[p.category], hue: 200 },
+          hostId: p.hostId, hostType: 'user', date: opt.date, startTime: opt.startTime, endTime: opt.endTime,
+          place: p.place ?? { name: t('장소 미정'), lat: 0, lng: 0 }, capacity: Math.max(goers.length, p.inviteeIds.length + 1), visibility: 'selected', visibilityTargets: [...p.inviteeIds],
+          joinPolicy: 'invite', fee: 0, invitedIds: [...p.inviteeIds], comments: [], createdAt: new Date().toISOString(),
+        };
+        db.activities.unshift(activity);
+        const room = ensureActivityRoom(activity);
+        const parts: Participation[] = goers.filter((g) => g !== p.hostId).map((userId) => {
+          const pt: Participation = { id: uid('p'), activityId: activity.id, userId, status: 'approved', createdAt: new Date().toISOString() };
+          db.participations.push(pt); addToRoom(room, userId); return pt;
+        });
+        p.status = 'decided'; p.decidedOptionId = optionId; p.activityId = activity.id;
+        const nts: Notification[] = [];
+        if (goers.includes(DEMO_USER_ID) && p.hostId !== DEMO_USER_ID) nts.push(notify(DEMO_USER_ID, { type: 'plan_decided', title: t('약속 시간이 정해졌어요'), body: `${host.nickname}${t('님이 "')}${p.title}${t('" 시간을 확정했어요. 그룹 채팅방이 열렸어요.')}`, link: `/activities/${activity.id}` }));
+        return { activity, patch: { timePolls: [p], activities: [activity], participations: parts, chatRooms: [room], notifications: nts } };
+      });
+    },
+    async cancel(pollId) {
+      return request(() => { const p = find(db.timePolls, pollId); p.status = 'cancelled'; return { timePolls: [p] }; });
     },
   },
 

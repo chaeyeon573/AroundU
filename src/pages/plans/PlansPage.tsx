@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, Send, ChevronRight, Clock, Mail, Heart, BookOpen, Puzzle } from 'lucide-react';
+import { Users, CalendarCheck, Send, ChevronRight, Clock, Mail, Heart, BookOpen, Puzzle, Vote } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Tag, CardSkeleton, ErrorState } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
@@ -25,8 +25,10 @@ export function PlansPage() {
   const proposals = useAppStore((s) => s.proposals);
   const opps = useAppStore((s) => s.opportunities);
   const intents = useAppStore((s) => s.opportunityIntents);
+  const polls = useAppStore((s) => s.timePolls);
   const me = v.me;
   const today = todayISO();
+  const openPolls = polls.filter((p) => p.status === 'open' && (p.hostId === me.id || p.inviteeIds.includes(me.id)));
   if (status === 'loading') return <div><TopBar back title="My Plans" /><CardSkeleton /></div>;
   if (status === 'error') return <div><TopBar back title="My Plans" /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
 
@@ -61,6 +63,17 @@ export function PlansPage() {
     <div className="min-h-full pb-8">
       <TopBar back title="My Plans" messages />
       <div className="px-4 pt-2 space-y-5">
+        <section>
+          <div className="flex items-end justify-between mb-2"><h2 className="text-[15px] font-bold flex items-center gap-1.5"><Vote size={15} className="text-heart" />{t('시간 정하는 중')}<span className="text-[12px] text-ink-3 font-semibold">{openPolls.length}</span></h2><button onClick={() => nav('/together/new')} className="text-[12px] font-semibold text-primary">+ Plan Together</button></div>
+          {openPolls.length === 0 ? <div className="card px-4 py-3 text-[12px] text-ink-3">{t('진행 중인 시간 투표가 없어요. 친구들과 만날 시간을 투표로 정해보세요.')}</div> : (
+            <div className="card divide-y divide-line">{openPolls.map((p) => { const h = v.userById(p.hostId); const voted = !!p.votes[me.id]; const n = Object.keys(p.votes).length; return (
+              <button key={p.id} onClick={() => nav(`/together/${p.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
+                <span className="h-10 w-10 rounded-xl bg-heart-soft text-heart grid place-items-center"><Vote size={18} /></span>
+                <span className="flex-1 min-w-0"><b className="text-[13px] block truncate">{p.title}</b><span className="text-[12px] text-ink-3">{p.hostId === me.id ? t('내가 주최') : h?.nickname} · {lang === 'en' ? `${n}/${p.inviteeIds.length + 1} voted · ${p.options.length} options` : `${n}/${p.inviteeIds.length + 1}명 투표 · 후보 ${p.options.length}개`}</span></span>
+                {p.hostId === me.id ? <Tag tone="primary" className="h-5">{t('확정하기')}</Tag> : voted ? <Tag tone="mint" className="h-5">{t('투표 완료')}</Tag> : <Tag tone="accent" className="h-5">{t('투표하기')}</Tag>}
+              </button>); })}</div>
+          )}
+        </section>
         <Section icon={<Mail size={15} className="text-accent" />} title={t('받은 초대')} count={invites.length + proposalsIn.length + friendReqs.length} empty={t('받은 초대가 없어요.')}>
           {friendReqs.map((r) => { const u = v.userById(r.fromId); return u && (
             <div key={r.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={36} /><span className="flex-1 text-[13px]"><b>{u.nickname}</b>{t('님의 친구 요청')}</span><Button size="sm" variant="outline" onClick={() => run(() => api.relationships.respondFriendRequest(r.id, false))}>{t('거절')}</Button><Button size="sm" onClick={() => run(() => api.relationships.respondFriendRequest(r.id, true), t('친구가 되었어요!'))}>{t('수락')}</Button></div>); })}
@@ -133,6 +146,12 @@ export function PlanCard({ item }: { item: ReturnType<typeof planFeed>[number] }
       </div>
     );
   }
+  if (item.kind === 'poll') return (
+    <div className="card p-3.5">{head}
+      <p className="text-[14px] mt-2">{lang === 'en' ? <>is picking a time for <b>{item.poll.title}</b> · {item.poll.options.length} options</> : <><b>{item.poll.title}</b> 시간을 정하고 있어요 · 후보 {item.poll.options.length}개</>}</p>
+      <Button size="sm" className="mt-3" full variant={item.voted ? 'secondary' : 'primary'} onClick={() => nav(`/together/${item.poll.id}`)}>{item.voted ? t('투표 완료 · 현황 보기') : t('되는 시간 고르기')}</Button>
+    </div>
+  );
   if (item.kind === 'saved') return <div className="card p-3.5">{head}<p className="text-[14px] mt-2">{lang === 'en' ? <>saved <b>{item.title}</b>.</> : <><b>{item.title}</b>을(를) 저장했어요.</>}</p><Button size="sm" variant="outline" className="mt-3" onClick={() => nav(`/opportunities/${item.oppId}`)}>{t('나도 볼래요')}</Button></div>;
   const g = item.text as Goal;
   return (

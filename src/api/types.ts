@@ -1,6 +1,6 @@
 import type {
   Activity, ActivityProposal, ChatRoom, ID, Notification, Organization, Participation, Post, Relationships, Report, School, User,
-  ActivityCategory, Visibility, JoinPolicy, ActivityKind, Place, ReportTargetType, Availability, Opportunity, OpportunityIntentRecord, OpportunityIntent, Role,
+  ActivityCategory, Visibility, JoinPolicy, ActivityKind, Place, ReportTargetType, Availability, Opportunity, OpportunityIntentRecord, OpportunityIntent, Role, TimePoll, TimeOption,
 } from '@/types';
 
 /** 클라이언트가 보유하는 전체 데이터 스냅샷 (실제 API에서는 필요한 부분만 내려받도록 분리) */
@@ -18,12 +18,13 @@ export interface Snapshot {
   reports: Report[];
   opportunities: Opportunity[];
   opportunityIntents: OpportunityIntentRecord[];
+  timePolls: TimePoll[];
 }
 
 /** 변경된 엔티티만 담아 돌려주는 부분 응답. 스토어가 id 기준으로 병합한다. */
 export type Patch = Partial<Omit<Snapshot, 'relationships'>> & {
   relationships?: Relationships;
-  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals' | 'opportunityIntents', ID[]>>;
+  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals' | 'opportunityIntents' | 'timePolls', ID[]>>;
 };
 
 export interface RegisterInput {
@@ -117,6 +118,16 @@ export interface OpportunityInput {
   orgId?: ID;
 }
 
+/** Plan Together 생성 입력 */
+export interface TimePollInput {
+  title: string;
+  category: ActivityCategory;
+  place?: Place;
+  inviteeIds: ID[];
+  options: Omit<TimeOption, 'id'>[];
+  closesAt: string;
+}
+
 export interface AroundUApi {
   auth: {
     loginDemo(): Promise<User>;
@@ -187,6 +198,16 @@ export interface AroundUApi {
   proposals: {
     create(fromId: ID, toId: ID, input: Pick<ActivityProposal, 'category' | 'message' | 'when'>): Promise<Patch>;
     respond(id: ID, accept: boolean): Promise<Patch>;
+  };
+
+  /** Plan Together — 단체 약속 시간 투표 */
+  together: {
+    create(hostId: ID, input: TimePollInput): Promise<{ poll: TimePoll; patch: Patch }>;
+    vote(pollId: ID, userId: ID, optionIds: ID[]): Promise<Patch>;
+    addOption(pollId: ID, userId: ID, option: Omit<TimeOption, 'id'>): Promise<Patch>;
+    /** 확정: 활동을 만들고 그 시간에 표를 던진 사람을 참가자로 초대한다 */
+    decide(pollId: ID, optionId: ID): Promise<{ activity: Activity; patch: Patch }>;
+    cancel(pollId: ID): Promise<Patch>;
   };
 
   chats: {

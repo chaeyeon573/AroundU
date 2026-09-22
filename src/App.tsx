@@ -29,6 +29,8 @@ import { TimetablePage } from '@/pages/timetable/TimetablePage';
 import { DiscoverPage } from '@/pages/discover/DiscoverPage';
 import { PlansPage } from '@/pages/plans/PlansPage';
 import { ClassPage } from '@/pages/classes/ClassPage';
+import { CreateTogetherPage } from '@/pages/together/CreateTogetherPage';
+import { TogetherPage } from '@/pages/together/TogetherPage';
 import { OpportunityDetailPage } from '@/pages/opportunities/OpportunityDetailPage';
 import { ProfileContextPage } from '@/pages/profile/ProfileContextPage';
 
@@ -92,6 +94,8 @@ export default function App() {
           <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/plans" element={<PlansPage />} />
           <Route path="/classes/:courseName" element={<ClassPage />} />
+          <Route path="/together/new" element={<CreateTogetherPage />} />
+          <Route path="/together/:id" element={<TogetherPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/activities/:id" element={<ActivityDetailPage />} />

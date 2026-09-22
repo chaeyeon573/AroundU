@@ -4,14 +4,15 @@ import { Clock, MapPin, Users, Map as MapIcon, BadgeCheck, Ticket, Lock } from '
 import type { Activity } from '@/types';
 import { Avatar, Button, Cover, Tag, VisibilityTag } from '@/components/ui';
 import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
-import { formatDateTime, formatFee } from '@/lib/format';
+import { formatDateTime, formatFee, formatTime } from '@/lib/format';
 import { useViewer } from '@/hooks/useViewer';
 import { cn } from '@/lib/cn';
 import { JoinButton } from '@/components/cards/JoinButton';
 
 interface Props {
   activity: Activity;
-  variant?: 'feed' | 'row' | 'mini';
+  /** text: 사진 없이 글만 (발견 › 활동 피드) */
+  variant?: 'feed' | 'row' | 'mini' | 'text';
   className?: string;
   badge?: string;
 }
@@ -55,6 +56,34 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
           <div className="text-[12px] text-ink-2 mt-1 flex items-center gap-2"><span className="flex items-center gap-1"><Users size={11} />{count}/{a.capacity >= 999 ? '∞' : a.capacity}</span><span>{name}</span></div>
         </div>
       </button>
+    );
+  }
+
+  if (variant === 'text') {
+    return (
+      <article className={cn('card p-3.5', className)}>
+        <div className="flex gap-3">
+          <button onClick={() => nav(`/activities/${a.id}`)} className="h-11 w-11 rounded-xl grid place-items-center text-[20px] shrink-0" style={{ background: `${color}1A` }}>{CATEGORY_EMOJI[a.category]}</button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap"><span className="text-[11px] font-bold" style={{ color }}>{CATEGORY_LABELS[a.category]}</span>{badge && <Tag tone="accent" className="h-5">{badge}</Tag>}{a.official && <Tag tone="gold" className="h-5"><BadgeCheck size={11} /> {t('학교 공식')}</Tag>}<VisibilityTag value={a.visibility} className="ml-auto" /></div>
+            <button onClick={() => nav(`/activities/${a.id}`)} className="text-left"><h3 className="text-[15px] font-bold leading-snug mt-0.5">{a.title}</h3></button>
+          </div>
+        </div>
+        <p className="text-[13px] text-ink-2 mt-2 line-clamp-2">{a.description}</p>
+        <div className="mt-2 space-y-0.5 text-[12px] text-ink-2">
+          <div className="flex items-center gap-1"><Clock size={12} className="text-ink-3" />{formatDateTime(a.date, a.startTime)} – {formatTime(a.endTime)}</div>
+          <div className="flex items-center gap-1 truncate"><MapPin size={12} className="text-ink-3" />{a.place.name}</div>
+          <div className="flex items-center gap-1"><Users size={12} className="text-ink-3" />{count}{t('명 참가 · 모집')} {a.capacity >= 999 ? t('제한 없음') : `${a.capacity}${t('명')}`} · <Ticket size={12} className="text-ink-3" />{formatFee(a.fee)}{a.joinPolicy !== 'open' && <> · <Lock size={11} />{JOIN_POLICY_LABELS[a.joinPolicy].replace(t(' 참가'), '')}</>}</div>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <button onClick={() => nav(org ? `/orgs/${org.id}` : `/users/${a.hostId}`)} className="flex items-center gap-1.5 min-w-0">
+            {org ? <Avatar emoji={org.logo.emoji} hue={org.logo.hue} url={org.logo.url} size={24} /> : host && <Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} url={host.avatar.url} size={24} />}
+            <span className="text-[12px] text-ink-2 font-medium truncate">{name}{org?.verified && <BadgeCheck size={12} className="inline ml-0.5 text-gold" />}</span>
+          </button>
+          <span className="flex-1" />
+          <JoinButton activity={a} size="sm" />
+        </div>
+      </article>
     );
   }
 

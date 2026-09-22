@@ -23,7 +23,7 @@ interface AppState extends Snapshot {
 const empty: Snapshot = {
   users: [], schools: [], organizations: [], activities: [], participations: [], posts: [],
   relationships: { likes: [], follows: [], friendRequests: [], friends: [], blocks: [] },
-  proposals: [], chatRooms: [], notifications: [], reports: [], opportunities: [], opportunityIntents: [],
+  proposals: [], chatRooms: [], notifications: [], reports: [], opportunities: [], opportunityIntents: [], timePolls: [],
 };
 
 function upsert<T extends { id: ID }>(list: T[], items?: T[], removed?: ID[]) {
@@ -88,6 +88,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       reports: upsert(s.reports, patch.reports),
       opportunities: upsert(s.opportunities, patch.opportunities),
       opportunityIntents: upsert(s.opportunityIntents, patch.opportunityIntents, patch.removed?.opportunityIntents),
+      timePolls: upsert(s.timePolls, patch.timePolls, patch.removed?.timePolls),
       relationships: patch.relationships ? structuredClone(patch.relationships) : s.relationships,
     });
   },
