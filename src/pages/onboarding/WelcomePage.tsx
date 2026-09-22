@@ -1,21 +1,44 @@
 import { useState } from 'react';
 import { t, lang, setLang } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, MapPin, Users, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { GraduationCap, MapPin, Users, Sparkles, Mail } from 'lucide-react';
+import { Button, BottomSheet, Field, Input } from '@/components/ui';
 import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
+import { api, apiMode } from '@/api';
 
 export function WelcomePage() {
   const nav = useNavigate();
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
   const [busy, setBusy] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [hint, setHint] = useState('');
 
   const login = async () => {
     setBusy(true);
     try {
       const user = await api.auth.loginDemo();
+      await setCurrentUser(user);
+      nav('/', { replace: true });
+    } catch (e) { showToast((e as Error).message, 'error'); setBusy(false); }
+  };
+
+  const sendCode = async () => {
+    setBusy(true);
+    try {
+      const r = await api.schools.sendVerificationCode(email.trim(), '');
+      setHint(r.hint);
+      if (r.ok) setSent(true); else showToast(r.hint, 'error');
+    } catch (e) { showToast((e as Error).message, 'error'); } finally { setBusy(false); }
+  };
+
+  const loginWithCode = async () => {
+    setBusy(true);
+    try {
+      const user = await api.auth.loginWithCode(email.trim(), code.trim());
       await setCurrentUser(user);
       nav('/', { replace: true });
     } catch (e) { showToast((e as Error).message, 'error'); setBusy(false); }
@@ -43,10 +66,28 @@ export function WelcomePage() {
         <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary-soft text-primary text-[12px] font-semibold px-3 h-8"><GraduationCap size={14} /> {t('대학생·대학원생·졸업생을 위한 서비스')}</div>
       </div>
       <div className="px-6 pb-10 space-y-2.5 safe-bottom">
-        <Button full size="lg" onClick={login} loading={busy}>{t('로그인 (데모 계정)')}</Button>
-        <Button full size="lg" variant="outline" onClick={() => nav('/onboarding/basic')}>{t('회원가입')}</Button>
+        <Button full size="lg" onClick={() => nav('/onboarding/basic')}>{t('회원가입')}</Button>
+        <Button full size="lg" variant="outline" icon={<Mail size={16} />} onClick={() => setEmailOpen(true)}>{t('이메일로 로그인')}</Button>
+        <Button full size="lg" variant="ghost" onClick={login} loading={busy && !emailOpen}>{t('로그인 (데모 계정)')}</Button>
         <p className="text-center text-[11px] text-ink-3 pt-1">{t('정확한 위치는 다른 사용자에게 절대 공개되지 않아요.')}</p>
       </div>
+
+      <BottomSheet open={emailOpen} onClose={() => setEmailOpen(false)} title={t('이메일로 로그인')}>
+        <div className="space-y-4">
+          <Field label={t('학교 이메일')} hint={hint || t('가입할 때 쓴 학교 이메일로 코드를 보내드려요.')}>
+            <div className="flex gap-2">
+              <Input type="email" autoFocus placeholder="you@school.edu" value={email} onChange={(e) => { setEmail(e.target.value); setSent(false); }} />
+              <Button variant="secondary" onClick={sendCode} loading={busy} disabled={!email.includes('@')}>{t('코드 받기')}</Button>
+            </div>
+          </Field>
+          {sent && (
+            <Field label={t('인증 코드')} hint={apiMode === 'mock' ? t('데모 인증 코드: 123456') : undefined}>
+              <Input inputMode="numeric" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} />
+            </Field>
+          )}
+          <Button full size="lg" onClick={loginWithCode} loading={busy} disabled={!sent || code.trim().length < 6}>{t('로그인')}</Button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

@@ -4,8 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { OpenSlotSheet } from '@/components/social/OpenSlotSheet';
 import { ClassSpaceContent } from '@/pages/classes/ClassPage';
 import { slotSuggestions } from '@/lib/social';
-import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles, Search } from 'lucide-react';
 import type { Course } from '@/types';
+import type { CatalogCourse } from '@/api/types';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState, Avatar } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
@@ -32,6 +33,8 @@ export function TimetablePage() {
   const participations = useAppStore((s) => s.participations);
   const me = v.me;
   const [editing, setEditing] = useState<Course | null>(null);
+  const [catalogQ, setCatalogQ] = useState('');
+  const [catalog, setCatalog] = useState<CatalogCourse[] | null>(null);
   const [slot, setSlot] = useState<{ day: number; block: { start: number; end: number } } | null>(null);
   const [params, setParams] = useSearchParams();
   const [space, setSpace] = useState<string | null>(null);
@@ -64,6 +67,24 @@ export function TimetablePage() {
   const overlaps = friendIds.map((fid) => v.userById(fid)!).filter((f) => f && f.timetable.length > 0 && v.canSeeField(f, 'timetable'))
     .map((f) => ({ f, blocks: overlapBlocks(myFree, freeBlocks(f.timetable, today)) })).filter((x) => x.blocks.length > 0);
   const bestBlock = overlaps.length ? overlaps.flatMap((o) => o.blocks).sort((a, b) => (b.end - b.start) - (a.end - a.start))[0] : null;
+
+  const schoolId = me?.affiliation.type === 'university' ? me.affiliation.schoolId : '';
+  useEffect(() => {
+    if (!editing || editing.id || !schoolId) { setCatalog(null); return; }
+    let alive = true;
+    const h = setTimeout(() => { api.catalog.courses(schoolId, catalogQ).then((r) => { if (alive) setCatalog(r); }).catch(() => { if (alive) setCatalog([]); }); }, 200);
+    return () => { alive = false; clearTimeout(h); };
+  }, [editing, schoolId, catalogQ]);
+
+  /** 수업 목록에서 골라 요일별 수업으로 펼쳐 추가 */
+  const addFromCatalog = async (c: CatalogCourse) => {
+    if (!me || !editing) return;
+    const name = `${c.code} ${c.title}`.slice(0, 60);
+    const hue = editing.hue;
+    const rows: Course[] = c.meetings.map((m) => ({ id: uid('c'), name, day: m.day, start: m.start, end: m.end, room: c.location, professor: c.instructor, hue }));
+    setBusy(true);
+    try { await run(() => api.users.update(me.id, { timetable: [...me.timetable, ...rows] }), `${rows.length}${t('개 수업 시간 추가')}`); setEditing(null); setCatalogQ(''); } catch { /* */ } finally { setBusy(false); }
+  };
 
   const save = async () => {
     if (!editing || !editing.name.trim() || toMin(editing.start) >= toMin(editing.end)) return;
@@ -177,6 +198,24 @@ export function TimetablePage() {
       <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? t('수업 수정') : t('수업 추가')}>
         {editing && (
           <div className="space-y-4">
+            {!editing.id && schoolId && (
+              <div className="rounded-2xl bg-surface-2 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-[13px] font-semibold"><Search size={14} className="text-primary" />{t('학교 수업 목록에서 찾기')}</div>
+                <Input placeholder={t('수업 이름이나 과목 코드로 검색')} value={catalogQ} onChange={(e) => setCatalogQ(e.target.value)} />
+                {catalog && catalog.length > 0 && (
+                  <div className="max-h-44 overflow-y-auto divide-y divide-line rounded-xl bg-white">
+                    {catalog.slice(0, 20).map((c) => (
+                      <button key={c.id} type="button" disabled={busy} onClick={() => addFromCatalog(c)} className="w-full text-left px-3 py-2 press">
+                        <div className="text-[13px] font-semibold">{c.code} <span className="font-medium text-ink-2">{c.title}</span></div>
+                        <div className="text-[11px] text-ink-3">{c.meetings.map((m) => `${DAY_LABELS[m.day]} ${m.start}–${m.end}`).join(' · ')}{c.instructor ? ` · ${c.instructor}` : ''}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {catalog && catalog.length === 0 && catalogQ && <div className="text-[12px] text-ink-3">{t('검색 결과가 없어요. 직접 입력할 수 있어요.')}</div>}
+                <div className="text-[11px] text-ink-3">{t('직접 입력')} ↓</div>
+              </div>
+            )}
             <Field label={t('과목명')} required><Input autoFocus placeholder={t('예: 데이터베이스')} value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
             <div className="grid grid-cols-3 gap-2">
               <Field label={t('요일')} required><Select value={editing.day} onChange={(e) => setEditing({ ...editing, day: Number(e.target.value) })}>{DAY_LABELS.map((d, i) => <option key={d} value={i}>{d}{t('요일')}</option>)}</Select></Field>

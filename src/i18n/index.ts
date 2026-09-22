@@ -4,6 +4,11 @@ export type Lang = 'ko' | 'en';
 const KEY = 'aroundu.lang';
 
 function readLang(): Lang {
+  // 서버(Node)에서는 환경변수로 언어를 정한다
+  try {
+    const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.AROUNDU_LANG;
+    if (env === 'en' || env === 'ko') return env;
+  } catch { /* browser */ }
   try {
     const v = localStorage.getItem(KEY);
     if (v === 'en' || v === 'ko') return v;

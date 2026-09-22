@@ -4,6 +4,7 @@ import type {
 } from '@/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
 import { photo } from '@/lib/assets';
+import { catalogOrganizations } from './catalog/orgs';
 
 const T = todayISO();
 const T1 = addDaysISO(1);
@@ -147,7 +148,7 @@ export const users: User[] = [
   }),
 ];
 
-export const organizations: Organization[] = [
+const demoOrganizations: Organization[] = [
   {
     id: 'o_band', name: 'Cal Indie Collective (band club)', logo: { emoji: '🎸', hue: 280 , url: photo('c_eguitar') }, type: 'club', schoolId: 's_berkeley', verified: true,
     description: 'Student bands since 1987. Fall and spring shows at the student union, weekly jams.',
@@ -217,6 +218,12 @@ export const organizations: Organization[] = [
     regularActivities: ['Mon/Wed/Fri 7pm runs'], notices: [], links: [{ label: 'Strava', url: 'https://strava.com/example' }],
     followerIds: ['u_minjun', 'u_jimin'], memberIds: ['u_minjun'], adminIds: ['u_minjun'], applicantIds: [],
   },
+];
+
+/** 데모 조직 + 캠퍼스 동아리·그리스 조직 목록 (이름이 겹치는 항목은 데모 쪽을 우선) */
+export const organizations: Organization[] = [
+  ...demoOrganizations,
+  ...catalogOrganizations.filter((o) => !demoOrganizations.some((d) => d.schoolId === o.schoolId && d.name.toLowerCase().startsWith(o.name.toLowerCase().split(' (')[0]))),
 ];
 
 export const activities: Activity[] = [
