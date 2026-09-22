@@ -48,6 +48,7 @@ export interface RegisterInput {
   prompts: User['prompts'];
   voicePrompt?: User['voicePrompt'];
   poll?: User['poll'];
+  timetable?: User['timetable'];
   locationPermission: User['settings']['locationPermission'];
   notifications: boolean;
 }

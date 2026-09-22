@@ -120,7 +120,7 @@ export const mockApi: AroundUApi = {
           },
           bio: input.bio, likes: input.likes, freeTime: input.freeTime, height: input.height, availability: input.availability,
           interests: input.interests, purposes: input.purposes, preferredPartner: input.preferredPartner, region: school.region,
-          prompts: input.prompts, voicePrompt: input.voicePrompt, poll: input.poll,
+          prompts: input.prompts, voicePrompt: input.voicePrompt, poll: input.poll, timetable: input.timetable ?? [],
           fieldVisibility: input.fieldVisibility,
           settings: { messagePolicy: 'connected', notifications: input.notifications, locationPermission: input.locationPermission },
           createdAt: new Date().toISOString(),

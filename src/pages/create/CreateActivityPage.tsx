@@ -35,7 +35,7 @@ export function CreateActivityPage() {
 
   const [form, setForm] = useState<ActivityInput>(() => editing ? { ...editing } : {
     kind, category: kind === 'org_event' ? 'club' : 'coffee', title: '', description: '', cover: { emoji: '☕', hue: 30 },
-    date: todayISO(), startTime: '18:00', endTime: '19:30', place: presets[0], capacity: kind === 'personal' ? 4 : 10, fee: 0, conditions: '',
+    date: params.get('date') ?? todayISO(), startTime: params.get('start') ?? '18:00', endTime: params.get('end') ?? '19:30', place: presets[0], capacity: kind === 'personal' ? 4 : 10, fee: 0, conditions: '',
     joinPolicy: kind === 'personal' ? 'open' : 'approval', visibility: 'school', visibilityTargets: [], invitedIds: [], orgId: kind === 'org_event' ? myOrgs[0]?.id : undefined,
   });
   const patch = (p: Partial<ActivityInput>) => setForm((f) => ({ ...f, ...p }));

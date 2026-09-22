@@ -15,6 +15,7 @@ import type { Availability } from '@/types';
 import { PromptAnswerCard, VoicePlayer, PollCard, CompletionMeter } from '@/components/prompts/PromptComponents';
 import { profileCompletion, questionById, MAX_TEXT_PROMPTS } from '@/data/prompts';
 import { Mic, MessageSquareText, Plus } from 'lucide-react';
+import { statusNow, statusLabel } from '@/lib/timetable';
 
 export function ProfilePage() {
   const nav = useNavigate();
@@ -85,9 +86,14 @@ export function ProfilePage() {
           )}
         </div>
 
+        <button onClick={() => nav('/timetable')} className="card w-full p-3.5 flex items-center gap-3 text-left press">
+          <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center"><CalendarDays size={18} /></span>
+          <span className="flex-1"><span className="block text-[11px] text-ink-3">내 시간표</span><b className="text-[14px]">{me.timetable.length ? `${me.timetable.length}개 수업 · ${statusLabel(statusNow(me.timetable))}` : '시간표 만들기'}</b></span>
+          <ChevronRight size={18} className="text-ink-3" />
+        </button>
         <button onClick={() => setAvailOpen(true)} className="card w-full p-3.5 flex items-center gap-3 text-left press">
           <span className="h-10 w-10 rounded-xl bg-mint-soft text-mint grid place-items-center"><Clock size={18} /></span>
-          <span className="flex-1"><span className="block text-[11px] text-ink-3">활동 가능한 시간</span><b className="text-[14px]">{AVAILABILITY_LABELS[me.availability]}</b></span>
+          <span className="flex-1"><span className="block text-[11px] text-ink-3">활동 가능한 시간{me.timetable.length ? ' (시간표 없는 날 기준)' : ''}</span><b className="text-[14px]">{AVAILABILITY_LABELS[me.availability]}</b></span>
           <ChevronRight size={18} className="text-ink-3" />
         </button>
 

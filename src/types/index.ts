@@ -43,7 +43,20 @@ export interface CompanyAffiliation {
 
 export type Affiliation = UniversityAffiliation | CompanyAffiliation;
 
-export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts' | 'prompts';
+export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts' | 'prompts' | 'timetable';
+
+/** 시간표 수업. 요일 0=월 … 6=일 */
+export interface Course {
+  id: ID;
+  name: string;
+  day: number;
+  start: string;
+  end: string;
+  /** 강의실 — 본인에게만 보이며 절대 공개되지 않는다 */
+  room?: string;
+  professor?: string;
+  hue: number;
+}
 
 /** 프로필 질문(텍스트) — 질문 풀에서 골라 짧게 답한다 */
 export interface ProfilePrompt {
@@ -89,6 +102,8 @@ export interface User {
   prompts: ProfilePrompt[];
   voicePrompt?: VoicePrompt;
   poll?: PollPrompt;
+  /** 시간표 — 다른 사용자에게는 공강 여부만 공개된다 */
+  timetable: Course[];
   fieldVisibility: Record<ProfileField, Visibility>;
   settings: {
     messagePolicy: 'connected' | 'friends_only' | 'none';

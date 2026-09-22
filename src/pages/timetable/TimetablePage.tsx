@@ -1,0 +1,170 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
+import type { Course } from '@/types';
+import { TopBar } from '@/components/layout/TopBar';
+import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState } from '@/components/ui';
+import { useViewer } from '@/hooks/useViewer';
+import { useAppStore } from '@/store/useAppStore';
+import { api } from '@/api';
+import { DAY_LABELS, GRID_START, GRID_END, toMin, toHHMM, freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, jsDayToIdx, fmtBlock, fmtHours } from '@/lib/timetable';
+import { friendsOf } from '@/lib/relations';
+import { uid, addDaysISO } from '@/lib/format';
+import { CATEGORY_COLORS, CATEGORY_EMOJI } from '@/lib/labels';
+import { cn } from '@/lib/cn';
+
+const HOUR_PX = 44;
+const HUES = [220, 160, 15, 280, 45, 330, 120, 200, 60, 300];
+
+const emptyCourse = (day: number): Course => ({ id: '', name: '', day, start: '10:00', end: '11:15', room: '', hue: HUES[Math.floor(Math.random() * HUES.length)] });
+
+export function TimetablePage() {
+  const nav = useNavigate();
+  const v = useViewer();
+  const run = useAppStore((s) => s.run);
+  const status = useAppStore((s) => s.status);
+  const error = useAppStore((s) => s.error);
+  const init = useAppStore((s) => s.init);
+  const participations = useAppStore((s) => s.participations);
+  const me = v.me;
+  const [editing, setEditing] = useState<Course | null>(null);
+  const [busy, setBusy] = useState(false);
+  const today = todayIdx();
+  const showWeekend = me.timetable.some((c) => c.day >= 5);
+  const days = showWeekend ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4];
+  const hours = Array.from({ length: GRID_END - GRID_START }, (_, i) => GRID_START + i);
+
+  // 이번 주 참가 활동을 요일 블록으로
+  const weekActs = useMemo(() => {
+    const monday = new Date(); monday.setDate(monday.getDate() - today);
+    const start = monday.toISOString().slice(0, 10); const end = addDaysISO(6, monday);
+    return v.visibleActivities.filter((a) => a.date >= start && a.date <= end && (a.hostId === me.id || participations.some((p) => p.activityId === a.id && p.userId === me.id && p.status === 'approved')))
+      .map((a) => ({ a, day: jsDayToIdx(new Date(a.date).getDay()) }));
+  }, [v.visibleActivities, participations, me.id, today]);
+
+  const now = statusNow(me.timetable);
+  const myFree = freeBlocks(me.timetable, today);
+  const friendIds = friendsOf(v.snap, me.id);
+  const overlaps = friendIds.map((fid) => v.userById(fid)!).filter((f) => f && f.timetable.length > 0 && v.canSeeField(f, 'timetable'))
+    .map((f) => ({ f, blocks: overlapBlocks(myFree, freeBlocks(f.timetable, today)) })).filter((x) => x.blocks.length > 0);
+  const bestBlock = overlaps.length ? overlaps.flatMap((o) => o.blocks).sort((a, b) => (b.end - b.start) - (a.end - a.start))[0] : null;
+
+  const save = async () => {
+    if (!editing || !editing.name.trim() || toMin(editing.start) >= toMin(editing.end)) return;
+    setBusy(true);
+    const course = { ...editing, id: editing.id || uid('c'), room: editing.room?.trim() || undefined };
+    const next = editing.id ? me.timetable.map((c) => (c.id === course.id ? course : c)) : [...me.timetable, course];
+    try { await run(() => api.users.update(me.id, { timetable: next }), editing.id ? '수업을 수정했어요.' : '수업을 추가했어요.'); setEditing(null); } catch { /* */ } finally { setBusy(false); }
+  };
+  const remove = async () => {
+    if (!editing?.id) return;
+    setBusy(true);
+    try { await run(() => api.users.update(me.id, { timetable: me.timetable.filter((c) => c.id !== editing.id) }), '수업을 삭제했어요.'); setEditing(null); } catch { /* */ } finally { setBusy(false); }
+  };
+
+  if (status === 'loading') return <div><TopBar back title="시간표" /><CardSkeleton count={2} /></div>;
+  if (status === 'error') return <div><TopBar back title="시간표" /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
+
+  return (
+    <div className="min-h-full pb-28">
+      <TopBar back title="내 시간표" messages right={<VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label="공강 시간 공개 범위" />} />
+      <div className="px-4 pt-2 space-y-3">
+        {me.timetable.length > 0 && (
+          <div className={cn('card p-3.5 flex items-center gap-3', now.kind === 'in_class' ? 'bg-[linear-gradient(120deg,#FFF4DE,#FFFFFF)]' : 'bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]')}>
+            <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', now.kind === 'in_class' ? 'bg-gold' : 'bg-mint')} />
+            <div className="flex-1 min-w-0">
+              <b className="text-[14px]">{DAY_LABELS[today]}요일 · {statusLabel(now)}</b>
+              <div className="text-[12px] text-ink-3 truncate">{now.kind === 'in_class' ? `${now.course.name}${now.course.room ? ` · ${now.course.room}` : ''}` : now.kind === 'free' && now.next ? `다음 수업 ${now.next.start} ${now.next.name}` : '오늘 남은 시간은 자유예요'}</div>
+            </div>
+            <Tag>{me.timetable.length}개 수업</Tag>
+          </div>
+        )}
+
+        {me.timetable.length === 0 ? (
+          <EmptyState emoji="📅" title="시간표가 비어 있어요" description="수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요."
+            action={<Button icon={<Plus size={16} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>첫 수업 추가</Button>} />
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="grid" style={{ gridTemplateColumns: `34px repeat(${days.length}, 1fr)` }}>
+              <div />
+              {days.map((d) => <div key={d} className={cn('text-center text-[12px] font-bold py-2', d === today ? 'text-primary' : 'text-ink-3')}>{DAY_LABELS[d]}</div>)}
+            </div>
+            <div className="grid border-t border-line" style={{ gridTemplateColumns: `34px repeat(${days.length}, 1fr)`, height: hours.length * HOUR_PX }}>
+              <div className="relative">{hours.map((h, i) => <div key={h} className="absolute right-1.5 text-[10px] text-ink-3 tabular-nums" style={{ top: i * HOUR_PX + 2 }}>{h}</div>)}</div>
+              {days.map((d) => (
+                <div key={d} className={cn('relative border-l border-line', d === today && 'bg-primary-soft/30')} onClick={(e) => { const y = e.nativeEvent.offsetY; const h = GRID_START + Math.floor(y / HOUR_PX); setEditing({ ...emptyCourse(d), start: toHHMM(h * 60), end: toHHMM(h * 60 + 75) }); }}>
+                  {hours.map((h, i) => <div key={h} className="absolute left-0 right-0 border-t border-line/70" style={{ top: i * HOUR_PX }} />)}
+                  {me.timetable.filter((c) => c.day === d).map((c) => (
+                    <button key={c.id} onClick={(e) => { e.stopPropagation(); setEditing(c); }} className="absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-left overflow-hidden press"
+                      style={{ top: (toMin(c.start) - GRID_START * 60) / 60 * HOUR_PX, height: (toMin(c.end) - toMin(c.start)) / 60 * HOUR_PX - 2, background: `hsl(${c.hue} 80% 90%)`, borderLeft: `3px solid hsl(${c.hue} 70% 55%)` }}>
+                      <div className="text-[10px] font-bold leading-tight line-clamp-2" style={{ color: `hsl(${c.hue} 60% 30%)` }}>{c.name}</div>
+                      {c.room && <div className="text-[9px] text-ink-3 truncate">{c.room}</div>}
+                    </button>
+                  ))}
+                  {weekActs.filter((x) => x.day === d).map(({ a }) => (
+                    <button key={a.id} onClick={(e) => { e.stopPropagation(); nav(`/activities/${a.id}`); }} className="absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-left overflow-hidden press border-2 border-dashed"
+                      style={{ top: Math.max(0, (toMin(a.startTime) - GRID_START * 60) / 60 * HOUR_PX), height: Math.max(22, (toMin(a.endTime) - toMin(a.startTime)) / 60 * HOUR_PX - 2), borderColor: CATEGORY_COLORS[a.category], background: `${CATEGORY_COLORS[a.category]}18` }}>
+                      <div className="text-[10px] font-bold leading-tight line-clamp-2" style={{ color: CATEGORY_COLORS[a.category] }}>{CATEGORY_EMOJI[a.category]} {a.title}</div>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="px-3 py-2 text-[11px] text-ink-3 flex items-center gap-3 border-t border-line"><span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary-soft border-l-2 border-primary mr-1 align-middle" />수업</span><span><span className="inline-block h-2.5 w-2.5 rounded-sm border-2 border-dashed border-mint mr-1 align-middle" />참가 활동</span><span className="ml-auto">빈 칸을 탭해 수업 추가</span></div>
+          </div>
+        )}
+
+        {me.timetable.length > 0 && (
+          <div className="card p-4">
+            <b className="text-[14px] flex items-center gap-1.5"><Users size={15} className="text-primary" />오늘 공강이 겹치는 친구</b>
+            {overlaps.length === 0 ? (
+              <p className="text-[12px] text-ink-3 mt-2">{friendIds.length === 0 ? '친구를 추가하면 공강이 겹치는 시간을 알려드려요.' : '오늘은 겹치는 공강이 없어요. 친구가 시간표를 공개하면 여기에 보여요.'}</p>
+            ) : (
+              <>
+                <div className="mt-2 rounded-xl bg-primary-soft px-3 py-2.5 text-[13px] flex items-center gap-2"><Sparkles size={14} className="text-primary shrink-0" /><span><b>{bestBlock && fmtBlock(bestBlock)}</b>에 시간이 맞는 친구가 <b>{overlaps.filter((o) => o.blocks.some((b) => bestBlock && b.start <= bestBlock.start && b.end >= bestBlock.end)).length}명</b> 있어요. 활동을 만들어볼까요?</span></div>
+                <div className="mt-2 divide-y divide-line">
+                  {overlaps.map(({ f, blocks }) => (
+                    <button key={f.id} onClick={() => nav(`/users/${f.id}`)} className="w-full flex items-center gap-3 py-2.5 text-left press">
+                      <span className="h-9 w-9 rounded-full grid place-items-center text-lg shrink-0" style={{ background: `hsl(${f.avatar.hue} 80% 88%)` }}>{f.avatar.emoji}</span>
+                      <span className="flex-1 min-w-0"><b className="text-[13px]">{f.nickname}</b><span className="block text-[12px] text-ink-3 truncate">{blocks.map((b) => `${fmtBlock(b)} (${fmtHours(b)})`).join(' · ')}</span></span>
+                      <ChevronRight size={16} className="text-ink-3" />
+                    </button>
+                  ))}
+                </div>
+                {bestBlock && <Button full size="sm" className="mt-2" icon={<CalendarPlus size={15} />} onClick={() => nav(`/create/activity?kind=personal&start=${toHHMM(bestBlock.start)}&end=${toHHMM(Math.min(bestBlock.end, bestBlock.start + 90))}`)}>{fmtBlock({ start: bestBlock.start, end: Math.min(bestBlock.end, bestBlock.start + 90) })} 활동 만들기</Button>}
+              </>
+            )}
+          </div>
+        )}
+
+        <p className="text-[11px] text-ink-3 flex items-start gap-1.5 px-1"><Lock size={12} className="shrink-0 mt-0.5" />다른 사용자에게는 전체 시간표가 아닌 공강 여부만 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.</p>
+      </div>
+
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
+        <Button full size="lg" icon={<Plus size={18} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>수업 추가</Button>
+      </div>
+
+      <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? '수업 수정' : '수업 추가'}>
+        {editing && (
+          <div className="space-y-4">
+            <Field label="과목명" required><Input autoFocus placeholder="예: 데이터베이스" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="요일" required><Select value={editing.day} onChange={(e) => setEditing({ ...editing, day: Number(e.target.value) })}>{DAY_LABELS.map((d, i) => <option key={d} value={i}>{d}요일</option>)}</Select></Field>
+              <Field label="시작" required><Input type="time" value={editing.start} onChange={(e) => setEditing({ ...editing, start: e.target.value })} /></Field>
+              <Field label="종료" required><Input type="time" value={editing.end} onChange={(e) => setEditing({ ...editing, end: e.target.value })} /></Field>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="강의실 (나만 보기)"><Input placeholder="예: 공학관 B103" value={editing.room ?? ''} onChange={(e) => setEditing({ ...editing, room: e.target.value })} /></Field>
+              <Field label="교수 (선택)"><Input value={editing.professor ?? ''} onChange={(e) => setEditing({ ...editing, professor: e.target.value })} /></Field>
+            </div>
+            <Field label="색상"><div className="flex flex-wrap gap-1.5">{HUES.map((h) => <button key={h} type="button" onClick={() => setEditing({ ...editing, hue: h })} className={cn('h-7 w-7 rounded-full', editing.hue === h && 'ring-2 ring-offset-2 ring-ink')} style={{ background: `hsl(${h} 75% 70%)` }} aria-label={`색상 ${h}`} />)}</div></Field>
+            <div className="flex gap-2">
+              {editing.id && <Button variant="danger" icon={<Trash2 size={16} />} onClick={remove} loading={busy}>삭제</Button>}
+              <Button full loading={busy} disabled={!editing.name.trim() || toMin(editing.start) >= toMin(editing.end)} onClick={save}>{editing.id ? '수정' : '추가'}</Button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+    </div>
+  );
+}

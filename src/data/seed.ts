@@ -12,7 +12,7 @@ const T9 = addDaysISO(9);
 export const DEMO_USER_ID = 'u_me';
 
 const defaultVisibility = (v: Visibility = 'school'): Record<ProfileField, Visibility> => ({
-  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v, prompts: 'public',
+  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v, prompts: 'public', timetable: 'friends',
 });
 
 export const schools: School[] = [
@@ -42,6 +42,7 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
   purposes: ['friend'],
   region: '신촌',
   prompts: [],
+  timetable: [],
   fieldVisibility: defaultVisibility(),
   settings: { messagePolicy: 'connected', notifications: true, locationPermission: 'granted' },
   createdAt: isoHoursAgo(24 * 30),
@@ -64,6 +65,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_now', answer: '정문 카페에서 커피 마시면서 사이드 프로젝트 얘기' }, { questionId: 'q_spot', answer: '중도 4층 창가, 오후엔 햇빛이 딱 좋아요' }, { questionId: 'q_ask_me', answer: '리액트, 신촌 카페 지도, 전시 추천' }],
     voicePrompt: { questionId: 'v_now', durationSec: 18, recordedAt: isoHoursAgo(40) },
     poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 0, votes: { u_sua: 0, u_jimin: 2 } },
+    timetable: [{ id: 'c1', name: '데이터베이스', day: 0, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c2', name: '운영체제', day: 0, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c3', name: '데이터베이스', day: 2, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c4', name: '운영체제', day: 2, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c5', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', room: '경영관 201', hue: 15 }, { id: 'c6', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', room: '공학관 세미나실', hue: 280 }, { id: 'c7', name: '영어 회화', day: 4, start: '11:00', end: '12:15', room: '외솔관 302', hue: 45 }],
   }),
   mk({
     id: 'u_jimin', nickname: '지민', birthYear: 2002, gender: 'female',
@@ -79,6 +81,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_now', answer: '오늘 6시 신촌에서 커피, 창업 얘기 환영' }, { questionId: 'q_cafe', answer: '커피리브레 신촌점 플랫화이트' }, { questionId: 'q_always', answer: '전시회. 특히 사진전' }, { questionId: 'q_role', answer: '분위기 메이커 겸 일정 잡는 사람' }],
     voicePrompt: { questionId: 'v_campus', durationSec: 24, recordedAt: isoHoursAgo(70) },
     poll: { questionId: 'p_first', options: ['커피', '밥', '같이 운동'], ownChoice: 0, votes: { u_sua: 0, u_taeho: 1, u_hana: 0 } },
+    timetable: [{ id: 'c1', name: '마케팅 원론', day: 0, start: '10:30', end: '11:45', hue: 20 }, { id: 'c2', name: '마케팅 원론', day: 2, start: '10:30', end: '11:45', hue: 20 }, { id: 'c3', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', hue: 15 }, { id: 'c4', name: '회계 원리', day: 3, start: '13:00', end: '14:15', hue: 200 }],
   }),
   mk({
     id: 'u_dohyun', nickname: '도현', birthYear: 2000, gender: 'male',
@@ -93,6 +96,7 @@ export const users: User[] = [
     nowWant: 'LLM 논문 같이 읽을 분',
     prompts: [{ questionId: 'q_project', answer: '멀티모달 LLM 논문 리뷰, 학부생 세미나 준비' }, { questionId: 'q_study_type', answer: '조용히 각자 읽고 30분 토론' }, { questionId: 'q_hobby', answer: '클라이밍. 초보 같이 가요' }],
     poll: { questionId: 'p_study', options: ['중도 붙박이', '카페 노마드', '집에서 벼락치기'], ownChoice: 0, votes: { u_yuna: 0 } },
+    timetable: [{ id: 'c1', name: '고급 기계학습', day: 1, start: '10:00', end: '12:45', hue: 170 }, { id: 'c2', name: '연구실 세미나', day: 2, start: '16:00', end: '17:30', hue: 190 }],
   }),
   mk({
     id: 'u_seoyeon', nickname: '서연', birthYear: 2003, gender: 'female',
@@ -107,6 +111,7 @@ export const users: User[] = [
     nowWant: '주말에 공연 같이 볼 사람',
     prompts: [{ questionId: 'q_into', answer: '요즘 90년대 브릿팝 다시 파는 중' }, { questionId: 'q_free_day', answer: '토요일 오후. 공연 보러 가요' }, { questionId: 'q_emoji', answer: '🎸🐈🍜' }],
     voicePrompt: { questionId: 'v_song', durationSec: 29, recordedAt: isoHoursAgo(100) },
+    timetable: [{ id: 'c1', name: '심리통계', day: 0, start: '09:00', end: '10:15', hue: 200 }, { id: 'c2', name: '인지심리학', day: 0, start: '15:00', end: '16:15', hue: 300 }, { id: 'c3', name: '심리통계', day: 2, start: '09:00', end: '10:15', hue: 200 }, { id: 'c4', name: '발달심리학', day: 1, start: '13:00', end: '14:15', hue: 120 }, { id: 'c5', name: '음악의 이해', day: 3, start: '10:00', end: '11:15', hue: 280 }],
   }),
   mk({
     id: 'u_minjun', nickname: '민준', birthYear: 2001, gender: 'male',
@@ -174,6 +179,7 @@ export const users: User[] = [
     interests: ['club', 'exhibition', 'meal', 'coffee'],
     purposes: ['club', 'friend'],
     prompts: [{ questionId: 'q_project', answer: '가을 정기공연 준비 중' }, { questionId: 'q_role', answer: '총무 겸 기타' }, { questionId: 'q_cafe', answer: '학생회관 지하 라멘집' }],
+    timetable: [{ id: 'c1', name: '컴파일러', day: 0, start: '11:00', end: '12:15', hue: 240 }, { id: 'c2', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', hue: 280 }, { id: 'c3', name: '컴파일러', day: 2, start: '11:00', end: '12:15', hue: 240 }, { id: 'c4', name: '네트워크', day: 1, start: '09:00', end: '10:15', hue: 180 }, { id: 'c5', name: '네트워크', day: 3, start: '09:00', end: '10:15', hue: 180 }],
   }),
   mk({
     id: 'u_sua', nickname: '수아', birthYear: 2004, gender: 'female',
@@ -188,6 +194,7 @@ export const users: User[] = [
     nowWant: '지금 백양로 산책 가실 분',
     prompts: [{ questionId: 'q_now', answer: '백양로 산책 30분' }, { questionId: 'q_gap', answer: '알고리즘 문제 하나 풀고 산책' }, { questionId: 'q_want_person', answer: '코딩 같이 배울 사람' }],
     poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 2, votes: { u_me: 2 } },
+    timetable: [{ id: 'c1', name: '자료구조', day: 0, start: '09:00', end: '10:15', hue: 220 }, { id: 'c2', name: '자료구조', day: 2, start: '09:00', end: '10:15', hue: 220 }, { id: 'c3', name: '이산수학', day: 1, start: '10:30', end: '11:45', hue: 60 }, { id: 'c4', name: '이산수학', day: 3, start: '10:30', end: '11:45', hue: 60 }, { id: 'c5', name: '글쓰기', day: 4, start: '13:00', end: '14:15', hue: 330 }],
   }),
   mk({
     id: 'u_woojin', nickname: '우진', birthYear: 2001, gender: 'male',

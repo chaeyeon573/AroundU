@@ -2,13 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, UserPlus, Clock, MapPin, X, Sparkles } from 'lucide-react';
 import type { User } from '@/types';
 import { Portrait, VerifiedBadge, Tag, Button } from '@/components/ui';
-import { AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS } from '@/lib/labels';
+import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS } from '@/lib/labels';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { commonInterests } from '@/lib/relations';
 import { cn } from '@/lib/cn';
 import { PromptAnswerCard } from '@/components/prompts/PromptComponents';
+import { availabilityText } from '@/lib/timetable';
 
 interface Props {
   user: User;
@@ -35,7 +36,8 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
   const liked = v.iLike(user.id);
   const following = v.isFollowing(user.id);
   const common = commonInterests(v.me, user);
-  const showAvail = v.canSeeField(user, 'availability') && user.availability !== 'hidden';
+  const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
+  const showAvail = avail.auto || (v.canSeeField(user, 'availability') && user.availability !== 'hidden');
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
@@ -65,7 +67,7 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
           {common.length > 0 && <Tag tone="mint"><Sparkles size={11} /> 공통 {common.length}</Tag>}
         </div>
         <div className="text-[12px] text-ink-2 space-y-0.5">
-          {showAvail && <div className="flex items-center gap-1"><Clock size={12} className="text-ink-3" />{AVAILABILITY_LABELS[user.availability]}</div>}
+          {showAvail && <div className="flex items-center gap-1"><Clock size={12} className="text-ink-3" />{avail.text}{avail.auto && <span className="text-[10px] text-mint font-semibold ml-0.5">시간표</span>}</div>}
           <div className="flex items-center gap-1"><MapPin size={12} className="text-ink-3" />{user.region} 근처 · {user.purposes.slice(0, 2).map((p) => PURPOSE_LABELS[p]).join(', ')}</div>
         </div>
         {v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? <PromptAnswerCard prompt={user.prompts[0]} compact />

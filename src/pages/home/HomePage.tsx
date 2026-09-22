@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
-import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle } from '@/components/ui';
+import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, IconButton } from '@/components/ui';
+import { freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, fmtBlock, toHHMM } from '@/lib/timetable';
 import { PersonCard } from '@/components/cards/PersonCard';
 import { ActivityCard } from '@/components/cards/ActivityCard';
 import { PostCard } from '@/components/cards/PostCard';
@@ -44,6 +45,13 @@ export function HomePage() {
   const others = acts.filter((a) => !friendActs.includes(a) && !orgEvents.includes(a) && !officialEvents.includes(a) && !smallGroups.includes(a) && a.hostId !== me.id);
   const popularPost = [...v.visiblePosts].sort((a, b) => b.likeIds.length - a.likeIds.length).find((p) => p.likeIds.length >= 3 && posts.includes(p));
   const overlapFriends = v.visibleUsers.filter((u) => friendIds.has(u.id) && u.availability === me.availability && me.availability !== 'hidden' && me.availability !== 'in_class');
+  // 시간표 기반: 오늘 공강이 겹치는 친구
+  const ttNow = statusNow(me.timetable);
+  const myFree = freeBlocks(me.timetable, todayIdx());
+  const ttOverlaps = me.timetable.length ? v.visibleUsers.filter((u) => friendIds.has(u.id) && u.timetable.length > 0 && v.canSeeField(u, 'timetable'))
+    .map((u) => ({ u, blocks: overlapBlocks(myFree, freeBlocks(u.timetable, todayIdx())) })).filter((x) => x.blocks.length > 0) : [];
+  const ttBest = ttOverlaps.length ? ttOverlaps.flatMap((o) => o.blocks).sort((a, b) => (b.end - b.start) - (a.end - a.start))[0] : null;
+  const ttBestCount = ttBest ? ttOverlaps.filter((o) => o.blocks.some((b) => b.start <= ttBest.start && b.end >= ttBest.end)).length : 0;
 
   const isEmpty = people.length === 0 && acts.length === 0;
 
@@ -52,6 +60,7 @@ export function HomePage() {
       <TopBar
         title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : '학교 선택'} <ChevronDown size={16} className="text-ink-3" /></button>}
         bell messages
+        right={<IconButton onClick={() => nav('/timetable')} aria-label="시간표"><CalendarDays size={22} /></IconButton>}
       />
       <div className="px-4 pt-2 flex gap-2">
         <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />사람, 활동, 동아리 검색</button>
@@ -69,7 +78,21 @@ export function HomePage() {
 
       {status === 'ready' && !isEmpty && (
         <div className="space-y-6 pt-4">
-          {overlapFriends.length > 0 && (
+          {me.timetable.length === 0 && (
+            <button onClick={() => nav('/timetable')} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press">
+              <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center shrink-0"><CalendarDays size={18} /></span>
+              <span className="flex-1 text-[13px] leading-snug"><b>시간표를 추가해보세요</b><br /><span className="text-ink-2">공강 시간에 맞는 친구와 활동을 추천해드려요.</span></span>
+              <ChevronRight size={18} className="text-ink-3" />
+            </button>
+          )}
+          {ttBest && (
+            <button onClick={() => nav(`/create/activity?kind=personal&start=${toHHMM(ttBest.start)}&end=${toHHMM(Math.min(ttBest.end, ttBest.start + 90))}`)} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]">
+              <span className="h-10 w-10 rounded-xl bg-mint text-white grid place-items-center shrink-0"><CalendarDays size={18} /></span>
+              <span className="flex-1 text-[13px] leading-snug"><b>오늘 {fmtBlock(ttBest)} 공강이 겹치는 친구가 {ttBestCount}명 있어요.</b><br /><span className="text-ink-2">{statusLabel(ttNow)} · 활동을 만들어볼까요?</span></span>
+              <ChevronRight size={18} className="text-ink-3" />
+            </button>
+          )}
+          {overlapFriends.length > 0 && !ttBest && (
             <button onClick={() => nav('/create/activity?kind=personal')} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E9EDFF,#FFFFFF)]">
               <span className="h-10 w-10 rounded-xl bg-primary text-white grid place-items-center shrink-0"><Zap size={18} /></span>
               <span className="flex-1 text-[13px] leading-snug"><b>{AVAILABILITY_LABELS[me.availability].replace(' 가능', '')} 시간이 맞는 친구가 {overlapFriends.length}명 있어요.</b><br /><span className="text-ink-2">활동을 만들어볼까요?</span></span>

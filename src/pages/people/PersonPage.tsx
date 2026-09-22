@@ -10,13 +10,14 @@ import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ALL_CATEGORIES, CATEGORY_EMOJI, CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/labels';
+import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ALL_CATEGORIES, CATEGORY_EMOJI, CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/labels';
 import { commonInterests, mutualFriends } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
 import type { ActivityCategory } from '@/types';
 import { cn } from '@/lib/cn';
 import { PromptAnswerCard, VoicePlayer, PollCard } from '@/components/prompts/PromptComponents';
 import { questionById } from '@/data/prompts';
+import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@/lib/timetable';
 
 export function PersonPage() {
   const { id } = useParams();
@@ -106,7 +107,12 @@ export function PersonPage() {
           <Block label="관심사" visible><div className="flex flex-wrap gap-1.5">{user.interests.map((i) => <Chip key={i} size="sm" active={common.includes(i)}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div></Block>
           <Block label="하고 싶은 활동" visible={see('freeTime')}>{user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 mb-1.5">“{user.nowWant}”</div>}<p className="text-[13px] text-ink-2">{user.freeTime || '아직 작성하지 않았어요'}</p></Block>
           <Block label="좋아하는 것" visible={see('likes')}><p className="text-[13px] text-ink-2">{user.likes || '—'}</p></Block>
-          <Block label="활동 가능한 시간" visible={see('availability') && user.availability !== 'hidden'}><p className="text-[13px] text-ink-2 flex items-center gap-1"><Clock size={13} className="text-ink-3" />{AVAILABILITY_LABELS[user.availability]}</p></Block>
+          <Block label="활동 가능한 시간" visible={see('timetable') && user.timetable.length > 0 ? true : see('availability') && user.availability !== 'hidden'}>
+            <p className="text-[13px] text-ink-2 flex items-center gap-1"><Clock size={13} className="text-ink-3" />{availabilityText(user, see('timetable')).text}</p>
+            {see('timetable') && user.timetable.length > 0 && (() => { const fb = freeBlocks(user.timetable, todayIdx()); const ov = v.me.timetable.length ? overlapBlocks(freeBlocks(v.me.timetable, todayIdx()), fb) : []; return (
+              <div className="mt-1.5 flex flex-wrap gap-1">{fb.map((b) => <Tag key={b.start} tone={ov.some((o) => o.start <= b.start && o.end >= b.end) ? 'mint' : 'neutral'}>{fmtBlock(b)}</Tag>)}<span className="text-[11px] text-ink-3 w-full">오늘 공강 · 초록은 나와 겹치는 시간 · 전체 시간표와 강의실은 비공개</span></div>
+            ); })()}
+          </Block>
           <Block label="이용 목적" visible={see('purposes')}><div className="flex flex-wrap gap-1.5">{user.purposes.map((p) => <Tag key={p}>{PURPOSE_LABELS[p]}</Tag>)}</div></Block>
           <Block label="지역" visible><p className="text-[13px] text-ink-2 flex items-center gap-1"><MapPin size={13} className="text-ink-3" />{user.region} 근처 <span className="text-ink-3 text-[11px]">· 정확한 위치는 공개되지 않아요</span></p></Block>
           {see('height') && user.height && <Block label="키" visible><p className="text-[13px] text-ink-2">{user.height}cm</p></Block>}
