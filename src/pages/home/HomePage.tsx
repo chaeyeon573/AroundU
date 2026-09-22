@@ -1,19 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, UserPlus, Coffee, Compass, Undo2, Clock, Heart, MessageCircle, Sparkles, CheckCircle2, Clock3, BookmarkPlus } from 'lucide-react';
+import { Search, ChevronDown, UserPlus, Coffee, Heart, MessageCircle, CheckCircle2, Clock } from 'lucide-react';
 import { t, lang } from '@/i18n';
 import { TopBar } from '@/components/layout/TopBar';
 import { LAST_SEEN_KEY } from '@/components/layout/BottomNav';
-import { Chip, ChipRow, CardSkeleton, EmptyState, ErrorState, Button, Portrait, VerifiedBadge, Tag, Avatar, BottomSheet } from '@/components/ui';
+import { Chip, ChipRow, CardSkeleton, EmptyState, ErrorState, Button, Portrait, VerifiedBadge, Avatar, BottomSheet } from '@/components/ui';
 import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { INTEREST_EMOJI, INTEREST_LABELS, MEET_PREF_LABELS } from '@/lib/labels';
+import { INTEREST_EMOJI, INTEREST_LABELS } from '@/lib/labels';
 import { commonInterests, friendsOf } from '@/lib/relations';
 import { matchScore, type Reason } from '@/lib/recommend';
 import { availabilityText } from '@/lib/timetable';
-import { todayISO } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { User } from '@/types';
 
@@ -21,12 +20,8 @@ const FILTERS = [
   { key: 'all', label: '전체' }, { key: 'friends', label: '친구' }, { key: 'food', label: '밥·카페' }, { key: 'study', label: '공부' }, { key: 'exercise', label: '운동' }, { key: 'hobby', label: '취미' }, { key: 'startup', label: '창업·프로젝트' },
 ] as const;
 type Filter = typeof FILTERS[number]['key'];
-type SeenAction = 'skip' | 'like' | 'later' | 'friend';
-interface Seen { id: string; action: SeenAction; at: string }
-const SEEN_KEY = `aroundu.people.seen.${todayISO()}`;
-const loadSeen = (): Seen[] => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]'); } catch { return []; } };
 
-/** 첫 번째 탭: 사람 — 한 번에 한 명, 왜 추천됐는지와 함께 */
+/** 첫 번째 탭: 사람 — 한 번에 한 명, 옆으로 넘겨 본다. 넘기기·거절은 없다 */
 export function HomePage() {
   const nav = useNavigate();
   const status = useAppStore((s) => s.status);
@@ -39,12 +34,10 @@ export function HomePage() {
   const v = useViewer();
   const me = v.me;
   const [filter, setFilter] = useState<Filter>('all');
-  const [seen, setSeen] = useState<Seen[]>(loadSeen);
-  const [history, setHistory] = useState<Seen[]>([]);
-  const [seenOpen, setSeenOpen] = useState(false);
+  const [idx, setIdx] = useState(0);
   const [matched, setMatched] = useState<User | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
   const friendIds = useMemo(() => new Set(friendsOf(v.snap, me.id)), [v.snap, me.id]);
-  useEffect(() => { try { localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); } catch { /* */ } }, [seen]);
 
   const scored = useMemo(() => v.visibleUsers
     .map((u) => ({ u, ...matchScore(me, u, { opportunities: opps, opportunityIntents: intents }, v.canSeeField(u, 'timetable')) }))
@@ -61,38 +54,19 @@ export function HomePage() {
       default: return true;
     }
   };
-  const seenIds = new Set(seen.map((s) => s.id));
-  const deck = scored.filter((x) => passes(x.u) && !seenIds.has(x.u.id)).sort((a, b) => b.score - a.score);
-  const laterDeck = scored.filter((x) => passes(x.u) && seen.find((s) => s.id === x.u.id)?.action === 'later');
-  const cards = deck.length ? deck : laterDeck;
-  const current = cards[0];
-  useEffect(() => { try { if (current) localStorage.setItem(LAST_SEEN_KEY, current.u.id); } catch { /* */ } }, [current]);
+  const cards = scored.filter((x) => passes(x.u)).sort((a, b) => b.score - a.score).slice(0, 20);
+  const current = cards[Math.min(idx, cards.length - 1)];
+  try { if (current) localStorage.setItem(LAST_SEEN_KEY, current.u.id); } catch { /* */ }
 
-  const mark = (u: User, action: SeenAction) => {
-    const rec = { id: u.id, action, at: new Date().toISOString() };
-    setSeen((s) => [...s.filter((x) => x.id !== u.id), rec]);
-    setHistory((h) => [...h, rec]);
-  };
-  const skip = (u: User) => mark(u, 'skip');
   const like = async (u: User) => {
-    mark(u, 'like');
-    if (v.iLike(u.id)) return;
-    try { const res = await run(() => api.relationships.toggleLike(me.id, u.id)); if (res.mutual) setMatched(u); else showToast(`${u.nickname}${t('님에게 관심을 표시했어요. 상대에게는 보이지 않아요.')}`); } catch { /* */ }
+    try { const res = await run(() => api.relationships.toggleLike(me.id, u.id)); if (res.mutual) setMatched(u); else if (!v.iLike(u.id)) showToast(`${u.nickname}${t('님에게 관심을 표시했어요. 상대에게는 보이지 않아요.')}`); } catch { /* */ }
   };
   const friend = async (u: User) => {
-    mark(u, 'friend');
     if (v.isFriend(u.id) || v.pendingOut(u.id)) return;
     try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
   };
-  const undo = () => {
-    const last = history[history.length - 1];
-    if (!last) return;
-    setHistory((h) => h.slice(0, -1));
-    setSeen((s) => s.filter((x) => x.id !== last.id));
-  };
   const openChat = async (u: User) => { try { const res = await run(() => api.chats.openDirect(me.id, u.id)); setMatched(null); nav(`/chats/${res.room.id}`); } catch { /* */ } };
-
-  const todaySeen = seen.map((s) => ({ s, u: v.userById(s.id) })).filter((x) => x.u);
+  const changeFilter = (f: Filter) => { setFilter(f); setIdx(0); scroller.current?.scrollTo({ left: 0 }); };
 
   return (
     <div className="min-h-full pb-6">
@@ -103,58 +77,31 @@ export function HomePage() {
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
       {status === 'ready' && (
-        <div className="px-4 pt-1">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[12px] text-ink-3 flex items-center gap-1 min-w-0 truncate"><Sparkles size={11} className="shrink-0" />{me.meetPreference.length ? `${me.meetPreference.map((p) => MEET_PREF_LABELS[p].replace(t(' 사람'), '')).slice(0, 2).join(', ')}${t(' 우선')}` : t('목표·관심사·시간이 맞는 순서예요')}</p>
-            <button onClick={() => nav('/profile/context')} className="text-[12px] font-semibold text-primary shrink-0">{t('기준 바꾸기')}</button>
-          </div>
-          <ChipRow className="py-0 mb-3">{FILTERS.map((f) => <Chip key={f.key} size="sm" active={filter === f.key} onClick={() => setFilter(f.key)}>{t(f.label)}</Chip>)}</ChipRow>
-
+        <div className="pt-1">
+          <div className="px-4"><ChipRow className="py-0 mb-3">{FILTERS.map((f) => <Chip key={f.key} size="sm" active={filter === f.key} onClick={() => changeFilter(f.key)}>{t(f.label)}</Chip>)}</ChipRow></div>
           {!current ? (
-            <EmptyState emoji="🙌" title={seen.length ? t('오늘 추천을 다 봤어요') : t('이 조건에 맞는 사람이 아직 없어요')} description={seen.length ? t('넘긴 사람을 다시 보거나 내일 새로운 추천을 받아보세요.') : t('필터를 바꾸거나 목표·시간표를 채우면 추천이 늘어나요.')}
-              action={<div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { setSeen([]); setHistory([]); }}>{t('다시 보기')}</Button><Button size="sm" onClick={() => nav('/discover')}>{t('활동 둘러보기')}</Button></div>} />
+            <EmptyState emoji="🙋" title={t('이 조건에 맞는 사람이 아직 없어요')} description={t('필터를 바꾸거나 목표·시간표를 채우면 추천이 늘어나요.')} action={<Button size="sm" onClick={() => nav('/discover')}>{t('활동 둘러보기')}</Button>} />
           ) : (
             <>
-              <div className="relative" style={{ height: 500 }}>
-                {cards.slice(0, 3).map((c, i) => (
-                  <SwipeCard key={c.u.id} user={c.u} reasons={c.reasons} index={i} onSkip={() => skip(c.u)} onLike={() => like(c.u)} onOpen={() => nav(`/users/${c.u.id}`)} later={seen.find((s) => s.id === c.u.id)?.action === 'later'} />
-                )).reverse()}
+              <div ref={scroller} className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 px-4" onScroll={(e) => { const el = e.currentTarget; setIdx(Math.round(el.scrollLeft / (el.clientWidth - 32 + 12))); }}>
+                {cards.map((c) => <PersonSlide key={c.u.id} user={c.u} reasons={c.reasons} onOpen={() => nav(`/users/${c.u.id}`)} liked={v.iLike(c.u.id)} />)}
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                <ActionButton icon={<X size={20} />} label={t('넘기기')} tone="bg-surface-2 text-ink-2" onClick={() => skip(current.u)} />
+              <div className="px-4 mt-3 grid grid-cols-3 gap-2">
+                <ActionButton icon={<Heart size={19} fill={v.iLike(current.u.id) ? 'currentColor' : 'none'} />} label={t('관심')} tone={v.iLike(current.u.id) ? 'bg-heart text-white' : 'bg-heart-soft text-heart'} onClick={() => like(current.u)} />
                 <ActionButton icon={<UserPlus size={19} />} label={v.isFriend(current.u.id) ? t('친구') : v.pendingOut(current.u.id) ? t('요청됨') : t('친구로 연결')} tone="bg-primary-soft text-primary" onClick={() => friend(current.u)} />
                 <ActionButton icon={<Coffee size={19} />} label={t('커피 제안')} tone="bg-gold-soft text-[#B57A0E]" onClick={() => nav(`/users/${current.u.id}?propose=1&cat=coffee`)} />
-                <ActionButton icon={<Compass size={19} />} label={t('함께할 일')} tone="bg-mint-soft text-mint" onClick={() => nav(`/users/${current.u.id}?tab=together`)} />
               </div>
-              <div className="mt-2 flex items-center justify-between text-[12px]">
-                <button onClick={undo} disabled={!history.length} className="flex items-center gap-1 text-ink-3 disabled:opacity-40 press"><Undo2 size={14} />{t('이전 카드')}</button>
-                <button onClick={() => mark(current.u, 'later')} className="flex items-center gap-1 text-ink-3 press"><BookmarkPlus size={14} />{t('나중에 보기')}</button>
-                <button onClick={() => setSeenOpen(true)} className="flex items-center gap-1 text-ink-3 press"><Clock3 size={14} />{t('오늘 본 사람')} {seen.length}</button>
-              </div>
-              <p className="text-[11px] text-ink-3 mt-3 text-center flex items-center justify-center gap-1"><Heart size={10} />{t('오른쪽으로 밀면 관심 · 상대에게는 보이지 않고 서로 표시했을 때만 알려줘요')}</p>
+              <div className="mt-2 text-center text-[12px] text-ink-3">{Math.min(idx, cards.length - 1) + 1} / {cards.length}</div>
             </>
           )}
         </div>
       )}
-
-      <BottomSheet open={seenOpen} onClose={() => setSeenOpen(false)} title={t('오늘 본 사람')}>
-        {todaySeen.length === 0 ? <p className="text-[13px] text-ink-3">{t('아직 본 사람이 없어요.')}</p> : (
-          <div className="divide-y divide-line">{todaySeen.map(({ s, u }) => (
-            <div key={s.id} className="flex items-center gap-3 py-2.5">
-              <button onClick={() => { setSeenOpen(false); nav(`/users/${u!.id}`); }}><Avatar emoji={u!.avatar.emoji} hue={u!.avatar.hue} url={u!.avatar.url} size={36} /></button>
-              <span className="flex-1 min-w-0"><b className="text-[13px]">{u!.nickname}</b><span className="block text-[11px] text-ink-3">{{ skip: t('넘김'), like: t('관심 표시'), later: t('나중에 보기'), friend: t('친구 요청') }[s.action]}</span></span>
-              <button onClick={() => setSeen((x) => x.filter((y) => y.id !== s.id))} className="text-[12px] font-semibold text-primary">{t('다시 보기')}</button>
-            </div>
-          ))}</div>
-        )}
-      </BottomSheet>
 
       <BottomSheet open={!!matched} onClose={() => setMatched(null)} title={t('서로 관심이 있어요')}>
         {matched && (
           <div className="text-center">
             <div className="flex justify-center -space-x-3 mb-3"><Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={64} ring /><Avatar emoji={matched.avatar.emoji} hue={matched.avatar.hue} url={matched.avatar.url} size={64} ring /></div>
             <p className="text-[15px] font-bold">{matched.nickname}{t('님과 서로의 스타일이 마음에 들었어요.')}</p>
-            <p className="text-[13px] text-ink-3 mt-1">{t('이제 메시지를 보낼 수 있어요. 가볍게 커피부터 제안해볼까요?')}</p>
             <div className="flex gap-2 mt-4"><Button full variant="outline" onClick={() => { setMatched(null); nav(`/users/${matched.id}?propose=1&cat=coffee`); }}>{t('커피 제안')}</Button><Button full icon={<MessageCircle size={16} />} onClick={() => openChat(matched)}>{t('메시지')}</Button></div>
           </div>
         )}
@@ -164,58 +111,32 @@ export function HomePage() {
 }
 
 function ActionButton({ icon, label, tone, onClick }: { icon: React.ReactNode; label: string; tone: string; onClick: () => void }) {
-  return <button onClick={onClick} className={cn('h-[60px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold press', tone)}>{icon}<span className="truncate max-w-full px-1">{label}</span></button>;
+  return <button onClick={onClick} className={cn('h-[56px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold press', tone)}>{icon}<span className="truncate max-w-full px-1">{label}</span></button>;
 }
 
-/** 드래그 가능한 카드 — 라이브러리 없이 포인터 이벤트로 구현 */
-function SwipeCard({ user, reasons, index, onSkip, onLike, onOpen, later }: { user: User; reasons: Reason[]; index: number; onSkip: () => void; onLike: () => void; onOpen: () => void; later?: boolean }) {
+/** 한 장의 사람 카드 — 큰 사진, 이름·소속, 공통 관심사, 추천 이유 2개, 지금 하고 싶은 것 */
+function PersonSlide({ user, reasons, onOpen, liked }: { user: User; reasons: Reason[]; onOpen: () => void; liked: boolean }) {
   const v = useViewer();
-  const [dx, setDx] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [leaving, setLeaving] = useState<'left' | 'right' | null>(null);
-  const start = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const common = commonInterests(v.me, user);
   const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
   const want = v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? user.prompts[0].answer : user.nowWant;
   const shown = reasons.filter((r) => r.kind !== 'school').slice(0, 2);
-
-  const fly = (dir: 'left' | 'right') => { setLeaving(dir); setTimeout(dir === 'left' ? onSkip : onLike, 220); };
-  const onDown = (e: React.PointerEvent) => { if (index !== 0) return; start.current = { x: e.clientX, y: e.clientY, moved: false }; setDragging(true); (e.target as Element).setPointerCapture?.(e.pointerId); };
-  const onMove = (e: React.PointerEvent) => { if (!start.current) return; const d = e.clientX - start.current.x; if (Math.abs(d) > 6) start.current.moved = true; setDx(d); };
-  const onUp = () => {
-    if (!start.current) return;
-    const moved = start.current.moved; start.current = null; setDragging(false);
-    if (dx > 110) return fly('right');
-    if (dx < -110) return fly('left');
-    setDx(0);
-    if (!moved) onOpen();
-  };
-  const rot = dx / 18;
-  const style: React.CSSProperties = leaving
-    ? { transform: `translateX(${leaving === 'right' ? 520 : -520}px) rotate(${leaving === 'right' ? 18 : -18}deg)`, opacity: 0, transition: 'transform .22s ease-in, opacity .22s' }
-    : index === 0 ? { transform: `translateX(${dx}px) rotate(${rot}deg)`, transition: dragging ? 'none' : 'transform .25s' }
-    : { transform: `scale(${1 - index * 0.04}) translateY(${index * 12}px)`, opacity: 1 - index * 0.25, transition: 'transform .25s' };
-
   return (
-    <article className={cn('absolute inset-0 card overflow-hidden flex flex-col select-none touch-pan-y', index === 0 && 'cursor-grab active:cursor-grabbing')} style={{ ...style, zIndex: 10 - index }}
-      onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-      <div className="relative">
-        <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className="h-[272px]" />
+    <article className="card overflow-hidden w-[calc(100%-32px)] shrink-0 snap-center flex flex-col" style={{ minWidth: 'calc(100% - 32px)' }}>
+      <button onClick={onOpen} className="relative text-left">
+        <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className="h-[320px]" />
         <div className="absolute inset-x-0 bottom-0 p-4 pt-14 bg-[linear-gradient(to_top,rgba(0,0,0,.72),rgba(0,0,0,0))] text-white">
-          <div className="flex items-center gap-1.5"><h2 className="text-[22px] font-extrabold">{user.nickname}</h2><span className="text-[15px] font-semibold opacity-90">{new Date().getFullYear() - user.birthYear + 1}</span>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={16} />}</div>
+          <div className="flex items-center gap-1.5"><h2 className="text-[22px] font-extrabold">{user.nickname}</h2><span className="text-[15px] font-semibold opacity-90">{new Date().getFullYear() - user.birthYear + 1}</span>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={16} />}{liked && <Heart size={16} fill="currentColor" className="text-heart ml-auto" />}</div>
           <div className="text-[12px] opacity-90 truncate">{affiliationText(user)}</div>
           <div className="mt-1.5 flex flex-wrap gap-1">{(common.length ? common : user.interests.slice(0, 3)).slice(0, 4).map((i) => <span key={i} className={cn('rounded-lg px-2 h-6 inline-flex items-center text-[11px] font-semibold backdrop-blur', common.includes(i) ? 'bg-white/90 text-primary' : 'bg-white/25')}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</span>)}</div>
         </div>
-        {later && <Tag tone="gold" className="absolute top-3 left-3">{t('나중에 보기')}</Tag>}
-        <div className={cn('absolute top-5 left-4 rounded-xl border-4 border-mint text-mint px-3 py-1 text-[22px] font-black rotate-[-14deg] transition-opacity', dx > 40 ? 'opacity-100' : 'opacity-0')}>{t('관심')}</div>
-        <div className={cn('absolute top-5 right-4 rounded-xl border-4 border-ink-3 text-ink-3 px-3 py-1 text-[22px] font-black rotate-[14deg] transition-opacity', dx < -40 ? 'opacity-100' : 'opacity-0')}>{t('넘기기')}</div>
-      </div>
-      <div className="p-3.5 flex-1 flex flex-col gap-2 bg-surface">
+      </button>
+      <button onClick={onOpen} className="p-3.5 flex-1 flex flex-col gap-2 bg-surface text-left">
         {shown.length > 0 ? <ul className="space-y-0.5">{shown.map((r) => <li key={r.text} className="text-[13px] text-ink-2 flex items-start gap-1.5"><CheckCircle2 size={14} className="text-primary shrink-0 mt-0.5" /><span className="line-clamp-1">{r.text}</span></li>)}</ul>
           : <p className="text-[13px] text-ink-3">{lang === 'en' ? 'Someone outside your usual circle.' : '평소와 다른 분야의 사람이에요.'}</p>}
-        <div className="text-[12px] text-ink-2 flex items-center gap-1"><Clock size={12} className="text-ink-3" />{avail.text}{avail.auto && <span className="text-[10px] text-mint font-semibold ml-0.5">{t('시간표')}</span>}</div>
-        {want && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 line-clamp-2"><span className="text-[10px] font-bold opacity-70 block">{t('지금 같이 하고 싶은 것')}</span>“{want}”</div>}
-      </div>
+        <div className="text-[12px] text-ink-2 flex items-center gap-1"><Clock size={12} className="text-ink-3" />{avail.text}</div>
+        {want && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 line-clamp-2">“{want}”</div>}
+      </button>
     </article>
   );
 }
