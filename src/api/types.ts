@@ -90,6 +90,7 @@ export interface PostInput {
   visibility: Visibility;
   relatedActivityId?: ID;
   orgId?: ID;
+  anonymous?: boolean;
 }
 
 export interface AroundUApi {

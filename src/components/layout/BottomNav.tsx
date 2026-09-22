@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb, CalendarHeart, CalendarDays } from 'lucide-react';
+import { Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb, CalendarHeart, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BottomSheet } from '@/components/ui';
 
 const items = [
-  { to: '/', label: t('홈'), Icon: Home },
+  { to: '/', label: t('사람'), Icon: Users },
   { to: '/timetable', label: t('시간표'), Icon: CalendarDays },
   { to: '/community', label: t('커뮤니티'), Icon: LayoutGrid },
   { to: '/profile', label: t('프로필'), Icon: User },
@@ -52,7 +52,7 @@ export function BottomNav() {
   );
 }
 
-function NavItem({ to, label, Icon }: { to: string; label: string; Icon: typeof Home }) {
+function NavItem({ to, label, Icon }: { to: string; label: string; Icon: typeof Users }) {
   return (
     <NavLink to={to} end={to === '/'} className={({ isActive }) => cn('flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-semibold', isActive ? 'text-primary' : 'text-ink-3')}>
       {({ isActive }) => (<><Icon size={22} strokeWidth={isActive ? 2.4 : 2} />{label}</>)}

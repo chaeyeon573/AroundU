@@ -406,6 +406,24 @@ export const participations: Participation[] = [
 
 export const posts: Post[] = [
   {
+    id: 'po10', authorId: 'u_woojin', authorType: 'user', media: [], anonymous: true,
+    text: '중도 3층 에어컨 너무 세지 않나요? 담요 필수… 다들 어디서 공부해요?',
+    tags: ['중앙도서관', '익명'], visibility: 'school', likeIds: ['u_sua', 'u_yuna', 'u_jimin'], savedIds: [],
+    comments: [{ id: 'pc10', authorId: 'u_yuna', text: '4층 창가 가세요. 거긴 괜찮아요', createdAt: isoMinutesAgo(30) }, { id: 'pc11', authorId: 'u_woojin', text: '오 감사합니다!', createdAt: isoMinutesAgo(20) }], createdAt: isoMinutesAgo(45),
+  },
+  {
+    id: 'po11', authorId: 'u_seoyeon', authorType: 'user', media: [], anonymous: true,
+    text: '혼밥하는 사람 많나요? 학생회관에서 혼자 먹을 때마다 괜히 눈치 보여서… 저만 그런가요',
+    tags: ['익명', '학생회관'], visibility: 'school', likeIds: ['u_sua', 'u_minjun', 'u_hana', 'u_dohyun', 'u_taeho'], savedIds: [],
+    comments: [{ id: 'pc12', authorId: 'u_sua', text: '저도요!! 점심 같이 먹어요. 계획 탭에서 점심 열어둘게요', createdAt: isoHoursAgo(1) }], createdAt: isoHoursAgo(3),
+  },
+  {
+    id: 'po12', authorId: 'u_hana', authorType: 'user', media: [], anonymous: true,
+    text: '동아리 면접 처음인데 뭐 물어보나요? 밴드 동아리 지원했어요 🎸',
+    tags: ['동아리', '면접', '익명'], visibility: 'public', likeIds: ['u_junho'], savedIds: [],
+    comments: [{ id: 'pc13', authorId: 'u_junho', text: '저희는 면접 없어요! 합주 체험만 하면 돼요 ㅎㅎ', createdAt: isoHoursAgo(5) }], createdAt: isoHoursAgo(6),
+  },
+  {
     id: 'po1', authorId: 'u_jimin', authorType: 'user', media: [{ emoji: '☕', hue: 30 , url: photo('c_espresso') }, { emoji: '🍰', hue: 20 , url: photo('c_mug') }],
     text: '정문 앞 새로 생긴 카페. 플랫화이트 맛집 인정. 오늘 저녁 여기서 커피 모임 열었어요 ☕',
     tags: ['신촌카페', '커피'], visibility: 'public', likeIds: ['u_sua', 'u_taeho', 'u_hana'], savedIds: [],

@@ -303,6 +303,8 @@ export interface Post {
   savedIds: ID[];
   comments: Comment[];
   relatedActivityId?: ID;
+  /** 익명 게시 — 작성자는 서버에만 저장되고 화면에는 '익명'으로 표시 */
+  anonymous?: boolean;
   createdAt: string;
 }
 
