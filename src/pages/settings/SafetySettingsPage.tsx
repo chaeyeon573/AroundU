@@ -33,7 +33,7 @@ export function SafetySettingsPage() {
         <div className="card p-4">
           <b className="text-[14px] flex items-center gap-1.5"><Ban size={16} className="text-danger" />{t('차단한 사용자')} {blocked.length}</b>
           {blocked.length === 0 ? <p className="text-[12px] text-ink-3 mt-2">{t('차단한 사용자가 없어요.')}</p> : (
-            <div className="mt-2 divide-y divide-line">{blocked.map((u) => u && <div key={u.id} className="flex items-center gap-3 py-2.5"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={36} /><b className="flex-1 text-[14px]">{u.nickname}</b><Button size="sm" variant="outline" onClick={() => run(() => api.relationships.unblock(me.id, u.id), t('차단을 해제했어요.'))}>{t('차단 해제')}</Button></div>)}</div>
+            <div className="mt-2 divide-y divide-line">{blocked.map((u) => u && <div key={u.id} className="flex items-center gap-3 py-2.5"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={36} /><b className="flex-1 text-[14px]">{u.nickname}</b><Button size="sm" variant="outline" onClick={() => run(() => api.relationships.unblock(me.id, u.id), t('차단을 해제했어요.'))}>{t('차단 해제')}</Button></div>)}</div>
           )}
         </div>
         <div className="card p-4">

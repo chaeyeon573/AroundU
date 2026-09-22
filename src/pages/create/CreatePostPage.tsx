@@ -36,7 +36,7 @@ export function CreatePostPage() {
         <Field label={t('사진')} hint={t('데모에서는 이모지 카드로 사진을 대체해요. 여러 장 추가할 수 있어요.')}>
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
             {form.media.map((m, i) => (
-              <div key={i} className="relative shrink-0"><Cover emoji={m.emoji} hue={m.hue} className="h-24 w-24 rounded-2xl" size={36} />
+              <div key={i} className="relative shrink-0"><Cover emoji={m.emoji} hue={m.hue} url={m.url} className="h-24 w-24 rounded-2xl" size={36} />
                 {form.media.length > 1 && <button onClick={() => patch({ media: form.media.filter((_, j) => j !== i) })} className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-ink text-white grid place-items-center"><X size={12} /></button>}</div>
             ))}
             {form.media.length < 5 && <button onClick={() => patch({ media: [...form.media, { emoji: EMOJIS[form.media.length % EMOJIS.length], hue: (form.media.length * 70 + 30) % 360 }] })} className="h-24 w-24 rounded-2xl border-2 border-dashed border-line grid place-items-center text-ink-3 shrink-0"><Plus size={22} /></button>}

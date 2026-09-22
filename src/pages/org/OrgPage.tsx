@@ -32,11 +32,11 @@ export function OrgPage() {
   return (
     <div className="min-h-full pb-8">
       <TopBar back title={org.name} messages />
-      <Cover emoji={org.logo.emoji} hue={org.logo.hue} className="h-[140px]" size={60} />
+      <Cover emoji={org.logo.emoji} hue={org.logo.hue} url={org.logo.url} className="h-[140px]" size={60} />
       <div className="px-4 -mt-8 relative">
         <div className="card p-4">
           <div className="flex items-start gap-3">
-            <Avatar emoji={org.logo.emoji} hue={org.logo.hue} size={64} className="!rounded-2xl ring-4 ring-white -mt-10" />
+            <Avatar emoji={org.logo.emoji} hue={org.logo.hue} url={org.logo.url} size={64} className="!rounded-2xl ring-4 ring-white -mt-10" />
             <div className="flex-1 min-w-0">
               <h1 className="text-[18px] font-extrabold flex items-center gap-1 leading-tight">{org.name}{org.verified && <BadgeCheck size={18} className="text-gold shrink-0" />}</h1>
               <div className="text-[12px] text-ink-3 mt-0.5">{school?.name}{org.parent ? ` · ${org.parent}` : ''} · {ORG_TYPE_LABELS[org.type]}</div>
@@ -71,7 +71,7 @@ export function OrgPage() {
             {org.policyNote && <div className="rounded-xl bg-gold-soft px-3 py-2 text-[12px] text-ink-2 flex gap-2"><ShieldCheck size={14} className="text-[#B57A0E] shrink-0 mt-0.5" /><span><b>{t('학교 정책 안내')}</b> · {org.policyNote}</span></div>}
           </div>
         )}
-        <div className="card mt-3 p-4"><b className="text-[14px]">{t('사진과 영상')}</b><div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">{org.gallery.map((g, i) => <div key={i} className="shrink-0 w-[120px]"><Cover emoji={g.emoji} hue={g.hue} className="h-[120px] rounded-xl" size={40} /><div className="text-[11px] text-ink-3 mt-1 text-center">{g.caption}</div></div>)}</div></div>
+        <div className="card mt-3 p-4"><b className="text-[14px]">{t('사진과 영상')}</b><div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">{org.gallery.map((g, i) => <div key={i} className="shrink-0 w-[120px]"><Cover emoji={g.emoji} hue={g.hue} url={g.url} className="h-[120px] rounded-xl" size={40} /><div className="text-[11px] text-ink-3 mt-1 text-center">{g.caption}</div></div>)}</div></div>
 
         <div className="card mt-3 p-4"><b className="text-[14px] flex items-center gap-1.5"><CalendarDays size={15} className="text-primary" />{t('정기 활동')}</b><ul className="mt-2 space-y-1.5">{org.regularActivities.map((r) => <li key={r} className="text-[13px] text-ink-2 flex gap-2"><span className="text-primary">•</span>{r}</li>)}</ul></div>
 

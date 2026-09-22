@@ -44,7 +44,7 @@ export function ActivityDetailPage() {
   return (
     <div className="min-h-full pb-28">
       <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label={t('더보기')}><MoreHorizontal size={20} /></button>} />
-      <Cover emoji={a.cover.emoji} hue={a.cover.hue} className="h-[240px]" size={96} />
+      <Cover emoji={a.cover.emoji} hue={a.cover.hue} url={a.cover.url} className="h-[240px]" size={96} />
       <div className="px-4 -mt-6 relative">
         <div className="card p-4">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -58,7 +58,7 @@ export function ActivityDetailPage() {
         </div>
 
         <button onClick={() => nav(org ? `/orgs/${org.id}` : `/users/${a.hostId}`)} className="card mt-3 p-3 w-full flex items-center gap-3 text-left press">
-          {org ? <Avatar emoji={org.logo.emoji} hue={org.logo.hue} size={44} className="!rounded-xl" /> : host && <Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} size={44} />}
+          {org ? <Avatar emoji={org.logo.emoji} hue={org.logo.hue} url={org.logo.url} size={44} className="!rounded-xl" /> : host && <Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} url={host.avatar.url} size={44} />}
           <div className="flex-1 min-w-0">
             <div className="text-[11px] text-ink-3">{t('주최자')}</div>
             <div className="text-[14px] font-bold flex items-center gap-1 truncate">{org?.name ?? host?.nickname}{(org?.verified || (host?.affiliation.type === 'university' && host.affiliation.emailVerified)) && <BadgeCheck size={13} className="text-verify" />}</div>
@@ -98,7 +98,7 @@ export function ActivityDetailPage() {
           <b className="text-[14px]">{t('댓글 또는 질문')} {a.comments.length}</b>
           <div className="mt-3 space-y-3">
             {a.comments.map((c) => { const u = v.userById(c.authorId); return (
-              <div key={c.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={30} /><div className="flex-1"><div className="text-[12px]"><b>{u?.nickname}</b>{c.authorId === a.hostId && <Tag tone="primary" className="ml-1 h-5">{t('주최자')}</Tag>}<span className="text-ink-3 ml-1.5">{relativeTime(c.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{c.text}</p></div></div>
+              <div key={c.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={30} /><div className="flex-1"><div className="text-[12px]"><b>{u?.nickname}</b>{c.authorId === a.hostId && <Tag tone="primary" className="ml-1 h-5">{t('주최자')}</Tag>}<span className="text-ink-3 ml-1.5">{relativeTime(c.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{c.text}</p></div></div>
             ); })}
             {a.comments.length === 0 && <p className="text-[12px] text-ink-3">{t('궁금한 점을 주최자에게 물어보세요.')}</p>}
           </div>
@@ -147,7 +147,7 @@ function PersonPill({ id, label }: { id: string; label?: string }) {
   if (!u) return null;
   return (
     <button onClick={() => nav(`/users/${id}`)} className="flex items-center gap-1.5 rounded-full bg-surface-2 pl-1 pr-3 h-8 text-[12px] font-semibold press">
-      <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={24} />{u.nickname}{label && <span className="text-primary">{label}</span>}
+      <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={24} />{u.nickname}{label && <span className="text-primary">{label}</span>}
     </button>
   );
 }

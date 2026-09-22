@@ -83,7 +83,7 @@ export interface User {
   nickname: string;
   birthYear: number;
   gender: Gender;
-  avatar: { emoji: string; hue: number; photoType: 'face' | 'masked' | 'back' };
+  avatar: { emoji: string; hue: number; photoType: 'face' | 'masked' | 'back'; url?: string };
   identityVerified: boolean;
   affiliation: Affiliation;
   bio: string;
@@ -143,7 +143,7 @@ export interface Opportunity {
   host: string;
   orgId?: ID;
   description: string;
-  cover: { emoji: string; hue: number };
+  cover: { emoji: string; hue: number; url?: string };
   /** 마감일 (지원형) */
   deadline?: string;
   /** 행사 일시 */
@@ -194,13 +194,13 @@ export type OrganizationType = 'club' | 'department' | 'lab' | 'council' | 'gree
 export interface Organization {
   id: ID;
   name: string;
-  logo: { emoji: string; hue: number };
+  logo: { emoji: string; hue: number; url?: string };
   type: OrganizationType;
   schoolId: ID;
   parent?: string;
   verified: boolean;
   description: string;
-  gallery: { emoji: string; hue: number; caption: string }[];
+  gallery: { emoji: string; hue: number; caption: string; url?: string }[];
   regularActivities: string[];
   recruitment?: { title: string; period: string; open: boolean };
   notices: { id: ID; title: string; body: string; createdAt: string }[];
@@ -243,7 +243,7 @@ export interface Activity {
   category: ActivityCategory;
   title: string;
   description: string;
-  cover: { emoji: string; hue: number };
+  cover: { emoji: string; hue: number; url?: string };
   hostId: ID;
   hostType: 'user' | 'org';
   orgId?: ID;
@@ -288,7 +288,7 @@ export interface Post {
   authorId: ID;
   authorType: 'user' | 'org';
   orgId?: ID;
-  media: { emoji: string; hue: number }[];
+  media: { emoji: string; hue: number; url?: string }[];
   text: string;
   tags: string[];
   visibility: Visibility;

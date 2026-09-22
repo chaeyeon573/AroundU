@@ -52,7 +52,7 @@ export function ProfilePage() {
       <div className="px-4 pt-2 space-y-3">
         <div className="card p-4">
           <div className="flex items-center gap-4">
-            <Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} size={76} ring />
+            <Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={76} ring />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5"><h1 className="text-[20px] font-extrabold truncate">{me.nickname}</h1>{me.affiliation.type === 'university' && me.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} />}{me.identityVerified && <VerifiedBadge kind="identity" size={18} />}</div>
               <div className="text-[12px] text-ink-3 truncate">{affiliationText(me, true)}</div>
@@ -109,10 +109,10 @@ export function ProfilePage() {
         </button>
 
         <Segmented value={tab} onChange={setTab} options={[{ value: 'posts', label: t('게시물') }, { value: 'created', label: t('만든 활동') }, { value: 'joined', label: t('참여') }, { value: 'saved', label: t('저장') }]} />
-        {tab === 'posts' && (myPosts.length ? <div className="grid grid-cols-3 gap-1.5">{myPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} className="aspect-square rounded-xl" size={32} /></button>)}</div> : <Empty icon={<Grid3X3 size={20} />} text={t('아직 게시물이 없어요')} action={<Button size="sm" onClick={() => nav('/create/post')}>{t('게시물 작성')}</Button>} />)}
+        {tab === 'posts' && (myPosts.length ? <div className="grid grid-cols-3 gap-1.5">{myPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={32} /></button>)}</div> : <Empty icon={<Grid3X3 size={20} />} text={t('아직 게시물이 없어요')} action={<Button size="sm" onClick={() => nav('/create/post')}>{t('게시물 작성')}</Button>} />)}
         {tab === 'created' && (created.length ? <div className="space-y-2">{created.map((a) => <ActivityCard key={a.id} activity={a} variant="row" badge={a.date < todayISO() ? t('종료') : undefined} />)}</div> : <Empty icon={<CalendarDays size={20} />} text={t('만든 활동이 없어요')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal')}>{t('활동 만들기')}</Button>} />)}
         {tab === 'joined' && (joined.length ? <div className="space-y-2">{joined.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div> : <Empty icon={<Users size={20} />} text={t('참여한 활동이 없어요')} action={<Button size="sm" onClick={() => nav('/map')}>{t('지도에서 찾기')}</Button>} />)}
-        {tab === 'saved' && (savedActs.length || savedPosts.length ? <div className="space-y-2">{savedActs.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}{savedPosts.length > 0 && <div className="grid grid-cols-3 gap-1.5">{savedPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} className="aspect-square rounded-xl" size={32} /></button>)}</div>}</div> : <Empty icon={<Bookmark size={20} />} text={t('저장한 활동이 없어요')} />)}
+        {tab === 'saved' && (savedActs.length || savedPosts.length ? <div className="space-y-2">{savedActs.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}{savedPosts.length > 0 && <div className="grid grid-cols-3 gap-1.5">{savedPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={32} /></button>)}</div>}</div> : <Empty icon={<Bookmark size={20} />} text={t('저장한 활동이 없어요')} />)}
         <p className="text-[11px] text-ink-3 text-center flex items-center justify-center gap-1"><Heart size={11} />{t('관심 목록은 본인만 확인할 수 있어요')}</p>
       </div>
 

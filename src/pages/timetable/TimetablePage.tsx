@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
 import type { Course } from '@/types';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState } from '@/components/ui';
+import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState, Avatar } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
@@ -126,7 +126,7 @@ export function TimetablePage() {
                 <div className="mt-2 divide-y divide-line">
                   {overlaps.map(({ f, blocks }) => (
                     <button key={f.id} onClick={() => nav(`/users/${f.id}`)} className="w-full flex items-center gap-3 py-2.5 text-left press">
-                      <span className="h-9 w-9 rounded-full grid place-items-center text-lg shrink-0" style={{ background: `hsl(${f.avatar.hue} 80% 88%)` }}>{f.avatar.emoji}</span>
+                      <Avatar emoji={f.avatar.emoji} hue={f.avatar.hue} url={f.avatar.url} size={36} />
                       <span className="flex-1 min-w-0"><b className="text-[13px]">{f.nickname}</b><span className="block text-[12px] text-ink-3 truncate">{blocks.map((b) => `${fmtBlock(b)} (${fmtHours(b)})`).join(' · ')}</span></span>
                       <ChevronRight size={16} className="text-ink-3" />
                     </button>

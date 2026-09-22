@@ -33,7 +33,7 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
   if (variant === 'mini') {
     return (
       <button onClick={() => nav(`/activities/${a.id}`)} className={cn('card w-[200px] shrink-0 overflow-hidden text-left press', className)}>
-        <Cover emoji={a.cover.emoji} hue={a.cover.hue} className="h-[88px]" size={34} />
+        <Cover emoji={a.cover.emoji} hue={a.cover.hue} url={a.cover.url} className="h-[88px]" size={34} />
         <div className="p-3">
           <div className="text-[13px] font-bold line-clamp-2 leading-snug">{a.title}</div>
           <div className="text-[11px] text-ink-3 mt-1">{formatDateTime(a.date, a.startTime)}</div>
@@ -46,7 +46,7 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
   if (variant === 'row') {
     return (
       <button onClick={() => nav(`/activities/${a.id}`)} className={cn('card w-full flex gap-3 p-3 text-left press', className)}>
-        <Cover emoji={a.cover.emoji} hue={a.cover.hue} className="h-[76px] w-[76px] rounded-xl shrink-0" size={32} />
+        <Cover emoji={a.cover.emoji} hue={a.cover.hue} url={a.cover.url} className="h-[76px] w-[76px] rounded-xl shrink-0" size={32} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color }}>{CATEGORY_EMOJI[a.category]} {CATEGORY_LABELS[a.category]}</span>{badge && <Tag tone="accent">{badge}</Tag>}</div>
           <div className="text-[14px] font-bold truncate mt-0.5">{a.title}</div>
@@ -62,7 +62,7 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
     <article className={cn('card overflow-hidden', className)}>
       <button onClick={() => nav(`/activities/${a.id}`)} className="block w-full text-left">
         <div className="relative">
-          <Cover emoji={a.cover.emoji} hue={a.cover.hue} className="h-[150px]" size={56} />
+          <Cover emoji={a.cover.emoji} hue={a.cover.hue} url={a.cover.url} className="h-[150px]" size={56} />
           <div className="absolute top-3 left-3 flex gap-1.5">
             <span className="rounded-lg px-2 h-6 inline-flex items-center text-[11px] font-bold text-white" style={{ background: color }}>{CATEGORY_EMOJI[a.category]} {CATEGORY_LABELS[a.category]}</span>
             {badge && <Tag tone="accent">{badge}</Tag>}
@@ -73,7 +73,7 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
       </button>
       <div className="p-3.5">
         <div className="flex items-center gap-2 mb-2">
-          {org ? <Avatar emoji={org.logo.emoji} hue={org.logo.hue} size={26} /> : host && <Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} size={26} />}
+          {org ? <Avatar emoji={org.logo.emoji} hue={org.logo.hue} url={org.logo.url} size={26} /> : host && <Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} url={host.avatar.url} size={26} />}
           <span className="text-[12px] text-ink-2 font-medium truncate">{name}{org?.verified && <BadgeCheck size={12} className="inline ml-0.5 text-gold" />}</span>
         </div>
         <button onClick={() => nav(`/activities/${a.id}`)} className="text-left"><h3 className="text-[16px] font-bold leading-snug">{a.title}</h3></button>

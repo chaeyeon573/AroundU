@@ -6,7 +6,7 @@ import { isTogetherType } from '@/lib/recommend';
 import { OpportunityCard } from '@/components/cards/OpportunityCard';
 import { opportunityScore, daysUntil, matchScore } from '@/lib/recommend';
 import { TopBar } from '@/components/layout/TopBar';
-import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, IconButton } from '@/components/ui';
+import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, IconButton, Avatar } from '@/components/ui';
 import { freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, fmtBlock, toHHMM } from '@/lib/timetable';
 import { PersonCard } from '@/components/cards/PersonCard';
 import { ActivityCard } from '@/components/cards/ActivityCard';
@@ -124,7 +124,7 @@ export function HomePage() {
               <div className="px-4 space-y-2">
                 {nowPeople.slice(0, 3).map((u) => (
                   <button key={u.id} onClick={() => nav(`/users/${u.id}`)} className="card w-full p-3 flex items-center gap-3 text-left press">
-                    <span className="h-11 w-11 rounded-full grid place-items-center text-xl" style={{ background: `hsl(${u.avatar.hue} 80% 88%)` }}>{u.avatar.emoji}</span>
+                    <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={44} />
                     <span className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-ink-3 text-[12px]"> · {u.affiliation.type === 'university' && u.affiliation.showDepartment ? u.affiliation.department : u.region}</span><br /><span className="text-[13px] text-primary font-medium truncate block">“{u.nowWant ?? t('지금 가능해요')}”</span></span>
                     <span className="h-2.5 w-2.5 rounded-full bg-mint shadow-[0_0_0_4px_#E1F7F0]" />
                   </button>

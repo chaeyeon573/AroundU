@@ -56,7 +56,7 @@ export function ChatRoomPage() {
           const showName = !mine && room.type !== 'direct' && room.messages[i - 1]?.senderId !== m.senderId;
           return (
             <div key={m.id} className={cn('flex gap-2 items-end', mine ? 'justify-end' : 'justify-start')}>
-              {!mine && <Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={28} className={cn(room.messages[i + 1]?.senderId === m.senderId && 'invisible')} />}
+              {!mine && <Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={28} className={cn(room.messages[i + 1]?.senderId === m.senderId && 'invisible')} />}
               <div className={cn('max-w-[72%]', mine && 'text-right')}>
                 {showName && <div className="text-[11px] text-ink-3 mb-0.5 ml-1">{u?.nickname}</div>}
                 <div className={cn('inline-block px-3.5 py-2 rounded-2xl text-[14px] leading-relaxed text-left', mine ? 'bg-primary text-white rounded-br-md' : 'bg-surface border border-line rounded-bl-md')}>{m.text}</div>

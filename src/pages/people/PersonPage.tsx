@@ -79,7 +79,7 @@ export function PersonPage() {
   return (
     <div className="min-h-full pb-28">
       <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label={t('더보기')}><MoreHorizontal size={20} /></button>} />
-      <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} photoType={user.avatar.photoType} className="h-[300px]" />
+      <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className="h-[300px]" />
       <div className="px-4 -mt-8 relative space-y-3">
         <div className="card p-4">
           <div className="flex items-center gap-2"><h1 className="text-[22px] font-extrabold">{user.nickname}</h1>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} label />}{user.identityVerified && <VerifiedBadge kind="identity" size={18} label />}</div>
@@ -129,13 +129,13 @@ export function PersonPage() {
         {(see('posts') ? userPosts.length > 0 : true) && (
           <div className="card p-4">
             <div className="flex items-center justify-between"><b className="text-[14px]">{t('사진과 게시물')}</b>{!see('posts') && <VisibilityTag value={user.fieldVisibility.posts} />}</div>
-            {see('posts') ? <div className="grid grid-cols-3 gap-1.5 mt-3">{userPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} className="aspect-square rounded-xl" size={30} /></button>)}</div>
+            {see('posts') ? <div className="grid grid-cols-3 gap-1.5 mt-3">{userPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={30} /></button>)}</div>
               : <p className="text-[12px] text-ink-3 mt-2 flex items-center gap-1"><Lock size={12} />{t('공개 범위에 포함되지 않아 볼 수 없어요.')}</p>}
           </div>
         )}
 
         {hosting.length > 0 && <div><h2 className="text-[15px] font-bold mb-2">{t('운영 중인 모임')}</h2><div className="space-y-2">{hosting.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div></div>}
-        {adminOrgs.length > 0 && <div><h2 className="text-[15px] font-bold mb-2">{t('운영 중인 조직')}</h2><div className="space-y-2">{adminOrgs.map((o) => <button key={o.id} onClick={() => nav(`/orgs/${o.id}`)} className="card w-full p-3 flex items-center gap-3 text-left press"><Avatar emoji={o.logo.emoji} hue={o.logo.hue} size={40} className="!rounded-xl" /><b className="text-[14px]">{o.name}</b></button>)}</div></div>}
+        {adminOrgs.length > 0 && <div><h2 className="text-[15px] font-bold mb-2">{t('운영 중인 조직')}</h2><div className="space-y-2">{adminOrgs.map((o) => <button key={o.id} onClick={() => nav(`/orgs/${o.id}`)} className="card w-full p-3 flex items-center gap-3 text-left press"><Avatar emoji={o.logo.emoji} hue={o.logo.hue} url={o.logo.url} size={40} className="!rounded-xl" /><b className="text-[14px]">{o.name}</b></button>)}</div></div>}
         {upcoming.filter((a) => a.hostId !== user.id).length > 0 && <div><h2 className="text-[15px] font-bold mb-2">{t('참여 예정인 공개 활동')}</h2><div className="space-y-2">{upcoming.filter((a) => a.hostId !== user.id).map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div></div>}
       </div>
 

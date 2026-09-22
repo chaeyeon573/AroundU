@@ -37,7 +37,7 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
   return (
     <article className={cn('card overflow-hidden', className)}>
       <div className="flex items-center gap-2.5 px-3.5 py-3">
-        <button onClick={goAuthor}><Avatar emoji={avatar.emoji} hue={avatar.hue} size={36} /></button>
+        <button onClick={goAuthor}><Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={36} /></button>
         <div className="flex-1 min-w-0">
           <button onClick={goAuthor} className="text-[14px] font-bold truncate flex items-center gap-1">{displayName}{org?.verified && <BadgeCheck size={13} className="text-gold" />}</button>
           <div className="text-[11px] text-ink-3 flex items-center gap-1.5">{relativeTime(p.createdAt)} · <VisibilityTag value={p.visibility} /></div>
@@ -50,7 +50,7 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
       </div>
       <div className="relative">
         <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar" onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
-          {p.media.map((m, i) => <Cover key={i} emoji={m.emoji} hue={m.hue} className="h-[260px] w-full shrink-0 snap-center" size={80} />)}
+          {p.media.map((m, i) => <Cover key={i} emoji={m.emoji} hue={m.hue} url={m.url} className="h-[260px] w-full shrink-0 snap-center" size={80} />)}
         </div>
         {p.media.length > 1 && (
           <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1">{p.media.map((_, i) => <span key={i} className={cn('h-1.5 w-1.5 rounded-full', i === slide ? 'bg-white' : 'bg-white/50')} />)}</div>
@@ -73,7 +73,7 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
           <div className="mt-3 border-t border-line pt-3 space-y-2">
             {p.comments.length === 0 && <p className="text-[12px] text-ink-3">{t('첫 댓글을 남겨보세요.')}</p>}
             {p.comments.map((c) => { const u = v.userById(c.authorId); return (
-              <div key={c.id} className="flex gap-2 text-[13px]"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={24} /><div><b className="mr-1">{u?.nickname}</b>{c.text}<span className="text-ink-3 text-[11px] ml-1.5">{relativeTime(c.createdAt)}</span></div></div>
+              <div key={c.id} className="flex gap-2 text-[13px]"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={24} /><div><b className="mr-1">{u?.nickname}</b>{c.text}<span className="text-ink-3 text-[11px] ml-1.5">{relativeTime(c.createdAt)}</span></div></div>
             ); })}
             <form className="flex gap-2 pt-1" onSubmit={async (e) => { e.preventDefault(); if (!text.trim()) return; await run(() => api.posts.comment(p.id, v.me.id, text.trim())); setText(''); }}>
               <Input placeholder={t('댓글 달기…')} value={text} onChange={(e) => setText(e.target.value)} className="h-10" />

@@ -46,7 +46,7 @@ export function OpportunityDetailPage() {
   return (
     <div className="min-h-full pb-28">
       <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label={t('더보기')}><MoreHorizontal size={20} /></button>} />
-      <Cover emoji={o.cover.emoji} hue={o.cover.hue} className="h-[200px]" size={80} />
+      <Cover emoji={o.cover.emoji} hue={o.cover.hue} url={o.cover.url} className="h-[200px]" size={80} />
       <div className="px-4 -mt-6 relative space-y-3">
         <div className="card p-4">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -90,7 +90,7 @@ export function OpportunityDetailPage() {
             {people.map(({ u, i, reasons }) => (
               <div key={u.id} className="card p-3.5">
                 <button onClick={() => nav(`/users/${u.id}`)} className="flex items-center gap-3 text-left w-full">
-                  <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={44} />
+                  <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={44} />
                   <div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-[12px] text-ink-3"> · {affiliationText(u)}</span><div className="text-[12px] mt-0.5"><Tag tone={i.intent === 'interested' ? 'neutral' : 'mint'} className="h-5">{i.intent === 'interested' ? t('관심') : i.intent === 'applying' ? t('지원 예정') : t('지원 완료')}</Tag>{u.canOffer.length > 0 && <span className="text-ink-2 ml-1.5">{t('제공:')} {u.canOffer.slice(0, 3).map((r) => PERSON_ROLE_LABELS[r]).join('·')}</span>}</div></div>
                 </button>
                 {reasons.length > 0 && <ul className="mt-2 space-y-0.5">{reasons.slice(0, 3).map((r) => <li key={r.text} className="text-[12px] text-ink-2 flex items-center gap-1"><CheckCircle2 size={12} className="text-primary shrink-0" />{r.text}</li>)}</ul>}
@@ -108,7 +108,7 @@ export function OpportunityDetailPage() {
             <div className="card p-4">
               <b className="text-[14px]">{t('질문과 답변')} {o.qna.length}</b>
               <div className="mt-3 space-y-3">
-                {o.qna.map((c) => { const u = v.userById(c.authorId); return <div key={c.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={30} /><div className="flex-1"><div className="text-[12px]"><b>{u?.nickname}</b><span className="text-ink-3 ml-1.5">{relativeTime(c.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{c.text}</p></div></div>; })}
+                {o.qna.map((c) => { const u = v.userById(c.authorId); return <div key={c.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={30} /><div className="flex-1"><div className="text-[12px]"><b>{u?.nickname}</b><span className="text-ink-3 ml-1.5">{relativeTime(c.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{c.text}</p></div></div>; })}
                 {o.qna.length === 0 && <p className="text-[12px] text-ink-3">{t('궁금한 점을 물어보면 지원 경험자나 주최 측이 답해줘요.')}</p>}
               </div>
               <form className="flex gap-2 mt-3" onSubmit={async (e) => { e.preventDefault(); if (!text.trim()) return; await run(() => api.opportunities.ask(o.id, v.me.id, text.trim())); setText(''); }}><Input className="h-10" placeholder={t('질문 남기기')} value={text} onChange={(e) => setText(e.target.value)} /><Button size="sm" className="h-10" type="submit" disabled={!text.trim()}>{t('등록')}</Button></form>
@@ -116,7 +116,7 @@ export function OpportunityDetailPage() {
             <div className="card p-4">
               <b className="text-[14px]">{t('지원·참가 후기')} {o.reviews.length}</b>
               <div className="mt-3 space-y-3">
-                {o.reviews.map((r) => { const u = v.userById(r.authorId); return <div key={r.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={30} /><div className="flex-1"><div className="text-[12px] flex items-center gap-1.5"><b>{u?.nickname}</b>{r.result && <Tag tone={r.result === 'accepted' ? 'mint' : r.result === 'rejected' ? 'neutral' : 'primary'} className="h-5">{{ accepted: t('합격·수혜'), rejected: t('불합격'), attended: t('참가') }[r.result]}</Tag>}<span className="text-ink-3">{relativeTime(r.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{r.text}</p></div></div>; })}
+                {o.reviews.map((r) => { const u = v.userById(r.authorId); return <div key={r.id} className="flex gap-2.5"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={30} /><div className="flex-1"><div className="text-[12px] flex items-center gap-1.5"><b>{u?.nickname}</b>{r.result && <Tag tone={r.result === 'accepted' ? 'mint' : r.result === 'rejected' ? 'neutral' : 'primary'} className="h-5">{{ accepted: t('합격·수혜'), rejected: t('불합격'), attended: t('참가') }[r.result]}</Tag>}<span className="text-ink-3">{relativeTime(r.createdAt)}</span></div><p className="text-[13px] text-ink-2 mt-0.5">{r.text}</p></div></div>; })}
                 {o.reviews.length === 0 && <p className="text-[12px] text-ink-3">{t('첫 후기를 남겨보세요. 결과 공개는 선택이에요.')}</p>}
               </div>
               <div className="mt-3 space-y-2">

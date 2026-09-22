@@ -61,7 +61,7 @@ export function ChatInboxPage() {
                 const avatar = other?.avatar ?? org?.logo ?? { emoji: r.type === 'activity' ? '🗓️' : '🏛️', hue: 220 };
                 return (
                   <button key={r.id} onClick={() => nav(`/chats/${r.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
-                    <Avatar emoji={avatar.emoji} hue={avatar.hue} size={48} className={cn(r.type !== 'direct' && '!rounded-2xl')} />
+                    <Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={48} className={cn(r.type !== 'direct' && '!rounded-2xl')} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5"><b className={cn('text-[14px] truncate', n > 0 && 'text-ink')}>{other?.nickname ?? r.title}</b>{r.type === 'activity' && <Users size={12} className="text-ink-3" />}{r.type === 'org' && <Building2 size={12} className="text-ink-3" />}<span className="text-[11px] text-ink-3 ml-auto shrink-0">{lm ? relativeTime(lm.createdAt) : ''}</span></div>
                       <div className={cn('text-[13px] truncate mt-0.5', n > 0 ? 'text-ink font-medium' : 'text-ink-3')}>{lm?.text ?? t('대화를 시작해보세요')}</div>
@@ -80,7 +80,7 @@ export function ChatInboxPage() {
             <h2 className="text-[14px] font-bold mb-2 flex items-center gap-1.5"><Inbox size={15} />{t('받은 활동 제안')} {inProposals.length}</h2>
             {inProposals.length === 0 ? <div className="card p-4 text-[13px] text-ink-3">{t('받은 제안이 없어요.')}</div> : inProposals.map((p) => { const u = v.userById(p.fromId); return (
               <div key={p.id} className="card p-3.5 mb-2">
-                <button onClick={() => nav(`/users/${p.fromId}`)} className="flex items-center gap-3 text-left w-full"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={40} /><div className="flex-1"><b className="text-[14px]">{u?.nickname}</b><div className="text-[12px] text-ink-3">{CATEGORY_EMOJI[p.category]} {CATEGORY_LABELS[p.category]} · {p.when}</div></div><Tag>{relativeTime(p.createdAt)}</Tag></button>
+                <button onClick={() => nav(`/users/${p.fromId}`)} className="flex items-center gap-3 text-left w-full"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={40} /><div className="flex-1"><b className="text-[14px]">{u?.nickname}</b><div className="text-[12px] text-ink-3">{CATEGORY_EMOJI[p.category]} {CATEGORY_LABELS[p.category]} · {p.when}</div></div><Tag>{relativeTime(p.createdAt)}</Tag></button>
                 <p className="mt-2 rounded-xl bg-surface-2 px-3 py-2 text-[13px]">“{p.message}”</p>
                 <div className="flex gap-2 mt-3"><Button full variant="outline" icon={<X size={15} />} onClick={() => run(() => api.proposals.respond(p.id, false))}>{t('이번에는 어려워요')}</Button><Button full icon={<Check size={15} />} onClick={async () => { await run(() => api.proposals.respond(p.id, true), t('제안을 수락했어요. 대화를 시작해요!')); setParams({ tab: 'direct' }); }}>{t('좋아요')}</Button></div>
               </div>
@@ -90,7 +90,7 @@ export function ChatInboxPage() {
             <h2 className="text-[14px] font-bold mb-2 flex items-center gap-1.5"><Users size={15} />{t('받은 친구 요청')} {inRequests.length}</h2>
             {inRequests.length === 0 ? <div className="card p-4 text-[13px] text-ink-3">{t('받은 친구 요청이 없어요.')}</div> : inRequests.map((q) => { const u = v.userById(q.fromId); return (
               <div key={q.id} className="card p-3.5 mb-2 flex items-center gap-3">
-                <button onClick={() => nav(`/users/${q.fromId}`)}><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={40} /></button>
+                <button onClick={() => nav(`/users/${q.fromId}`)}><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={40} /></button>
                 <div className="flex-1 min-w-0"><b className="text-[14px]">{u?.nickname}</b><div className="text-[12px] text-ink-3">{relativeTime(q.createdAt)}</div></div>
                 <Button size="sm" variant="outline" onClick={() => run(() => api.relationships.respondFriendRequest(q.id, false))}>{t('거절')}</Button>
                 <Button size="sm" onClick={() => run(() => api.relationships.respondFriendRequest(q.id, true), `${u?.nickname}${t('님과 친구가 되었어요!')}`)}>{t('수락')}</Button>
@@ -102,8 +102,8 @@ export function ChatInboxPage() {
             <section>
               <h2 className="text-[14px] font-bold mb-2 flex items-center gap-1.5"><MessageCircle size={15} />{t('보낸 요청')}</h2>
               <div className="card divide-y divide-line">
-                {outRequests.map((q) => { const u = v.userById(q.toId); return <div key={q.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={36} /><div className="flex-1 text-[13px]"><b>{u?.nickname}</b>{t('님에게 친구 요청')}</div><Tag>{t('대기 중')}</Tag></div>; })}
-                {outProposals.map((p) => { const u = v.userById(p.toId); return <div key={p.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} size={36} /><div className="flex-1 text-[13px]"><b>{u?.nickname}</b>{t('님에게')} {CATEGORY_LABELS[p.category]} {t('제안')}</div>{p.status === 'pending' ? <Tag>{t('대기 중')}</Tag> : <Tag tone="neutral">{t('이번 활동은 성사되지 않았어요')}</Tag>}</div>; })}
+                {outRequests.map((q) => { const u = v.userById(q.toId); return <div key={q.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={36} /><div className="flex-1 text-[13px]"><b>{u?.nickname}</b>{t('님에게 친구 요청')}</div><Tag>{t('대기 중')}</Tag></div>; })}
+                {outProposals.map((p) => { const u = v.userById(p.toId); return <div key={p.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u?.avatar.emoji ?? '👤'} hue={u?.avatar.hue ?? 200} url={u?.avatar.url} size={36} /><div className="flex-1 text-[13px]"><b>{u?.nickname}</b>{t('님에게')} {CATEGORY_LABELS[p.category]} {t('제안')}</div>{p.status === 'pending' ? <Tag>{t('대기 중')}</Tag> : <Tag tone="neutral">{t('이번 활동은 성사되지 않았어요')}</Tag>}</div>; })}
               </div>
               <p className="text-[11px] text-ink-3 mt-1">{t('읽음 여부와 거절 사유는 표시되지 않아요.')}</p>
             </section>

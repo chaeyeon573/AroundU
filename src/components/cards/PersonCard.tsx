@@ -54,7 +54,7 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
   return (
     <article className={cn('card overflow-hidden flex flex-col', compact ? 'w-[260px]' : 'w-full', className)}>
       <button onClick={() => nav(`/users/${user.id}`)} className="text-left">
-        <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} photoType={user.avatar.photoType} className={compact ? 'h-[168px]' : 'h-[220px]'} />
+        <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className={compact ? 'h-[168px]' : 'h-[220px]'} />
       </button>
       <div className="p-3.5 flex-1 flex flex-col gap-2">
         <div>

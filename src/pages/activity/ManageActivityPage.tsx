@@ -37,7 +37,7 @@ export function ManageActivityPage() {
           {pending.map((p) => { const u = v.userById(p.userId); if (!u) return null; return (
             <div key={p.id} className="card p-3.5">
               <button onClick={() => nav(`/users/${u.id}`)} className="flex items-center gap-3 text-left w-full">
-                <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={44} />
+                <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={44} />
                 <div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><div className="text-[12px] text-ink-3 truncate">{affiliationText(u)}</div></div>
                 <span className="text-[11px] text-ink-3">{relativeTime(p.createdAt)}</span>
               </button>
@@ -54,7 +54,7 @@ export function ManageActivityPage() {
         <div className="card divide-y divide-line">
           {approved.length === 0 && <div className="p-4 text-[13px] text-ink-3">{t('아직 승인된 참가자가 없어요.')}</div>}
           {approved.map((p) => { const u = v.userById(p.userId); if (!u) return null; return (
-            <div key={p.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} size={36} /><div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><div className="text-[12px] text-ink-3 truncate">{affiliationText(u)}</div></div><Tag tone="mint">{t('참가 확정')}</Tag></div>
+            <div key={p.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={36} /><div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><div className="text-[12px] text-ink-3 truncate">{affiliationText(u)}</div></div><Tag tone="mint">{t('참가 확정')}</Tag></div>
           ); })}
         </div>
         {rejected.length > 0 && <p className="text-[12px] text-ink-3 mt-3">{t('거절')} {rejected.length}{t('건 — 거절 사유는 요청자에게 표시되지 않아요.')}</p>}
