@@ -10,6 +10,7 @@ const T1 = addDaysISO(1);
 const T2 = addDaysISO(2);
 const T4 = addDaysISO(4);
 const T9 = addDaysISO(9);
+const nowPlus = (n: number) => { const d = new Date(Date.now() + n * 60000); const h = Math.min(23, d.getHours()); return `${String(h).padStart(2, '0')}:${String(h === 23 ? 0 : Math.floor(d.getMinutes() / 5) * 5).padStart(2, '0')}`; };
 
 export const DEMO_USER_ID = 'u_me';
 
@@ -140,6 +141,8 @@ export const users: User[] = [
     bio: 'Stats student association. Runs the study groups.', likes: 'Math, climbing, pho', freeTime: 'The climbing gym', availability: 'after18',
     interests: ['study', 'exercise', 'research'], purposes: ['study', 'club'],
     prompts: [{ questionId: 'q_study_type', answer: 'Discussion type. Will argue about one problem for 30 minutes' }, { questionId: 'q_hobby', answer: 'Climbing' }, { questionId: 'q_cafe', answer: 'A pho place on Shattuck (secret)' }],
+    timetable: [{ id: 'c1', name: 'CS 186 Databases', day: 0, start: '10:00', end: '11:00', hue: 220 }, { id: 'c2', name: 'CS 186 Databases', day: 2, start: '10:00', end: '11:00', hue: 220 }, { id: 'c3', name: 'STAT 134', day: 1, start: '13:00', end: '14:00', hue: 200 }],
+    fieldVisibility: { ...defaultVisibility('school'), timetable: 'school' },
     goals: ['scholarship', 'lab', 'internship'], lookingFor: ['application_partner', 'study_partner'], canOffer: ['data', 'research', 'club_ops'], living: { residence: 'commute', zone: 'Southside' }, interestedOrgIds: ['o_stat'],
   }),
 ];
@@ -290,6 +293,36 @@ export const activities: Activity[] = [
     place: { name: 'Doe Library café', lat: 37.8722, lng: -122.2592 }, capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, rolesNeeded: ['designer', 'developer'],
     comments: [{ id: 'c5', authorId: 'u_hana', text: 'I do design and I’m interested!', createdAt: isoHoursAgo(1) }], createdAt: isoHoursAgo(26),
   },
+  {
+    id: 'a_now_lunch', openSlot: true, kind: 'personal', category: 'meal', title: 'Hate eating alone — lunch at Crossroads?', description: 'Free period, heading to Crossroads. Anyone welcome, up to 4.',
+    cover: { emoji: '🍱', hue: 30 , url: photo('c_burrito') }, hostId: 'u_sua', hostType: 'user', date: T, startTime: nowPlus(25), endTime: nowPlus(85),
+    place: { name: 'Crossroads dining', area: 'Near Unit 2', lat: 37.8672, lng: -122.2560 }, capacity: 4, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoMinutesAgo(8),
+  },
+  {
+    id: 'a_now_coffee', openSlot: true, kind: 'personal', category: 'coffee', title: 'Coffee at Strada, 30 min', description: 'Taking a break from a stats report. One coffee, easy chat.',
+    cover: { emoji: '☕', hue: 25 , url: photo('c_mug') }, hostId: 'u_yuna', hostType: 'user', date: T, startTime: nowPlus(50), endTime: nowPlus(80),
+    place: { name: 'Caffe Strada', area: 'Near College Ave', lat: 37.8690, lng: -122.2547 }, capacity: 3, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoMinutesAgo(12),
+  },
+  {
+    id: 'a_now_badminton', kind: 'personal', category: 'exercise', title: 'Badminton, 2 hours, spare rackets', description: 'Booked a court at the RSF. Beginners welcome. Court number after approval.',
+    cover: { emoji: '🏸', hue: 140 , url: photo('c_volleyball') }, hostId: 'u_minjun', hostType: 'user', date: T, startTime: nowPlus(150), endTime: nowPlus(270),
+    place: { name: 'RSF court 3', area: 'Near the RSF', lat: 37.8686, lng: -122.2628 }, capacity: 4, visibility: 'public', joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoMinutesAgo(40),
+  },
+  {
+    id: 'a_crew_db', kind: 'group', category: 'study', title: 'CS 186 midterm Study Crew', courseName: 'CS 186 Databases', crewType: 'exam', mode: 'offline', description: 'Normalization and SQL. Split past exams and explain to each other.',
+    cover: { emoji: '📝', hue: 220 , url: photo('c_library') }, hostId: 'u_woojin', hostType: 'user', date: T1, startTime: '11:30', endTime: '13:00',
+    place: { name: 'Doe Library group room 2', lat: 37.8722, lng: -122.2592 }, capacity: 5, visibility: 'department', visibilityTargets: ['course:CS 186 Databases'], joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoHoursAgo(7),
+  },
+  {
+    id: 'a_crew_startup', kind: 'group', category: 'study', title: 'UGBA 105 project crew (idea narrowing)', courseName: 'UGBA 105 Entrepreneurship', crewType: 'project', mode: 'online', description: '30 minutes on Zoom after class. Narrow to two ideas.',
+    cover: { emoji: '🧩', hue: 15 , url: photo('c_two_laptops') }, hostId: 'u_jimin', hostType: 'user', date: T1, startTime: '18:00', endTime: '18:30',
+    place: { name: 'Online (Zoom)', lat: 37.8716, lng: -122.2530 }, capacity: 4, visibility: 'department', visibilityTargets: ['course:UGBA 105 Entrepreneurship'], joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(3),
+  },
+  {
+    id: 'a_hack_team', kind: 'group', category: 'networking', title: 'Hackathon team needs a designer + PM', opportunityId: 'op_hackathon', rolesNeeded: ['designer', 'planning'], mode: 'offline', description: 'Two devs on board. Looking for one designer and one PM. Topic: dining hall crowd levels.',
+    cover: { emoji: '💡', hue: 230 , url: photo('c_abstract2') }, hostId: 'u_dohyun', hostType: 'user', date: T4, startTime: '19:00', endTime: '21:00',
+    place: { name: 'Soda Hall lounge', lat: 37.8756, lng: -122.2588 }, capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoHoursAgo(5),
+  },
 ];
 
 export const participations: Participation[] = [
@@ -308,20 +341,28 @@ export const participations: Participation[] = [
   { id: 'p13', activityId: 'a_ai_seminar', userId: 'u_woojin', status: 'approved', createdAt: isoHoursAgo(7) },
   { id: 'p14', activityId: 'a_startup_chat', userId: 'u_jimin', status: 'approved', createdAt: isoHoursAgo(9) },
   { id: 'p15', activityId: 'a_friends_dinner', userId: 'u_junho', status: 'approved', createdAt: isoHoursAgo(3) },
+  { id: 'p16', activityId: 'a_now_lunch', userId: 'u_jimin', status: 'approved', createdAt: isoMinutesAgo(5) },
+  { id: 'p17', activityId: 'a_crew_db', userId: 'u_junho', status: 'approved', createdAt: isoHoursAgo(6) },
+  { id: 'p18', activityId: 'a_crew_startup', userId: 'u_taeho', status: 'approved', createdAt: isoHoursAgo(2) },
+  { id: 'p19', activityId: 'a_hack_team', userId: 'u_sua', status: 'approved', createdAt: isoHoursAgo(4) },
+  { id: 'p20', activityId: 'a_now_badminton', userId: 'u_woojin', status: 'approved', createdAt: isoMinutesAgo(30) },
 ];
 
 export const posts: Post[] = [
-  { id: 'po10', authorId: 'u_woojin', authorType: 'user', media: [], anonymous: true, text: 'Is the AC on Doe 3rd floor way too cold for anyone else? Blanket required… where do you all study?', tags: ['doelibrary', 'anon'], visibility: 'school', likeIds: ['u_sua', 'u_yuna', 'u_jimin'], savedIds: [], comments: [{ id: 'pc10', authorId: 'u_yuna', text: '4th floor by the windows. It’s fine there', createdAt: isoMinutesAgo(30) }, { id: 'pc11', authorId: 'u_woojin', text: 'Oh thank you!', createdAt: isoMinutesAgo(20) }], createdAt: isoMinutesAgo(45) },
-  { id: 'po11', authorId: 'u_seoyeon', authorType: 'user', media: [], anonymous: true, text: 'Anyone else eat alone a lot? I feel weirdly self-conscious at Crossroads… is it just me', tags: ['anon', 'dining'], visibility: 'school', likeIds: ['u_sua', 'u_minjun', 'u_hana', 'u_dohyun', 'u_taeho'], savedIds: [], comments: [{ id: 'pc12', authorId: 'u_sua', text: 'Me too!! Let’s get lunch. I’ll open a lunch slot in Plans', createdAt: isoHoursAgo(1) }], createdAt: isoHoursAgo(3) },
-  { id: 'po12', authorId: 'u_hana', authorType: 'user', media: [], anonymous: true, text: 'First club interview ever — what do they ask? Applied to the band club 🎸', tags: ['clubs', 'interview', 'anon'], visibility: 'public', likeIds: ['u_junho'], savedIds: [], comments: [{ id: 'pc13', authorId: 'u_junho', text: 'No interview for us! Just come jam :)', createdAt: isoHoursAgo(5) }], createdAt: isoHoursAgo(6) },
-  { id: 'po1', authorId: 'u_jimin', authorType: 'user', media: [{ emoji: '☕', hue: 30 , url: photo('c_espresso') }, { emoji: '🍰', hue: 20 , url: photo('c_mug') }], text: 'New café on Telegraph. The flat white is legit. Hosting a coffee meetup here tonight ☕', tags: ['berkeleycafes', 'coffee'], visibility: 'public', likeIds: ['u_sua', 'u_taeho', 'u_hana'], savedIds: [], comments: [{ id: 'pc1', authorId: 'u_sua', text: 'I’m coming!!', createdAt: isoMinutesAgo(50) }], relatedActivityId: 'a_coffee_sinchon', createdAt: isoHoursAgo(2) },
-  { id: 'po2', authorId: 'u_junho', authorType: 'org', orgId: 'o_band', media: [{ emoji: '🎤', hue: 285 , url: photo('c_stage') }], text: 'Fall show in 2 days! See you at Pauley Ballroom. New member sets 🎸', tags: ['band', 'fallshow', 'club'], visibility: 'public', likeIds: ['u_seoyeon', 'u_hana', 'u_jimin', DEMO_USER_ID], savedIds: [DEMO_USER_ID], comments: [], relatedActivityId: 'a_band_show', createdAt: isoHoursAgo(5) },
-  { id: 'po3', authorId: 'u_minjun', authorType: 'user', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }], text: '10k along the Bay this morning. 5k at Edwards Track tonight — beginners welcome!', tags: ['running', 'runcrew'], visibility: 'public', likeIds: ['u_jimin', 'u_woojin'], savedIds: [], comments: [{ id: 'pc2', authorId: 'u_jimin', text: 'See you tonight!', createdAt: isoHoursAgo(1) }], relatedActivityId: 'a_running', createdAt: isoHoursAgo(7) },
-  { id: 'po4', authorId: 'u_seoyeon', authorType: 'user', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }, { emoji: '🎸', hue: 280 , url: photo('c_eguitar') }], text: 'A cat wandered into rehearsal. Practice ruined, day made 😻 (friends only)', tags: ['cat', 'rehearsal'], visibility: 'friends', likeIds: [DEMO_USER_ID], savedIds: [], comments: [], createdAt: isoHoursAgo(9) },
-  { id: 'po5', authorId: 'u_dohyun', authorType: 'org', orgId: 'o_ailab', media: [{ emoji: '🧠', hue: 175 , url: photo('c_abstract1') }], text: 'Open seminar tomorrow 4pm at Soda Hall. Multimodal LLM review + apprentice Q&A. No background needed.', tags: ['AI', 'seminar', 'lab'], visibility: 'public', likeIds: ['u_sua', DEMO_USER_ID], savedIds: ['u_sua'], comments: [], relatedActivityId: 'a_ai_seminar', createdAt: isoHoursAgo(12) },
-  { id: 'po6', authorId: 'u_yuna', authorType: 'user', media: [{ emoji: '📚', hue: 45 , url: photo('c_library') }], text: 'Doe 4th floor window seats: no glare after 2pm, perfect for laptops. (Berkeley only)', tags: ['doelibrary', 'study'], visibility: 'school', likeIds: ['u_woojin'], savedIds: [], comments: [], createdAt: isoHoursAgo(15) },
-  { id: 'po7', authorId: 'u_hana', authorType: 'user', media: [{ emoji: '🎨', hue: 335 , url: photo('c_art') }, { emoji: '📷', hue: 320 , url: photo('c_chair') }], text: 'Last week at SFMOMA. Going again this weekend — I opened an activity if you want to come!', tags: ['exhibit', 'sf', 'review'], visibility: 'public', likeIds: ['u_jimin', 'u_seoyeon'], savedIds: [], comments: [{ id: 'pc3', authorId: 'u_seoyeon', text: 'Gorgeous photos', createdAt: isoHoursAgo(20) }], relatedActivityId: 'a_exhibit', createdAt: isoHoursAgo(22) },
-  { id: 'po8', authorId: 'u_taeho', authorType: 'user', media: [{ emoji: '🏷️', hue: 50 , url: photo('c_mug') }], text: 'Café Milano: BOGO lattes with a student ID today. Sharing the local intel!', tags: ['nearcampus', 'deal'], visibility: 'public', likeIds: ['u_sua', 'u_jimin', 'u_minjun', 'u_yuna'], savedIds: [], comments: [], relatedActivityId: 'a_deal', createdAt: isoHoursAgo(11) },
+  { id: 'po13', authorId: 'u_jimin', authorType: 'user', postType: 'review', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }, { emoji: '🌯', hue: 20 , url: photo('c_burrito') }], text: 'Burritos after the run. First full 5k! Who’s in next week?', topics: ['exercise', 'friends'], tags: ['running', 'berkeley'], visibility: 'school', likeIds: ['u_minjun', DEMO_USER_ID, 'u_sua'], savedIds: [], comments: [], relatedActivityId: 'a_running', taggedUserIds: ['u_minjun', DEMO_USER_ID], tagApprovedIds: ['u_minjun'], recruitNext: true, showOnProfile: true, showOnFeed: true, createdAt: isoMinutesAgo(50) },
+  { id: 'po14', authorId: DEMO_USER_ID, authorType: 'user', postType: 'story', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }], text: 'Rehearsal room cat update. Showed up for work again.', topics: ['daily'], tags: ['cat'], visibility: 'friends', likeIds: ['u_seoyeon'], savedIds: [], comments: [], taggedUserIds: ['u_seoyeon'], tagApprovedIds: ['u_seoyeon'], showOnProfile: true, showOnFeed: false, createdAt: isoHoursAgo(8) },
+  { id: 'po15', authorId: 'u_taeho', authorType: 'user', postType: 'together', media: [], text: 'Still without a hackathon team? We have one PM spot left. Check the team and reach out.', topics: ['startup', 'career'], tags: ['hackathon', 'team'], visibility: 'school', likeIds: ['u_hana'], savedIds: [], comments: [], relatedActivityId: 'a_hack_team', relatedOpportunityId: 'op_hackathon', showOnProfile: true, showOnFeed: true, createdAt: isoHoursAgo(2) },
+  { id: 'po10', authorId: 'u_woojin', authorType: 'user', postType: 'question', media: [], anonymous: true, text: 'Is the AC on Doe 3rd floor way too cold for anyone else? Blanket required… where do you all study?', tags: ['doelibrary', 'anon'], visibility: 'school', likeIds: ['u_sua', 'u_yuna', 'u_jimin'], savedIds: [], comments: [{ id: 'pc10', authorId: 'u_yuna', text: '4th floor by the windows. It’s fine there', createdAt: isoMinutesAgo(30) }, { id: 'pc11', authorId: 'u_woojin', text: 'Oh thank you!', createdAt: isoMinutesAgo(20) }], createdAt: isoMinutesAgo(45) },
+  { id: 'po11', authorId: 'u_seoyeon', authorType: 'user', postType: 'story', media: [], anonymous: true, text: 'Anyone else eat alone a lot? I feel weirdly self-conscious at Crossroads… is it just me', tags: ['anon', 'dining'], visibility: 'school', likeIds: ['u_sua', 'u_minjun', 'u_hana', 'u_dohyun', 'u_taeho'], savedIds: [], comments: [{ id: 'pc12', authorId: 'u_sua', text: 'Me too!! Let’s get lunch. I’ll open a lunch slot in Plans', createdAt: isoHoursAgo(1) }], createdAt: isoHoursAgo(3) },
+  { id: 'po12', authorId: 'u_hana', authorType: 'user', postType: 'question', media: [], anonymous: true, text: 'First club interview ever — what do they ask? Applied to the band club 🎸', tags: ['clubs', 'interview', 'anon'], visibility: 'public', likeIds: ['u_junho'], savedIds: [], comments: [{ id: 'pc13', authorId: 'u_junho', text: 'No interview for us! Just come jam :)', createdAt: isoHoursAgo(5) }], createdAt: isoHoursAgo(6) },
+  { id: 'po1', authorId: 'u_jimin', authorType: 'user', postType: 'together', media: [{ emoji: '☕', hue: 30 , url: photo('c_espresso') }, { emoji: '🍰', hue: 20 , url: photo('c_mug') }], text: 'New café on Telegraph. The flat white is legit. Hosting a coffee meetup here tonight ☕', tags: ['berkeleycafes', 'coffee'], visibility: 'public', likeIds: ['u_sua', 'u_taeho', 'u_hana'], savedIds: [], comments: [{ id: 'pc1', authorId: 'u_sua', text: 'I’m coming!!', createdAt: isoMinutesAgo(50) }], relatedActivityId: 'a_coffee_sinchon', createdAt: isoHoursAgo(2) },
+  { id: 'po2', authorId: 'u_junho', authorType: 'org', postType: 'news', orgId: 'o_band', media: [{ emoji: '🎤', hue: 285 , url: photo('c_stage') }], text: 'Fall show in 2 days! See you at Pauley Ballroom. New member sets 🎸', tags: ['band', 'fallshow', 'club'], visibility: 'public', likeIds: ['u_seoyeon', 'u_hana', 'u_jimin', DEMO_USER_ID], savedIds: [DEMO_USER_ID], comments: [], relatedActivityId: 'a_band_show', createdAt: isoHoursAgo(5) },
+  { id: 'po3', authorId: 'u_minjun', authorType: 'user', postType: 'together', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }], text: '10k along the Bay this morning. 5k at Edwards Track tonight — beginners welcome!', tags: ['running', 'runcrew'], visibility: 'public', likeIds: ['u_jimin', 'u_woojin'], savedIds: [], comments: [{ id: 'pc2', authorId: 'u_jimin', text: 'See you tonight!', createdAt: isoHoursAgo(1) }], relatedActivityId: 'a_running', createdAt: isoHoursAgo(7) },
+  { id: 'po4', authorId: 'u_seoyeon', authorType: 'user', postType: 'story', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }, { emoji: '🎸', hue: 280 , url: photo('c_eguitar') }], text: 'A cat wandered into rehearsal. Practice ruined, day made 😻 (friends only)', tags: ['cat', 'rehearsal'], visibility: 'friends', likeIds: [DEMO_USER_ID], savedIds: [], comments: [], createdAt: isoHoursAgo(9) },
+  { id: 'po5', authorId: 'u_dohyun', authorType: 'org', postType: 'news', orgId: 'o_ailab', media: [{ emoji: '🧠', hue: 175 , url: photo('c_abstract1') }], text: 'Open seminar tomorrow 4pm at Soda Hall. Multimodal LLM review + apprentice Q&A. No background needed.', tags: ['AI', 'seminar', 'lab'], visibility: 'public', likeIds: ['u_sua', DEMO_USER_ID], savedIds: ['u_sua'], comments: [], relatedActivityId: 'a_ai_seminar', createdAt: isoHoursAgo(12) },
+  { id: 'po6', authorId: 'u_yuna', authorType: 'user', postType: 'info', media: [{ emoji: '📚', hue: 45 , url: photo('c_library') }], text: 'Doe 4th floor window seats: no glare after 2pm, perfect for laptops. (Berkeley only)', tags: ['doelibrary', 'study'], visibility: 'school', likeIds: ['u_woojin'], savedIds: [], comments: [], createdAt: isoHoursAgo(15) },
+  { id: 'po7', authorId: 'u_hana', authorType: 'user', postType: 'review', media: [{ emoji: '🎨', hue: 335 , url: photo('c_art') }, { emoji: '📷', hue: 320 , url: photo('c_chair') }], text: 'Last week at SFMOMA. Going again this weekend — I opened an activity if you want to come!', tags: ['exhibit', 'sf', 'review'], visibility: 'public', likeIds: ['u_jimin', 'u_seoyeon'], savedIds: [], comments: [{ id: 'pc3', authorId: 'u_seoyeon', text: 'Gorgeous photos', createdAt: isoHoursAgo(20) }], relatedActivityId: 'a_exhibit', createdAt: isoHoursAgo(22) },
+  { id: 'po8', authorId: 'u_taeho', authorType: 'user', postType: 'info', media: [{ emoji: '🏷️', hue: 50 , url: photo('c_mug') }], text: 'Café Milano: BOGO lattes with a student ID today. Sharing the local intel!', tags: ['nearcampus', 'deal'], visibility: 'public', likeIds: ['u_sua', 'u_jimin', 'u_minjun', 'u_yuna'], savedIds: [], comments: [], relatedActivityId: 'a_deal', createdAt: isoHoursAgo(11) },
   { id: 'po9', authorId: DEMO_USER_ID, authorType: 'user', media: [{ emoji: '💻', hue: 235 , url: photo('c_laptop') }], text: 'Recruiting for a side project! Building a campus app in React.', tags: ['sideproject', 'react'], visibility: 'school', likeIds: ['u_sua', 'u_hana'], savedIds: [], comments: [], relatedActivityId: 'a_mine', createdAt: isoHoursAgo(26) },
 ];
 

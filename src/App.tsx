@@ -26,7 +26,9 @@ import { SearchPage } from '@/pages/home/SearchPage';
 import { ProfileListPage } from '@/pages/profile/ProfileListPage';
 import { EditPromptsPage } from '@/pages/profile/EditPromptsPage';
 import { TimetablePage } from '@/pages/timetable/TimetablePage';
-import { OpportunitiesPage } from '@/pages/opportunities/OpportunitiesPage';
+import { DiscoverPage } from '@/pages/discover/DiscoverPage';
+import { PlansPage } from '@/pages/plans/PlansPage';
+import { ClassPage } from '@/pages/classes/ClassPage';
 import { OpportunityDetailPage } from '@/pages/opportunities/OpportunityDetailPage';
 import { ProfileContextPage } from '@/pages/profile/ProfileContextPage';
 
@@ -81,13 +83,15 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/timetable" element={<TimetablePage />} />
-          <Route path="/plans" element={<Navigate to="/timetable?tab=plans" replace />} />
-          <Route path="/opportunities" element={<OpportunitiesPage />} />
+          <Route path="/discover" element={<DiscoverPage />} />
+          <Route path="/opportunities" element={<Navigate to="/community?tab=opportunities" replace />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route element={<AppShell withNav={false} />}>
+          <Route path="/timetable" element={<TimetablePage />} />
+          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/classes/:courseName" element={<ClassPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/activities/:id" element={<ActivityDetailPage />} />

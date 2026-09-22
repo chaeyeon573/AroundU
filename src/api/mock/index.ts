@@ -1,7 +1,7 @@
 import type { AroundUApi, Patch, Snapshot } from '../types';
 import { t } from '@/i18n';
 import type {
-  Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User,
+  Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User, Opportunity,
 } from '@/types';
 import { loadDB, resetDB, saveDB, getSession, setSession, type MockDB } from './db';
 import { DEMO_USER_ID } from '@/data/seed';
@@ -278,8 +278,15 @@ export const mockApi: AroundUApi = {
   posts: {
     async create(authorId, input) {
       return request(() => {
-        const post: Post = { id: uid('po'), authorId, authorType: input.orgId ? 'org' : 'user', likeIds: [], savedIds: [], comments: [], createdAt: new Date().toISOString(), ...input };
+        const post: Post = { id: uid('po'), authorId, authorType: input.orgId ? 'org' : 'user', likeIds: [], savedIds: [], comments: [], createdAt: new Date().toISOString(), showOnProfile: true, showOnFeed: true, ...input };
+        if (post.anonymous) { post.media = []; post.taggedUserIds = []; }
         db.posts.unshift(post);
+        const author = find(db.users, authorId);
+        // 데모: 태그된 사람은 잠시 후 자동 승인
+        (post.taggedUserIds ?? []).forEach((uid2) => {
+          if (uid2 !== DEMO_USER_ID) setTimeout(() => { post.tagApprovedIds = [...new Set([...(post.tagApprovedIds ?? []), uid2])]; push({ posts: [post] }); }, 4000);
+        });
+        if ((post.taggedUserIds ?? []).includes(DEMO_USER_ID) && authorId !== DEMO_USER_ID) notify(DEMO_USER_ID, { type: 'comment', title: t('게시물에 태그되었어요'), body: `${author.nickname}${t('님이 함께한 사람으로 태그했어요. 승인하면 내 프로필에도 보여요.')}`, link: '/community' });
         return { post, patch: { posts: [post] } };
       });
     },
@@ -304,6 +311,15 @@ export const mockApi: AroundUApi = {
       return request(() => {
         const p = find(db.posts, postId);
         p.comments.push({ id: uid('c'), authorId, text, createdAt: new Date().toISOString() });
+        return { posts: [p] };
+      });
+    },
+    async approveTag(postId, userId, approve) {
+      return request(() => {
+        const p = find(db.posts, postId);
+        const set = new Set(p.tagApprovedIds ?? []);
+        if (approve) set.add(userId); else { set.delete(userId); p.taggedUserIds = (p.taggedUserIds ?? []).filter((i) => i !== userId); }
+        p.tagApprovedIds = [...set];
         return { posts: [p] };
       });
     },
@@ -405,6 +421,21 @@ export const mockApi: AroundUApi = {
   },
 
   opportunities: {
+    async create(authorId, input) {
+      return request(() => {
+        const author = find(db.users, authorId);
+        const o: Opportunity = {
+          id: uid('op'), type: input.type, title: input.title, host: input.host || author.nickname, orgId: input.orgId, description: input.description,
+          cover: { emoji: { event: '🎪', club: '🎸', lab: '🔬', internship: '💼', scholarship: '🎓', hackathon: '💡', startup: '🚀', activity: '☕' }[input.type], hue: 200 },
+          deadline: input.deadline, date: input.date, eligibility: t('누구나'), rolesNeeded: input.rolesNeeded, sourceUrl: input.sourceUrl, sourceLabel: input.sourceUrl ? t('공유된 링크') : '',
+          tags: [], interests: [], goals: [], schoolId: author.affiliation.type === 'university' ? author.affiliation.schoolId : undefined, lastVerified: new Date().toISOString().slice(0, 10), qna: [], reviews: [], createdAt: new Date().toISOString(),
+        };
+        db.opportunities.unshift(o);
+        const rec = { id: uid('oi'), opportunityId: o.id, userId: authorId, intent: 'interested' as const, saved: true, createdAt: new Date().toISOString() };
+        db.opportunityIntents.push(rec);
+        return { opportunity: o, patch: { opportunities: [o], opportunityIntents: [rec] } };
+      });
+    },
     async setIntent(opportunityId, userId, intent) {
       return request(() => {
         const existing = db.opportunityIntents.find((i) => i.opportunityId === opportunityId && i.userId === userId);

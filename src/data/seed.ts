@@ -9,6 +9,8 @@ const T1 = addDaysISO(1);
 const T2 = addDaysISO(2);
 const T4 = addDaysISO(4);
 const T9 = addDaysISO(9);
+/** 지금부터 n분 뒤 (HH:MM) — Now 피드용 예시 활동은 항상 '곧' 시작한다 */
+const nowPlus = (n: number) => { const d = new Date(Date.now() + n * 60000); const h = Math.min(23, d.getHours()); return `${String(h).padStart(2, '0')}:${String(h === 23 ? 0 : Math.floor(d.getMinutes() / 5) * 5).padStart(2, '0')}`; };
 
 export const DEMO_USER_ID = 'u_me';
 
@@ -227,6 +229,8 @@ export const users: User[] = [
     interests: ['study', 'exercise', 'research'],
     purposes: ['study', 'club'],
     prompts: [{ questionId: 'q_study_type', answer: '토론형. 문제 하나로 30분 싸움 가능' }, { questionId: 'q_hobby', answer: '클라이밍' }, { questionId: 'q_cafe', answer: '신촌 국밥집 (이름 비밀)' }],
+    timetable: [{ id: 'c1', name: '데이터베이스', day: 0, start: '10:00', end: '11:15', hue: 220 }, { id: 'c2', name: '데이터베이스', day: 2, start: '10:00', end: '11:15', hue: 220 }, { id: 'c3', name: '심리통계', day: 1, start: '13:00', end: '14:15', hue: 200 }],
+    fieldVisibility: { ...defaultVisibility('school'), timetable: 'school' },
     goals: ['scholarship', 'lab', 'internship'], lookingFor: ['application_partner', 'study_partner'], canOffer: ['data', 'research', 'club_ops'], living: { residence: 'commute', zone: '신촌 남쪽' }, interestedOrgIds: ['o_stat'],
   }),
 ];
@@ -380,9 +384,54 @@ export const activities: Activity[] = [
     description: '주 1회 만나서 진행. 포트폴리오 목적. 디자이너 한 분 있으면 좋겠어요.',
     cover: { emoji: '💻', hue: 235 , url: photo('c_laptop') }, hostId: DEMO_USER_ID, hostType: 'user', date: T2, startTime: '18:00', endTime: '20:00',
     place: { name: '중앙도서관 1층 카페', lat: 37.5643, lng: 126.9372 },
-    capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, comments: [
+    capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, rolesNeeded: ['designer', 'developer'], comments: [
       { id: 'c5', authorId: 'u_hana', text: '디자인 쪽인데 관심 있어요!', createdAt: isoHoursAgo(1) },
     ], createdAt: isoHoursAgo(26),
+  },
+  // ── Now 피드용: 곧 시작하는 가벼운 활동 (작은 프로필 + 무엇·언제·어디) ──
+  {
+    id: 'a_now_lunch', openSlot: true, kind: 'personal', category: 'meal', title: '혼밥 싫어요 — 학생회관 점심 같이',
+    description: '공강이라 학생회관 식당 가요. 아무나 편하게 오세요. 4명까지.',
+    cover: { emoji: '🍱', hue: 30 , url: photo('c_paella') }, hostId: 'u_sua', hostType: 'user', date: T, startTime: nowPlus(25), endTime: nowPlus(85),
+    place: { name: '학생회관 식당', area: '학생회관 근처', lat: 37.5637, lng: 126.9387 },
+    capacity: 4, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoMinutesAgo(8),
+  },
+  {
+    id: 'a_now_coffee', openSlot: true, kind: 'personal', category: 'coffee', title: '중도 앞 커피 30분, 리포트 얘기나 해요',
+    description: '통계 리포트 쓰다가 머리 식히러 나가요. 커피 한 잔.',
+    cover: { emoji: '☕', hue: 25 , url: photo('c_mug') }, hostId: 'u_yuna', hostType: 'user', date: T, startTime: nowPlus(50), endTime: nowPlus(80),
+    place: { name: '중앙도서관 1층 카페', area: '중앙도서관 근처', lat: 37.5643, lng: 126.9372 },
+    capacity: 3, visibility: 'school', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoMinutesAgo(12),
+  },
+  {
+    id: 'a_now_badminton', kind: 'personal', category: 'exercise', title: '배드민턴 2시간, 라켓 여분 있어요',
+    description: '체육관 코트 잡아뒀어요. 초보 환영. 승인 후 코트 번호 알려드려요.',
+    cover: { emoji: '🏸', hue: 140 , url: photo('c_volleyball') }, hostId: 'u_minjun', hostType: 'user', date: T, startTime: nowPlus(150), endTime: nowPlus(270),
+    place: { name: '체육관 3번 코트', area: '체육관 근처', lat: 37.5660, lng: 126.9345 },
+    capacity: 4, visibility: 'public', joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoMinutesAgo(40),
+  },
+  // ── Study Crew: 수업 이름으로 묶이고 같은 수업 학생에게만 보인다 ──
+  {
+    id: 'a_crew_db', kind: 'group', category: 'study', title: '데이터베이스 중간고사 Study Crew', courseName: '데이터베이스', crewType: 'exam', mode: 'offline',
+    description: '정규화·SQL 파트 같이 정리해요. 기출 나눠서 풀고 서로 설명하기.',
+    cover: { emoji: '📝', hue: 220 , url: photo('c_library') }, hostId: 'u_woojin', hostType: 'user', date: T1, startTime: '11:30', endTime: '13:00',
+    place: { name: '중앙도서관 그룹스터디룸 2', lat: 37.5645, lng: 126.9375 },
+    capacity: 5, visibility: 'department', visibilityTargets: ['course:데이터베이스'], joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoHoursAgo(7),
+  },
+  {
+    id: 'a_crew_startup', kind: 'group', category: 'study', title: '창업과 혁신 팀플 크루 (아이디어 정리)', courseName: '창업과 혁신', crewType: 'project', mode: 'online',
+    description: '수업 끝나고 온라인으로 30분. 팀플 아이디어 두 개로 좁히기.',
+    cover: { emoji: '🧩', hue: 15 , url: photo('c_two_laptops') }, hostId: 'u_jimin', hostType: 'user', date: T1, startTime: '18:00', endTime: '18:30',
+    place: { name: '온라인 (Zoom)', lat: 37.5605, lng: 126.9390 },
+    capacity: 4, visibility: 'department', visibilityTargets: ['course:창업과 혁신'], joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(3),
+  },
+  // ── 팀원 모집: 기회에 연결된 팀 ──
+  {
+    id: 'a_hack_team', kind: 'group', category: 'networking', title: 'AI 해커톤 팀원 구해요 (디자인·기획)', opportunityId: 'op_hackathon', rolesNeeded: ['designer', 'planning'], mode: 'offline',
+    description: '개발 2명 있어요. 디자이너 1명, 기획 1명 찾습니다. 주제는 캠퍼스 식당 혼잡도.',
+    cover: { emoji: '💡', hue: 230 , url: photo('c_abstract2') }, hostId: 'u_dohyun', hostType: 'user', date: T4, startTime: '19:00', endTime: '21:00',
+    place: { name: '제1공학관 라운지', lat: 37.5617, lng: 126.9367 },
+    capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoHoursAgo(5),
   },
 ];
 
@@ -402,74 +451,95 @@ export const participations: Participation[] = [
   { id: 'p13', activityId: 'a_ai_seminar', userId: 'u_woojin', status: 'approved', createdAt: isoHoursAgo(7) },
   { id: 'p14', activityId: 'a_startup_chat', userId: 'u_jimin', status: 'approved', createdAt: isoHoursAgo(9) },
   { id: 'p15', activityId: 'a_friends_dinner', userId: 'u_junho', status: 'approved', createdAt: isoHoursAgo(3) },
+  { id: 'p16', activityId: 'a_now_lunch', userId: 'u_jimin', status: 'approved', createdAt: isoMinutesAgo(5) },
+  { id: 'p17', activityId: 'a_crew_db', userId: 'u_junho', status: 'approved', createdAt: isoHoursAgo(6) },
+  { id: 'p18', activityId: 'a_crew_startup', userId: 'u_taeho', status: 'approved', createdAt: isoHoursAgo(2) },
+  { id: 'p19', activityId: 'a_hack_team', userId: 'u_sua', status: 'approved', createdAt: isoHoursAgo(4) },
+  { id: 'p20', activityId: 'a_now_badminton', userId: 'u_woojin', status: 'approved', createdAt: isoMinutesAgo(30) },
 ];
 
 export const posts: Post[] = [
   {
-    id: 'po10', authorId: 'u_woojin', authorType: 'user', media: [], anonymous: true,
+    id: 'po13', authorId: 'u_jimin', authorType: 'user', postType: 'review', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }, { emoji: '🍲', hue: 20 , url: photo('c_hotpot') }],
+    text: '러닝 끝나고 국밥. 5km 처음 완주했어요. 다음 주에도 같이 뛸 사람!', topics: ['exercise', 'friends'],
+    tags: ['러닝', '신촌'], visibility: 'school', likeIds: ['u_minjun', DEMO_USER_ID, 'u_sua'], savedIds: [],
+    comments: [], relatedActivityId: 'a_running', taggedUserIds: ['u_minjun', DEMO_USER_ID], tagApprovedIds: ['u_minjun'], recruitNext: true, showOnProfile: true, showOnFeed: true, createdAt: isoMinutesAgo(50),
+  },
+  {
+    id: 'po14', authorId: DEMO_USER_ID, authorType: 'user', postType: 'story', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }],
+    text: '합주실 고양이 근황. 오늘도 출근했음.', topics: ['daily'],
+    tags: ['고양이'], visibility: 'friends', likeIds: ['u_seoyeon'], savedIds: [], comments: [], taggedUserIds: ['u_seoyeon'], tagApprovedIds: ['u_seoyeon'], showOnProfile: true, showOnFeed: false, createdAt: isoHoursAgo(8),
+  },
+  {
+    id: 'po15', authorId: 'u_taeho', authorType: 'user', postType: 'together', media: [],
+    text: '해커톤 팀 아직 못 구한 사람? 저희 팀 기획 한 자리 남았어요. 프로필 보고 편하게 문의 주세요.', topics: ['startup', 'career'],
+    tags: ['해커톤', '팀원모집'], visibility: 'school', likeIds: ['u_hana'], savedIds: [], comments: [], relatedActivityId: 'a_hack_team', relatedOpportunityId: 'op_hackathon', showOnProfile: true, showOnFeed: true, createdAt: isoHoursAgo(2),
+  },
+  {
+    id: 'po10', authorId: 'u_woojin', authorType: 'user', postType: 'question', media: [], anonymous: true,
     text: '중도 3층 에어컨 너무 세지 않나요? 담요 필수… 다들 어디서 공부해요?',
     tags: ['중앙도서관', '익명'], visibility: 'school', likeIds: ['u_sua', 'u_yuna', 'u_jimin'], savedIds: [],
     comments: [{ id: 'pc10', authorId: 'u_yuna', text: '4층 창가 가세요. 거긴 괜찮아요', createdAt: isoMinutesAgo(30) }, { id: 'pc11', authorId: 'u_woojin', text: '오 감사합니다!', createdAt: isoMinutesAgo(20) }], createdAt: isoMinutesAgo(45),
   },
   {
-    id: 'po11', authorId: 'u_seoyeon', authorType: 'user', media: [], anonymous: true,
+    id: 'po11', authorId: 'u_seoyeon', authorType: 'user', postType: 'story', media: [], anonymous: true,
     text: '혼밥하는 사람 많나요? 학생회관에서 혼자 먹을 때마다 괜히 눈치 보여서… 저만 그런가요',
     tags: ['익명', '학생회관'], visibility: 'school', likeIds: ['u_sua', 'u_minjun', 'u_hana', 'u_dohyun', 'u_taeho'], savedIds: [],
     comments: [{ id: 'pc12', authorId: 'u_sua', text: '저도요!! 점심 같이 먹어요. 계획 탭에서 점심 열어둘게요', createdAt: isoHoursAgo(1) }], createdAt: isoHoursAgo(3),
   },
   {
-    id: 'po12', authorId: 'u_hana', authorType: 'user', media: [], anonymous: true,
+    id: 'po12', authorId: 'u_hana', authorType: 'user', postType: 'question', media: [], anonymous: true,
     text: '동아리 면접 처음인데 뭐 물어보나요? 밴드 동아리 지원했어요 🎸',
     tags: ['동아리', '면접', '익명'], visibility: 'public', likeIds: ['u_junho'], savedIds: [],
     comments: [{ id: 'pc13', authorId: 'u_junho', text: '저희는 면접 없어요! 합주 체험만 하면 돼요 ㅎㅎ', createdAt: isoHoursAgo(5) }], createdAt: isoHoursAgo(6),
   },
   {
-    id: 'po1', authorId: 'u_jimin', authorType: 'user', media: [{ emoji: '☕', hue: 30 , url: photo('c_espresso') }, { emoji: '🍰', hue: 20 , url: photo('c_mug') }],
+    id: 'po1', authorId: 'u_jimin', authorType: 'user', postType: 'together', media: [{ emoji: '☕', hue: 30 , url: photo('c_espresso') }, { emoji: '🍰', hue: 20 , url: photo('c_mug') }],
     text: '정문 앞 새로 생긴 카페. 플랫화이트 맛집 인정. 오늘 저녁 여기서 커피 모임 열었어요 ☕',
     tags: ['신촌카페', '커피'], visibility: 'public', likeIds: ['u_sua', 'u_taeho', 'u_hana'], savedIds: [],
     comments: [{ id: 'pc1', authorId: 'u_sua', text: '저 갈래요!!', createdAt: isoMinutesAgo(50) }],
     relatedActivityId: 'a_coffee_sinchon', createdAt: isoHoursAgo(2),
   },
   {
-    id: 'po2', authorId: 'u_junho', authorType: 'org', orgId: 'o_band', media: [{ emoji: '🎤', hue: 285 , url: photo('c_stage') }],
+    id: 'po2', authorId: 'u_junho', authorType: 'org', postType: 'news', orgId: 'o_band', media: [{ emoji: '🎤', hue: 285 , url: photo('c_stage') }],
     text: '소리울림 가을 정기공연 D-2! 학생회관 대강당에서 만나요. 신입 무대 기대해주세요 🎸',
     tags: ['밴드', '정기공연', '동아리'], visibility: 'public', likeIds: ['u_seoyeon', 'u_hana', 'u_jimin', DEMO_USER_ID], savedIds: [DEMO_USER_ID],
     comments: [], relatedActivityId: 'a_band_show', createdAt: isoHoursAgo(5),
   },
   {
-    id: 'po3', authorId: 'u_minjun', authorType: 'user', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }],
+    id: 'po3', authorId: 'u_minjun', authorType: 'user', postType: 'together', media: [{ emoji: '🌅', hue: 130 , url: photo('c_road_sunset') }],
     text: '오늘 아침 한강 10km. 저녁엔 운동장에서 5km 같이 뛰어요. 초보 환영!',
     tags: ['러닝', '신촌러닝크루'], visibility: 'public', likeIds: ['u_jimin', 'u_woojin'], savedIds: [],
     comments: [{ id: 'pc2', authorId: 'u_jimin', text: '저녁에 봬요!', createdAt: isoHoursAgo(1) }],
     relatedActivityId: 'a_running', createdAt: isoHoursAgo(7),
   },
   {
-    id: 'po4', authorId: 'u_seoyeon', authorType: 'user', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }, { emoji: '🎸', hue: 280 , url: photo('c_eguitar') }],
+    id: 'po4', authorId: 'u_seoyeon', authorType: 'user', postType: 'story', media: [{ emoji: '🐈', hue: 290 , url: photo('c_tabby') }, { emoji: '🎸', hue: 280 , url: photo('c_eguitar') }],
     text: '합주실 고양이 등장. 오늘 연습은 망했지만 행복함 😻 (친구 공개)',
     tags: ['고양이', '합주'], visibility: 'friends', likeIds: [DEMO_USER_ID], savedIds: [],
     comments: [], createdAt: isoHoursAgo(9),
   },
   {
-    id: 'po5', authorId: 'u_dohyun', authorType: 'org', orgId: 'o_ailab', media: [{ emoji: '🧠', hue: 175 , url: photo('c_abstract1') }],
+    id: 'po5', authorId: 'u_dohyun', authorType: 'org', postType: 'news', orgId: 'o_ailab', media: [{ emoji: '🧠', hue: 175 , url: photo('c_abstract1') }],
     text: '내일 오후 4시 공학관 공개 세미나. 멀티모달 LLM 리뷰 + 학부 인턴 Q&A. 사전 지식 없어도 괜찮아요.',
     tags: ['AI', '세미나', '연구실'], visibility: 'public', likeIds: ['u_sua', DEMO_USER_ID], savedIds: ['u_sua'],
     comments: [], relatedActivityId: 'a_ai_seminar', createdAt: isoHoursAgo(12),
   },
   {
-    id: 'po6', authorId: 'u_yuna', authorType: 'user', media: [{ emoji: '📚', hue: 45 , url: photo('c_library') }],
+    id: 'po6', authorId: 'u_yuna', authorType: 'user', postType: 'info', media: [{ emoji: '📚', hue: 45 , url: photo('c_library') }],
     text: '중도 4층 창가 자리 꿀팁: 오후 2시 이후 햇빛 안 들어와서 노트북 하기 좋음. (같은 학교만)',
     tags: ['중앙도서관', '공부'], visibility: 'school', likeIds: ['u_woojin'], savedIds: [],
     comments: [], createdAt: isoHoursAgo(15),
   },
   {
-    id: 'po7', authorId: 'u_hana', authorType: 'user', media: [{ emoji: '🎨', hue: 335 , url: photo('c_art') }, { emoji: '📷', hue: 320 , url: photo('c_chair') }],
+    id: 'po7', authorId: 'u_hana', authorType: 'user', postType: 'review', media: [{ emoji: '🎨', hue: 335 , url: photo('c_art') }, { emoji: '📷', hue: 320 , url: photo('c_chair') }],
     text: '지난 주 성수 전시 후기. 이번 주말에 또 갈 건데 같이 가실 분 활동 열어뒀어요!',
     tags: ['전시', '성수', '후기'], visibility: 'public', likeIds: ['u_jimin', 'u_seoyeon'], savedIds: [],
     comments: [{ id: 'pc3', authorId: 'u_seoyeon', text: '사진 너무 예뻐요', createdAt: isoHoursAgo(20) }],
     relatedActivityId: 'a_exhibit', createdAt: isoHoursAgo(22),
   },
   {
-    id: 'po8', authorId: 'u_taeho', authorType: 'user', media: [{ emoji: '🏷️', hue: 50 , url: photo('c_mug') }],
+    id: 'po8', authorId: 'u_taeho', authorType: 'user', postType: 'info', media: [{ emoji: '🏷️', hue: 50 , url: photo('c_mug') }],
     text: '연세로 카페 온도, 오늘 학생증 보여주면 아메리카노 1+1이래요. 학교 주변 정보 공유!',
     tags: ['학교주변', '혜택'], visibility: 'public', likeIds: ['u_sua', 'u_jimin', 'u_minjun', 'u_yuna'], savedIds: [],
     comments: [], relatedActivityId: 'a_deal', createdAt: isoHoursAgo(11),

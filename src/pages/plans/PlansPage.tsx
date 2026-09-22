@@ -1,90 +1,102 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, Activity as Pulse, Send, ChevronRight } from 'lucide-react';
+import { Users, CalendarCheck, Send, ChevronRight, Clock, Mail, Heart, BookOpen, Puzzle } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, Button, Tag, CardSkeleton, ErrorState, EmptyState } from '@/components/ui';
+import { Avatar, Button, Tag, CardSkeleton, ErrorState } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { t, lang } from '@/i18n';
-import { planFeed, campusPulse } from '@/lib/social';
-import { WhosFreeSection, DailyQuestionSection } from '@/components/social/Sections';
-import { RSVP_LABELS, RSVP_EMOJI, GOAL_LABELS, GOAL_EMOJI } from '@/lib/labels';
-import { formatDateTime, todayISO, relativeTime } from '@/lib/format';
-import type { OpportunityIntent, Goal } from '@/types';
+import type { planFeed } from '@/lib/social';
+import { RSVP_LABELS, RSVP_EMOJI, GOAL_LABELS, GOAL_EMOJI, CATEGORY_EMOJI, OPP_TYPE_EMOJI } from '@/lib/labels';
+import { formatDateTime, todayISO, relativeTime, formatDate } from '@/lib/format';
+import { isTeamActivity } from '@/lib/discover';
+import { dday } from '@/lib/recommend';
+import type { OpportunityIntent, Goal, Activity } from '@/types';
 
+/** Me › My Plans — 받은 초대 / 대기 / 확정 / 관심 행사 / 팀 신청 / Study Crew */
 export function PlansPage() {
-  return <div className="min-h-full pb-6"><TopBar title={t('계획')} bell messages /><PlansContent /></div>;
-}
-
-export function PlansContent() {
   const nav = useNavigate();
   const v = useViewer();
   const status = useAppStore((s) => s.status);
   const error = useAppStore((s) => s.error);
   const init = useAppStore((s) => s.init);
-  const orgs = useAppStore((s) => s.organizations);
+  const run = useAppStore((s) => s.run);
   const participations = useAppStore((s) => s.participations);
   const proposals = useAppStore((s) => s.proposals);
+  const opps = useAppStore((s) => s.opportunities);
+  const intents = useAppStore((s) => s.opportunityIntents);
   const me = v.me;
-  const snap = useMemo(() => ({ ...v.snap, organizations: orgs }), [v.snap, orgs]);
-  const feed = useMemo(() => planFeed(snap, me, v.visibleActivities), [snap, me, v.visibleActivities]);
-  const schoolId = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
-  const pulse = useMemo(() => campusPulse(snap, schoolId, v.visibleActivities), [snap, schoolId, v.visibleActivities]);
   const today = todayISO();
-  const mine = v.visibleActivities.filter((a) => a.date >= today && (a.hostId === me.id || participations.some((p) => p.activityId === a.id && p.userId === me.id && p.status === 'approved'))).sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
-  const invites = proposals.filter((p) => p.toId === me.id && p.status === 'pending').length + v.snap.relationships.friendRequests.filter((r) => r.toId === me.id && r.status === 'pending').length;
+  if (status === 'loading') return <div><TopBar back title="My Plans" /><CardSkeleton /></div>;
+  if (status === 'error') return <div><TopBar back title="My Plans" /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
 
+  const upcoming = v.visibleActivities.filter((a) => a.date >= today).sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
+  const myPending = participations.filter((p) => p.userId === me.id && p.status === 'pending');
+  const pendingActs = upcoming.filter((a) => myPending.some((p) => p.activityId === a.id));
+  const confirmed = upcoming.filter((a) => a.hostId === me.id || participations.some((p) => p.activityId === a.id && p.userId === me.id && p.status === 'approved'));
+  const invites = upcoming.filter((a) => a.joinPolicy === 'invite' && (a.invitedIds ?? []).includes(me.id) && !participations.some((p) => p.activityId === a.id && p.userId === me.id));
+  const proposalsIn = proposals.filter((p) => p.toId === me.id && p.status === 'pending');
+  const friendReqs = v.snap.relationships.friendRequests.filter((r) => r.toId === me.id && r.status === 'pending');
+  const myIntents = intents.filter((i) => i.userId === me.id).map((i) => ({ i, o: opps.find((o) => o.id === i.opportunityId)! })).filter((x) => x.o);
+  const events = myIntents.filter((x) => x.o.date && x.o.date >= today && ['interested', 'going', 'solo', 'company'].includes(x.i.intent));
+  const teamPending = pendingActs.filter(isTeamActivity);
+  const crews = confirmed.filter((a) => a.courseName);
+  const plain = confirmed.filter((a) => !a.courseName);
 
-  if (status === 'loading') return <CardSkeleton />;
-  if (status === 'error') return <ErrorState message={error ?? undefined} onRetry={init} />;
+  const Row = ({ a, right }: { a: Activity; right?: React.ReactNode }) => (
+    <button onClick={() => nav(`/activities/${a.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
+      <span className="h-10 w-10 rounded-xl bg-surface-2 grid place-items-center text-[18px]">{a.courseName ? '📚' : CATEGORY_EMOJI[a.category]}</span>
+      <span className="flex-1 min-w-0"><b className="text-[13px] block truncate">{a.title}</b><span className="text-[12px] text-ink-3">{formatDateTime(a.date, a.startTime)} · {a.place.name}</span></span>
+      {right ?? (a.hostId === me.id && <Tag className="h-5">{t('주최')}</Tag>)}
+    </button>
+  );
+  const Section = ({ icon, title, count, children, empty }: { icon: React.ReactNode; title: string; count: number; children: React.ReactNode; empty: string }) => (
+    <section>
+      <h2 className="text-[15px] font-bold mb-2 flex items-center gap-1.5">{icon}{title}<span className="text-[12px] text-ink-3 font-semibold">{count}</span></h2>
+      {count === 0 ? <div className="card px-4 py-3 text-[12px] text-ink-3">{empty}</div> : <div className="card divide-y divide-line">{children}</div>}
+    </section>
+  );
 
   return (
-    <div>
+    <div className="min-h-full pb-8">
+      <TopBar back title="My Plans" messages />
       <div className="px-4 pt-2 space-y-5">
-        <WhosFreeSection />
-        <DailyQuestionSection />
-
-        {/* My plans */}
-        <section>
-          <div className="flex items-end justify-between mb-2"><h2 className="text-[17px] font-bold">{t('내 약속')}</h2>{invites > 0 && <button onClick={() => nav('/chats?tab=requests')} className="text-[12px] font-semibold text-accent flex items-center">{t('받은 초대')} {invites} <ChevronRight size={14} /></button>}</div>
-          {mine.length === 0 ? <div className="card p-4 text-[13px] text-ink-3">{t('확정된 약속이 없어요. 공강을 열거나 친구의 계획에 올라타 보세요.')}</div> : (
-            <div className="card divide-y divide-line">{mine.slice(0, 4).map((a) => (
-              <button key={a.id} onClick={() => nav(`/activities/${a.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
-                <span className="h-10 w-10 rounded-xl bg-mint-soft text-mint grid place-items-center"><CalendarCheck size={18} /></span>
-                <span className="flex-1 min-w-0"><b className="text-[13px] block truncate">{a.title}</b><span className="text-[12px] text-ink-3">{formatDateTime(a.date, a.startTime)} · {a.place.name}</span></span>
-                {a.hostId === me.id && <Tag className="h-5">{t('주최')}</Tag>}
-              </button>
-            ))}</div>
-          )}
-        </section>
-
-        {/* Friends' plans */}
-        <section>
-          <h2 className="text-[17px] font-bold mb-2">{t('친구들의 계획')}</h2>
-          {feed.length === 0 ? <EmptyState emoji="🗓️" title={t('아직 계획이 없어요')} description={t('친구를 추가하면 친구들이 무엇을 하려는지 여기서 보여요.')} /> : (
-            <div className="space-y-2">{feed.slice(0, 8).map((item) => <PlanCard key={item.id} item={item} />)}</div>
-          )}
-        </section>
-
-        {/* Campus pulse */}
-        <section className="card p-4">
-          <div className="text-[11px] font-bold text-primary flex items-center gap-1"><Pulse size={12} />Campus Pulse</div>
-          <ul className="mt-2 space-y-1 text-[13px] text-ink-2">
-            <li>• {lang === 'en' ? `${pulse.freeNow} students free right now` : `지금 공강인 학생 ${pulse.freeNow}명`}</li>
-            <li>• {lang === 'en' ? `${pulse.lunch} lunch meetups today` : `오늘 점심 활동 ${pulse.lunch}개`}</li>
-            {pulse.topOpp && <li>• {lang === 'en' ? `${pulse.topCount} interested in ${pulse.topOpp.title}` : `${pulse.topCount}명이 ${pulse.topOpp.title}에 관심 있음`}</li>}
-            <li>• {lang === 'en' ? `${pulse.teams} teams looking for members` : `${pulse.teams}개 팀이 팀원을 찾는 중`}</li>
-            <li>• {lang === 'en' ? `${pulse.companySeeking} people looking for someone to go with` : `${pulse.companySeeking}명이 같이 갈 사람을 찾는 중`}</li>
-          </ul>
-          <p className="text-[11px] text-ink-3 mt-2">{t('누가 어디에 있는지는 공개하지 않고 집계된 움직임만 보여줘요.')}</p>
-        </section>
+        <Section icon={<Mail size={15} className="text-accent" />} title={t('받은 초대')} count={invites.length + proposalsIn.length + friendReqs.length} empty={t('받은 초대가 없어요.')}>
+          {friendReqs.map((r) => { const u = v.userById(r.fromId); return u && (
+            <div key={r.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={36} /><span className="flex-1 text-[13px]"><b>{u.nickname}</b>{t('님의 친구 요청')}</span><Button size="sm" variant="outline" onClick={() => run(() => api.relationships.respondFriendRequest(r.id, false))}>{t('거절')}</Button><Button size="sm" onClick={() => run(() => api.relationships.respondFriendRequest(r.id, true), t('친구가 되었어요!'))}>{t('수락')}</Button></div>); })}
+          {proposalsIn.map((p) => { const u = v.userById(p.fromId); return u && (
+            <div key={p.id} className="flex items-center gap-3 px-3.5 py-3"><Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={36} /><span className="flex-1 min-w-0 text-[13px]"><b>{u.nickname}</b> · {CATEGORY_EMOJI[p.category]} {p.when}<span className="block text-[12px] text-ink-3 truncate">{p.message}</span></span><Button size="sm" variant="outline" onClick={() => run(() => api.proposals.respond(p.id, false))}>{t('이번에는 어려워요')}</Button><Button size="sm" onClick={() => run(() => api.proposals.respond(p.id, true), t('제안을 수락했어요.'))}>{t('수락')}</Button></div>); })}
+          {invites.map((a) => <Row key={a.id} a={a} right={<Tag tone="accent" className="h-5">{t('초대')}</Tag>} />)}
+        </Section>
+        <Section icon={<Clock size={15} className="text-gold" />} title={t('참가 신청 대기')} count={pendingActs.filter((a) => !isTeamActivity(a)).length} empty={t('승인을 기다리는 신청이 없어요.')}>
+          {pendingActs.filter((a) => !isTeamActivity(a)).map((a) => <Row key={a.id} a={a} right={<Tag tone="gold" className="h-5">{t('대기')}</Tag>} />)}
+        </Section>
+        <Section icon={<CalendarCheck size={15} className="text-mint" />} title={t('확정된 약속')} count={plain.length} empty={t('확정된 약속이 없어요. 발견 탭에서 지금 열린 활동에 올라타 보세요.')}>
+          {plain.map((a) => <Row key={a.id} a={a} />)}
+        </Section>
+        <Section icon={<Heart size={15} className="text-heart" />} title={t('관심 표시한 행사')} count={events.length} empty={t('관심 표시한 행사가 없어요.')}>
+          {events.map(({ i, o }) => (
+            <button key={i.id} onClick={() => nav(`/opportunities/${o.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
+              <span className="h-10 w-10 rounded-xl bg-surface-2 grid place-items-center text-[18px]">{OPP_TYPE_EMOJI[o.type]}</span>
+              <span className="flex-1 min-w-0"><b className="text-[13px] block truncate">{o.title}</b><span className="text-[12px] text-ink-3">{o.date && formatDate(o.date)}{o.deadline ? ` · ${dday(o.deadline)}` : ''}</span></span>
+              <Tag className="h-5">{RSVP_EMOJI[i.intent]} {RSVP_LABELS[i.intent]}</Tag>
+            </button>
+          ))}
+        </Section>
+        <Section icon={<Puzzle size={15} className="text-primary" />} title={t('대기 중인 팀 신청')} count={teamPending.length} empty={t('신청한 팀이 없어요. 발견 › 팀에서 역할이 맞는 팀을 찾아보세요.')}>
+          {teamPending.map((a) => <Row key={a.id} a={a} right={<Tag tone="gold" className="h-5">{t('대기')}</Tag>} />)}
+        </Section>
+        <Section icon={<BookOpen size={15} className="text-primary" />} title={t('Study Crew 일정')} count={crews.length} empty={t('참여 중인 Study Crew가 없어요. 시간표에서 수업을 누르면 만들 수 있어요.')}>
+          {crews.map((a) => <Row key={a.id} a={a} right={<Tag tone="primary" className="h-5">{a.courseName}</Tag>} />)}
+        </Section>
+        <div className="flex gap-2"><Button full variant="outline" onClick={() => nav('/timetable')}>{t('내 시간표')}</Button><Button full onClick={() => nav('/discover')}>{t('활동 찾기')}</Button></div>
       </div>
     </div>
   );
 }
 
-function PlanCard({ item }: { item: ReturnType<typeof planFeed>[number] }) {
+/** 친구들의 계획 카드 — Discover › Now 하단에서 사용 */
+export function PlanCard({ item }: { item: ReturnType<typeof planFeed>[number] }) {
   const nav = useNavigate();
   const v = useViewer();
   const run = useAppStore((s) => s.run);
@@ -127,6 +139,7 @@ function PlanCard({ item }: { item: ReturnType<typeof planFeed>[number] }) {
     <div className="card p-3.5">{head}
       <p className="text-[14px] mt-2">{lang === 'en' ? <>wants to <b>{GOAL_LABELS[g].toLowerCase()}</b> this semester {GOAL_EMOJI[g]}</> : <>{t('이번 학기에')} <b>{GOAL_LABELS[g]}</b>{t('를 하고 싶어 해요')} {GOAL_EMOJI[g]}</>}</p>
       <Button size="sm" className="mt-3" full onClick={() => nav(`/users/${u.id}?propose=1`)}>{t('같이 시작할래요')}</Button>
+      <span className="hidden"><ChevronRight size={1} /></span>
     </div>
   );
 }

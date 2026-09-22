@@ -2,7 +2,7 @@
 export type ID = string;
 
 /** 항목별 공개 범위 */
-export type Visibility = 'public' | 'school' | 'department' | 'friends' | 'selected' | 'private';
+export type Visibility = 'public' | 'school' | 'department' | 'friends' | 'followers' | 'selected' | 'private';
 
 /** 활동 가능한 시간 (완전한 시간표 대신 사용) */
 export type Availability = 'now' | 'afternoon' | 'after18' | 'weekend' | 'in_class' | 'hidden';
@@ -231,6 +231,8 @@ export type JoinPolicy = 'open' | 'approval' | 'invite';
 export interface Place {
   name: string;
   address?: string;
+  /** 대략적인 위치 — 승인제 활동은 승인 전까지 이 값만 보여준다 (예: "학생회관 근처") */
+  area?: string;
   lat: number;
   lng: number;
 }
@@ -270,11 +272,17 @@ export interface Activity {
   /** 시간표 공강에서 열린 활동 */
   openSlot?: boolean;
   rolesNeeded?: Role[];
+  /** Study Crew — 수업 이름으로 묶인다. visibilityTargets: ['course:<이름>']로 같은 수업 학생에게만 보인다 */
+  courseName?: string;
+  crewType?: CrewType;
+  mode?: 'offline' | 'online';
   comments: Comment[];
   /** 학교 공식 행사 여부 */
   official?: boolean;
   createdAt: string;
 }
+
+export type CrewType = 'exam' | 'assignment' | 'review' | 'project';
 
 export type ParticipationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
@@ -289,6 +297,8 @@ export interface Participation {
 
 // ─── 게시물 ───────────────────────────────────────────────────────────────
 export type PostCategory = 'friend' | 'school' | 'club' | 'public';
+/** 게시물 종류: 그냥 이야기 / 질문 / 정보 / 후기 / 같이할 사람 / 소식 */
+export type PostType = 'story' | 'question' | 'info' | 'review' | 'together' | 'news';
 
 export interface Post {
   id: ID;
@@ -303,8 +313,22 @@ export interface Post {
   savedIds: ID[];
   comments: Comment[];
   relatedActivityId?: ID;
-  /** 익명 게시 — 작성자는 서버에만 저장되고 화면에는 '익명'으로 표시 */
+  relatedOpportunityId?: ID;
+  /** 익명 게시 — 작성자는 서버에만 저장되고 화면에는 '익명'으로 표시. 익명 글은 텍스트만 가능 */
   anonymous?: boolean;
+  postType?: PostType;
+  /** 주제 태그 키 (일상·수업·진로 …) */
+  topics?: string[];
+  courseTag?: string;
+  /** 함께한 사람 — 상대가 승인해야 상대 프로필에 표시된다 */
+  taggedUserIds?: ID[];
+  tagApprovedIds?: ID[];
+  /** 다음 활동 같이할 사람 모집 */
+  recruitNext?: boolean;
+  /** 내 프로필 게시물 탭에 표시 (기본 true) */
+  showOnProfile?: boolean;
+  /** Community Feed에도 공개 (기본 true) */
+  showOnFeed?: boolean;
   createdAt: string;
 }
 

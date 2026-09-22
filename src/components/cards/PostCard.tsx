@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, CalendarCheck, Flag, Trash2, BadgeCheck } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, CalendarCheck, Flag, Trash2, BadgeCheck, Users, Sparkles, Puzzle, Check } from 'lucide-react';
 import type { Post } from '@/types';
 import { Avatar, Cover, Button, BottomSheet, Input, VisibilityTag } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { relativeTime } from '@/lib/format';
+import { POST_TYPE_LABELS, POST_TYPE_EMOJI, topicLabel, CATEGORY_EMOJI } from '@/lib/labels';
+import { isTeamActivity } from '@/lib/discover';
 import { cn } from '@/lib/cn';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 
@@ -20,6 +22,12 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
   const author = v.userById(p.authorId);
   const org = p.orgId ? v.orgById(p.orgId) : undefined;
   const related = p.relatedActivityId ? activities.find((a) => a.id === p.relatedActivityId) : undefined;
+  const opps = useAppStore((s) => s.opportunities);
+  const intents = useAppStore((s) => s.opportunityIntents);
+  const relatedOpp = p.relatedOpportunityId ? opps.find((o) => o.id === p.relatedOpportunityId) : undefined;
+  const myOppIntent = relatedOpp ? intents.find((i) => i.opportunityId === relatedOpp.id && i.userId === v.me.id) : undefined;
+  const tagged = (p.taggedUserIds ?? []).map((id) => ({ id, u: v.userById(id), ok: (p.tagApprovedIds ?? []).includes(id) })).filter((x) => x.u);
+  const iAmTagged = tagged.find((x) => x.id === v.me.id);
   const liked = p.likeIds.includes(v.me.id);
   const saved = p.savedIds.includes(v.me.id);
   const following = v.isFollowing(org ? org.id : p.authorId);
@@ -34,7 +42,8 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
   const displayName = anon ? t('익명') : org?.name ?? author?.nickname ?? t('알 수 없음');
   const TextBlock = () => (<>
     <p className={cn('leading-relaxed mt-1', p.media.length ? 'text-[14px]' : 'text-[15px]')}>{!anon && <b className="mr-1.5">{displayName}</b>}{p.text}</p>
-    {p.tags.length > 0 && <div className="mt-1 text-[12px] text-primary">{p.tags.map((tg) => `#${tg}`).join(' ')}</div>}
+    {tagged.filter((x) => x.ok || x.id === v.me.id || isMine).length > 0 && <div className="mt-1 text-[12px] text-ink-2 flex items-center gap-1 flex-wrap"><Users size={11} className="text-ink-3" />{t('함께:')} {tagged.filter((x) => x.ok || x.id === v.me.id || isMine).map((x) => <button key={x.id} onClick={() => nav(`/users/${x.id}`)} className="font-semibold">{x.u!.nickname}{!x.ok && <span className="text-ink-3 font-normal"> ({t('승인 대기')})</span>}</button>)}</div>}
+    {(p.tags.length > 0 || p.topics?.length || p.courseTag) && <div className="mt-1 text-[12px] text-primary">{[...(p.topics ?? []).map((k) => `#${topicLabel(k)}`), ...(p.courseTag ? [`📚${p.courseTag}`] : []), ...p.tags.map((tg) => `#${tg}`)].join(' ')}</div>}
   </>);
   const avatar = anon ? { emoji: '🫥', hue: 220 } : org ? org.logo : author?.avatar ?? { emoji: '👤', hue: 200 };
   const goAuthor = () => { if (anon) return; nav(org ? `/orgs/${org.id}` : `/users/${p.authorId}`); };
@@ -46,7 +55,7 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
         <button onClick={goAuthor}><Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={36} /></button>
         <div className="flex-1 min-w-0">
           <button onClick={goAuthor} className="text-[14px] font-bold truncate flex items-center gap-1">{displayName}{org?.verified && <BadgeCheck size={13} className="text-gold" />}</button>
-          <div className="text-[11px] text-ink-3 flex items-center gap-1.5">{anonSchool && <>{anonSchool} · </>}{relativeTime(p.createdAt)} · <VisibilityTag value={p.visibility} /></div>
+          <div className="text-[11px] text-ink-3 flex items-center gap-1.5">{anonSchool && <>{anonSchool} · </>}{relativeTime(p.createdAt)} · <VisibilityTag value={p.visibility} />{p.postType && <span className="rounded bg-surface-2 px-1 font-semibold">{POST_TYPE_EMOJI[p.postType]} {POST_TYPE_LABELS[p.postType]}</span>}</div>
         </div>
         {!isMine && !anon && (
           <button onClick={() => run(() => api.relationships.toggleFollow(v.me.id, org ? org.id : p.authorId, org ? 'org' : 'user'))}
@@ -65,15 +74,22 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
       <div className="px-3.5 pt-2.5 pb-3.5">
         {p.media.length === 0 && <div className="mb-1"><TextBlock /></div>}
         <div className="flex items-center gap-1 -ml-2">
-          <button onClick={() => run(() => api.posts.toggleLike(p.id, v.me.id))} className={cn('h-9 px-2 rounded-lg flex items-center gap-1 text-[13px] font-semibold press', liked ? 'text-heart' : 'text-ink-2')}><Heart size={20} fill={liked ? 'currentColor' : 'none'} />{p.likeIds.length}</button>
+          <button onClick={() => run(() => api.posts.toggleLike(p.id, v.me.id))} className={cn('h-9 px-2 rounded-lg flex items-center gap-1 text-[13px] font-semibold press', liked ? 'text-heart' : 'text-ink-2')} aria-label={t('공감')}><Heart size={20} fill={liked ? 'currentColor' : 'none'} />{p.likeIds.length}</button>
           <button onClick={() => setComments((c) => !c)} className="h-9 px-2 rounded-lg flex items-center gap-1 text-[13px] font-semibold text-ink-2 press"><MessageCircle size={20} />{p.comments.length}</button>
           <button onClick={() => showToast(t('링크를 복사했어요.'))} className="h-9 px-2 rounded-lg text-ink-2 press"><Share2 size={20} /></button>
           <span className="flex-1" />
           <button onClick={() => run(() => api.posts.toggleSave(p.id, v.me.id), saved ? undefined : t('저장했어요'))} className={cn('h-9 px-2 rounded-lg press', saved ? 'text-primary' : 'text-ink-2')}><Bookmark size={20} fill={saved ? 'currentColor' : 'none'} /></button>
         </div>
         {p.media.length > 0 && <TextBlock />}
-        {related && (
-          <Button size="sm" variant="secondary" full className="mt-3" icon={<CalendarCheck size={15} />} onClick={() => nav(`/activities/${related.id}`)}>{t('이 활동에 참여하기 ·')} {related.title}</Button>
+        {iAmTagged && !iAmTagged.ok && (
+          <div className="mt-3 rounded-xl bg-primary-soft px-3 py-2.5 text-[12px] flex items-center gap-2"><span className="flex-1">{t('함께한 사람으로 태그됐어요. 승인하면 내 프로필에도 보여요.')}</span><Button size="sm" variant="outline" onClick={() => run(() => api.posts.approveTag(p.id, v.me.id, false))}>{t('빼기')}</Button><Button size="sm" icon={<Check size={13} />} onClick={() => run(() => api.posts.approveTag(p.id, v.me.id, true), t('승인했어요.'))}>{t('승인')}</Button></div>
+        )}
+        {(related || relatedOpp || (!isMine && !anon)) && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {related && <Button size="sm" variant="secondary" icon={isTeamActivity(related) ? <Puzzle size={14} /> : <CalendarCheck size={14} />} onClick={() => nav(`/activities/${related.id}`)}>{isTeamActivity(related) ? t('팀 참여 문의') : t('활동 자세히 보기')}</Button>}
+            {relatedOpp && <Button size="sm" variant={myOppIntent ? 'secondary' : 'outline'} icon={<Sparkles size={14} />} onClick={() => run(() => api.opportunities.setIntent(relatedOpp.id, v.me.id, myOppIntent ? null : 'interested'), myOppIntent ? undefined : t('관심 표시했어요.'))}>{myOppIntent ? t('나도 관심 있어요 ✓') : t('나도 관심 있어요')}</Button>}
+            {!isMine && !anon && !org && <Button size="sm" variant={p.recruitNext ? 'primary' : 'outline'} icon={<span>{related ? CATEGORY_EMOJI[related.category] : '☕'}</span>} onClick={() => nav(`/users/${p.authorId}?propose=1&cat=${related?.category ?? 'coffee'}`)}>{t('다음에는 같이하기')}</Button>}
+          </div>
         )}
         {comments && (
           <div className="mt-3 border-t border-line pt-3 space-y-2">

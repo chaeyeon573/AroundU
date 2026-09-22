@@ -50,11 +50,15 @@ src/
     cards/          PersonCard, ActivityCard, JoinButton, PostCard, OrgCard, ReportSheet
   pages/
     onboarding/     시작 화면 + 6단계 가입
-    home/           추천 홈, 검색
-    map/            지도(마커·바텀시트·목록 전환)
+    home/           People 카드 스와이프, 검색
+    discover/       Discover (Now | Activities | Teams)
+    classes/        수업 공간 (같은 수업 학생 · Study Crew)
+    plans/          My Plans
+    timetable/      시간표 (수업 탭 → 수업 공간, 공강 탭 → Open Slot)
+    map/            지도(활동 카드·상세에서 진입)
     activity/       활동 상세, 참가자 관리(승인·거절)
     create/         활동 만들기/수정, 게시물 작성
-    community/      커뮤니티 피드
+    community/      Community (Feed | Opportunities | Clubs)
     people/         사람 상세(관심·팔로우·친구 요청·활동 제안)
     org/            동아리·조직 페이지
     chat/           채팅함(개인/활동/조직/요청), 채팅방(차단·신고)
@@ -68,10 +72,23 @@ src/
 `src/api/types.ts`의 `AroundUApi` 인터페이스를 구현하는 객체를 만들고 `src/api/index.ts`에서 `mockApi` 대신 내보내면 됩니다.
 모든 변경 API는 변경된 엔티티만 담은 `Patch`를 돌려주고, 스토어가 id 기준으로 병합합니다. `subscribe()`는 서버 푸시(WebSocket/SSE)에 대응합니다.
 
-## 계획 탭 · Open Slot · 소셜 RSVP (`src/pages/plans`, `src/components/social`, `src/lib/social.ts`)
+## 앱 구조 — People | Discover | + | Community | Me
 
-- 하단 탭: 사람 · 시간표 · + · 커뮤니티 · 프로필. 사람 탭 = Who's free + 오늘의 질문 + 추천 사람(필터: 추천·지금 시간 돼요·같은 수업·같은 목표·친구·새로운 분야). 커뮤니티 = 이번 주 행사·친구 활동·학교 소식(공식 행사·조직 공지)·공고·게시글·익명 글을 한 피드에. 익명 글은 학교명만 표시되고 팔로우·프로필 이동이 없으며 댓글도 익명. 시간표 탭 안에 "내 시간표 | 계획" 세그먼트. 지도는 홈 검색창 옆 핀 아이콘과 활동 상세의 "지도에서 보기"로 열리며 목록이 먼저 보이고 지도로 전환 가능
-- 계획 탭: Who's free right now?(친구·같은 행사·같은 조직·"새로운 사람에게 공개"만 노출, 남은 공강 시간만 표시), 오늘의 질문, 내 약속, 친구들의 계획 피드(의도 기반, 사진 없음), Campus Pulse(집계값만)
+| 탭 | 질문 | 내용 |
+| --- | --- | --- |
+| **People** (`src/pages/home/HomePage.tsx`) | 누구를 만날 것인가 | 한 번에 한 명 카드 스와이프. 큰 사진, 소속, 공통 관심사, 추천 이유, 가능한 시간, "지금 같이 하고 싶은 것". 왼쪽=넘기기, 오른쪽=관심(상대에게 비공개, 상호일 때만 매칭 시트). 버튼: 넘기기 / 친구로 연결 / 커피 제안 / 함께할 일. 이전 카드, 나중에 보기, 오늘 본 사람(localStorage). 필터: 전체·친구·밥·카페·공부·운동·취미·창업·프로젝트 |
+| **Discover** (`src/pages/discover/DiscoverPage.tsx`, `src/lib/discover.ts`) | 무엇을 함께할 것인가 | 상단 시간표 카드(오늘 공강·시간 맞는 사람·가능한 활동 → Open Slot). **Now**: 오늘 안에 시작하는 가벼운 활동을 한 줄 카드로(작은 프로필, 무엇·언제·어디, 같이 가기), 시간 칩(지금/30분/1시간/오늘)·종류 칩, 승인제는 승인 전 대략 위치만(`place.area`), Who's free·오늘의 질문·친구들의 계획·Campus Pulse. **Activities**: 이후 활동 + 같이 가는 행사·동아리·창업 기회. **Teams**: 팀원 모집 활동, Study Crew, 해커톤·창업 기회, 동아리 모집 — 목적·역할·대면/온라인 필터, 내가 제공할 수 있는 역할 표시 |
+| **+** (`src/components/layout/BottomNav.tsx`) | 상황에 맞는 생성 | 지금 만날 사람 찾기(30분 뒤 시작, People에서 마지막으로 본 사람 자동 초대) / 활동·약속 만들기 / Study Crew 만들기(수업 선택) / 팀원 모집(공고 상세에서 열면 역할 프리필) / 동아리 부원 모집·행사(관리자) / 기회 공유(링크·제목만) / 글 작성(조직 페이지에서 열면 조직 소식) |
+| **Community** (`src/pages/community/CommunityPage.tsx`) | 학교에 어떤 이야기·기회·조직이 있는가 | **Feed**: 게시물만. 종류(그냥 이야기·질문·정보·후기·같이할 사람·소식·익명)와 주제 태그. **Opportunities**: 나에게 맞는·공고·저장·유형별. **Clubs**: 조직 목록(내 조직·동아리·학회·연구실·Greek) → 조직 페이지 탭 소개·게시물·행사·모집·멤버 (`src/pages/org/OrgPage.tsx`). 조직 글은 부원 모집→Teams, 행사→Activities, 소식→Feed에 자동 노출 |
+| **Me** (`src/pages/profile/ProfilePage.tsx`) | 나와 내 일정 | 프로필 카드·질문 답변·목표. 목록: My Plans(받은 초대·참가 대기·확정·관심 행사·팀 신청·Study Crew, `src/pages/plans/PlansPage.tsx`) / 내 시간표 / 친구 / 채팅 / 저장한 공고 / 관심 행사 / 가입한 동아리 / 활동 기록. 게시물·만든 활동·참여·저장 탭 |
+
+시간표는 탭이 아니라 Discover 상단 카드와 Me에서 진입합니다. **수업을 탭하면 수업 공간**(`src/pages/classes/ClassPage.tsx`)이 열려 같은 수업 학생(시간표 공개 범위·같은 학교 기준)과 운영 중인 Study Crew를 보고, `Study Crew 만들기`로 제목·장소·시간(수업 직후)·공개 범위(같은 수업만, `visibilityTargets: ['course:<수업명>']`)가 미리 채워진 생성 화면으로 갑니다. 유형(시험·과제·복습·팀플)과 대면/온라인만 고르면 됩니다.
+
+**개인 포스트** (`src/pages/create/CreatePostPage.tsx`, `src/components/cards/PostCard.tsx`): 사진 1~4장 + 짧은 글, 종류·주제·수업 태그, 함께한 사람(상대가 승인해야 상대 프로필에 표시), 참여한 활동·관련 기회 연결, "다음 활동 같이할 사람 모집". 공개 범위는 같은 학교 / 친구 / 팔로워 / 나만 — 인터넷 전체 공개 없음. "내 프로필에 표시", "Community Feed에도 공개" 체크. 반응: 공감 / 댓글 / 나도 관심 있어요(관련 기회) / 다음에는 같이하기(작성자에게 제안) / 활동 자세히 보기 / 팀 참여 문의. 익명은 글만.
+
+## Open Slot · 소셜 RSVP (`src/pages/plans`, `src/components/social`, `src/lib/social.ts`)
+
+- Who's free right now?(친구·같은 행사·같은 조직·"새로운 사람에게 공개"만 노출, 남은 공강 시간만 표시), 오늘의 질문, 친구들의 계획 피드(의도 기반, 사진 없음), Campus Pulse(집계값만)는 Discover › Now 하단에. 지도는 활동 카드의 "지도" 버튼과 활동 상세에서만 열림
 - Open Slot: 시간표에서 공강을 탭하면 "이 시간에 무엇을 하고 싶어요?" → 공개 범위 → 활동 생성. 그 시간에 시간이 맞는 사람과 근처 활동을 함께 보여줌. `+` 메뉴의 "내 공강 열기"와 시간표 상단 "오늘 공강에 끼워 넣을 수 있는 것"에서도 진입
 - 소셜 RSVP: 관심 / 갈 예정 / 혼자 가요 / 같이 갈 사람 찾아요 / 팀 찾는 중 / 이미 신청 / 참여 경험 있음. 혼자·같이 갈 사람 찾는 사람이 "함께할 사람" 탭 상단에 오고 "같이 가기 제안"으로 연결
 - 사진: `public/photos/` (MIT 템플릿 저장소의 Unsplash 계열 인물·풍경 + ImageNet 샘플 몇 장). 공개 서비스 전에는 라이선스 확인된 사진으로 교체 필요
@@ -84,7 +101,7 @@ src/
 
 ## 이번 주 뭐 하지? · 공고 (`src/pages/opportunities`, `src/lib/recommend.ts`)
 
-- 하단 탭은 홈·지도·+·커뮤니티·프로필 5개 그대로. 행사·동아리 모집·해커톤·창업·점심은 홈 "이번 주 뭐 하지?" 섹션에, 장학금·인턴·연구실 공고는 홈 상단 한 줄 배너와 "공고" 목록에만 가볍게 노출
+- Community › Opportunities에 나에게 맞는 / 공고 / 저장·지원 / 유형별. 행사·동아리·해커톤·창업은 Discover › Activities·Teams에도 노출되고, 장학금·인턴·연구실 공고는 목록에만 가볍게 노출. 누구나 링크·제목만으로 기회 공유 가능(`api.opportunities.create`)
 - 같이 가는 종류에만 관심 ♥ / 같이 갈래요 / 사람 찾기가 붙고, 공고류는 저장·마감 알림·지원 완료만 제공
 - 관심 있음 / 지원 예정 / 지원 완료 / 저장, 마감 알림, Q&A와 후기(결과 공개 선택)
 - "함께할 사람" 탭: 같은 기회에 관심 있는 사람과 왜 맞는지(역할·목표·공강·수업) 표시, 팀 제안 → 활동 생성으로 연결
@@ -137,3 +154,4 @@ Hinge식 구조를 캠퍼스 맥락으로 옮겼습니다.
 - 쇼츠/짧은 영상, 학교 수강편람 연동(시간표는 직접 입력), 유료 광고, 정교한 AI 추천, 직장인 모드(데이터 모델만 확장 가능하게 설계)
 - 활동 시작 전 푸시 알림 스케줄링, 활동 주최자·참가자 평가/후기(구조만 예약)
 - 조직 페이지 생성·편집 UI, 조직 가입 승인 처리
+- Plan Together(단체 약속 시간 투표), 활동 후 "오늘 어땠어요?" 피드백(추천 가중치), 학교 LMS·캘린더 연동

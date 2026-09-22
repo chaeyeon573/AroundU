@@ -68,8 +68,14 @@ export function canView(s: Rel, viewer: User, ownerId: ID, visibility: Visibilit
   switch (visibility) {
     case 'public': return true;
     case 'school': return sameSchool(viewer, owner);
-    case 'department': return sameSchool(viewer, owner) && (targets?.length ? targets.includes(dept(viewer)) : dept(viewer) === dept(owner));
+    case 'department': {
+      if (!sameSchool(viewer, owner)) return false;
+      if (!targets?.length) return dept(viewer) === dept(owner);
+      // 'course:<수업명>' 타깃은 같은 수업을 듣는 사람에게만
+      return targets.some((tg) => tg.startsWith('course:') ? viewer.timetable.some((c) => c.name === tg.slice(7)) : tg === dept(viewer));
+    }
     case 'friends': return isFriend(s, viewer.id, ownerId);
+    case 'followers': return isFollowing(s, viewer.id, ownerId) || isFriend(s, viewer.id, ownerId);
     case 'selected': return (targets ?? []).includes(viewer.id);
     case 'private': return false;
   }
@@ -80,6 +86,16 @@ export const canViewActivity = (s: Rel, viewer: User, a: Activity) =>
 
 export const canViewPost = (s: Rel, viewer: User, p: Post) => canView(s, viewer, p.authorId, p.visibility);
 
+/** 같은 수업을 듣는 사람 (시간표 공개 범위를 지킨다) */
+export const classmates = (s: Rel, viewer: User, courseName: string, canSee: (u: User) => boolean) =>
+  s.users.filter((u) => u.id !== viewer.id && !isBlocked(s, viewer.id, u.id) && sameSchool(viewer, u) && u.timetable.some((c) => c.name === courseName) && canSee(u));
+
+/** 활동 장소 표시 — 승인제는 승인 전까지 대략적인 위치만 */
+export function placeLabel(a: Activity, viewer: User, approved: boolean): { name: string; approximate: boolean } {
+  if (a.hostId === viewer.id || approved || a.joinPolicy === 'open') return { name: a.place.name, approximate: false };
+  return { name: a.place.area ?? `${a.place.name.split(' ')[0]} ${t('근처')}`, approximate: true };
+}
+
 export const canViewField = (s: Rel, viewer: User, owner: User, field: ProfileField) =>
   canView(s, viewer, owner.id, owner.fieldVisibility[field]);
 
@@ -89,6 +105,7 @@ export function visibilityDescription(v: Visibility) {
     case 'school': return t('같은 학교 인증 사용자만 볼 수 있어요');
     case 'department': return t('지정한 학과·조직 구성원만 볼 수 있어요');
     case 'friends': return t('친구만 볼 수 있어요');
+    case 'followers': return t('나를 팔로우하는 사람과 친구만 볼 수 있어요');
     case 'selected': return t('선택한 사람만 볼 수 있어요');
     case 'private': return t('나만 볼 수 있어요');
   }

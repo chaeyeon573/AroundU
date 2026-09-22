@@ -81,6 +81,9 @@ export interface ActivityInput {
   opportunityId?: ID;
   rolesNeeded?: Role[];
   openSlot?: boolean;
+  courseName?: string;
+  crewType?: Activity['crewType'];
+  mode?: Activity['mode'];
 }
 
 export interface PostInput {
@@ -89,8 +92,29 @@ export interface PostInput {
   tags: string[];
   visibility: Visibility;
   relatedActivityId?: ID;
+  relatedOpportunityId?: ID;
   orgId?: ID;
   anonymous?: boolean;
+  postType?: Post['postType'];
+  topics?: string[];
+  courseTag?: string;
+  taggedUserIds?: ID[];
+  recruitNext?: boolean;
+  showOnProfile?: boolean;
+  showOnFeed?: boolean;
+}
+
+/** 기회 공유 — 링크와 제목만으로 등록하고 나머지는 나중에 채운다 */
+export interface OpportunityInput {
+  type: Opportunity['type'];
+  title: string;
+  host: string;
+  description: string;
+  sourceUrl: string;
+  deadline?: string;
+  date?: string;
+  rolesNeeded?: Role[];
+  orgId?: ID;
 }
 
 export interface AroundUApi {
@@ -132,6 +156,8 @@ export interface AroundUApi {
     toggleLike(postId: ID, userId: ID): Promise<Patch>;
     toggleSave(postId: ID, userId: ID): Promise<Patch>;
     comment(postId: ID, authorId: ID, text: string): Promise<Patch>;
+    /** 태그된 사람이 자기 프로필 노출을 승인 */
+    approveTag(postId: ID, userId: ID, approve: boolean): Promise<Patch>;
   };
 
   relationships: {
@@ -150,6 +176,7 @@ export interface AroundUApi {
   };
 
   opportunities: {
+    create(authorId: ID, input: OpportunityInput): Promise<{ opportunity: Opportunity; patch: Patch }>;
     /** 관심·지원 예정·지원 완료 설정 (null이면 해제) */
     setIntent(opportunityId: ID, userId: ID, intent: OpportunityIntent | null): Promise<Patch>;
     toggleSave(opportunityId: ID, userId: ID): Promise<Patch>;

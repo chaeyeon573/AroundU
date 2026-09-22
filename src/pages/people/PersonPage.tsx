@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { t, lang } from '@/i18n';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock, Mic } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Portrait, VerifiedBadge, Tag, Button, BottomSheet, Dialog, Textarea, Input, Chip, Cover, EmptyState, VisibilityTag } from '@/components/ui';
@@ -44,7 +44,8 @@ export function PersonPage() {
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (params.get('propose')) setParams({}, { replace: true }); }, [params, setParams]);
 
-  if (!user || user.id === v.me.id) { if (user?.id === v.me.id) nav('/profile', { replace: true }); return <div className="min-h-full"><TopBar back title={t('프로필')} /><EmptyState emoji="🙈" title={t('사용자를 찾을 수 없어요')} /></div>; }
+  if (user && user.id === v.me.id) return <Navigate to="/profile" replace />;
+  if (!user) { return <div className="min-h-full"><TopBar back title={t('프로필')} /><EmptyState emoji="🙈" title={t('사용자를 찾을 수 없어요')} /></div>; }
   if (v.hasBlocked(user.id)) return <div className="min-h-full"><TopBar back title={t('프로필')} /><EmptyState emoji="🚫" title={t('차단한 사용자예요')} description={t('차단을 해제하면 프로필을 다시 볼 수 있어요.')} action={<Button variant="outline" onClick={() => run(() => api.relationships.unblock(v.me.id, user.id), t('차단을 해제했어요.'))}>{t('차단 해제')}</Button>} /></div>;
   if (v.isBlocked(user.id)) return <div className="min-h-full"><TopBar back title={t('프로필')} /><EmptyState emoji="🙈" title={t('사용자를 찾을 수 없어요')} /></div>;
 
@@ -61,7 +62,10 @@ export function PersonPage() {
   const see = (f: Parameters<typeof v.canSeeField>[1]) => v.canSeeField(user, f);
   const upcoming = v.visibleActivities.filter((a) => a.visibility === 'public' && a.date >= todayISO() && (a.hostId === user.id || v.snap.participations.some((p) => p.activityId === a.id && p.userId === user.id && p.status === 'approved')));
   const hosting = v.visibleActivities.filter((a) => a.hostId === user.id && a.date >= todayISO());
-  const userPosts = v.visiblePosts.filter((p) => p.authorId === user.id && p.authorType === 'user');
+  const userPosts = v.visiblePosts.filter((p) => p.authorId === user.id && p.authorType === 'user' && !p.anonymous);
+  const taggedPosts = v.visiblePosts.filter((p) => p.authorId !== user.id && (p.taggedUserIds ?? []).includes(user.id) && (p.tagApprovedIds ?? []).includes(user.id) && p.media.length > 0);
+  const together = params.get('tab') === 'together';
+  const sharedOpps = v.snap.opportunityIntents.filter((i) => i.userId === user.id).map((i) => oppsAll.find((o) => o.id === i.opportunityId)).filter((o): o is NonNullable<typeof o> => !!o && o.date !== undefined && o.date >= todayISO());
   const adminOrgs = orgs.filter((o) => o.adminIds.includes(user.id));
   const pendingProposal = proposals.find((p) => p.fromId === v.me.id && p.toId === user.id && p.status === 'pending');
   const reasons = matchReasons(v.me, user, v.snap, see('timetable'));
@@ -102,6 +106,17 @@ export function PersonPage() {
           )}
         </div>
 
+        {together && (
+          <div className="card p-4 bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]">
+            <b className="text-[14px] flex items-center gap-1.5"><Sparkles size={15} className="text-mint" />{user.nickname}{t('님과 함께할 수 있는 것')}</b>
+            <div className="mt-2 space-y-1.5">
+              {hosting.map((a) => <button key={a.id} onClick={() => nav(`/activities/${a.id}`)} className="w-full flex items-center gap-2 text-[13px] text-left press"><span>{CATEGORY_EMOJI[a.category]}</span><span className="flex-1 truncate">{a.title}</span><span className="text-[11px] text-primary font-semibold">{t('참가')}</span></button>)}
+              {sharedOpps.map((o) => <button key={o.id} onClick={() => nav(`/opportunities/${o.id}`)} className="w-full flex items-center gap-2 text-[13px] text-left press"><span>🎪</span><span className="flex-1 truncate">{o.title}</span><span className="text-[11px] text-primary font-semibold">{t('같이 가기')}</span></button>)}
+              {hosting.length === 0 && sharedOpps.length === 0 && <p className="text-[12px] text-ink-2">{t('아직 열린 활동은 없어요. 공통 관심사로 커피나 점심을 제안해보세요.')}</p>}
+            </div>
+            <div className="flex gap-2 mt-3">{(common.length ? common : user.interests).slice(0, 3).map((i) => <Button key={i} size="sm" variant="outline" onClick={() => { setPCat(i === 'meal' ? 'meal' : i === 'study' ? 'study' : i === 'exercise' ? 'exercise' : 'coffee'); setPropose(true); }}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]} {t('제안')}</Button>)}</div>
+          </div>
+        )}
         {see('prompts') && (user.prompts.length > 0 || user.voicePrompt || user.poll) && (
           <div className="space-y-2.5">
             {user.prompts.filter((p) => p.answer.trim()).map((p) => <PromptAnswerCard key={p.questionId} prompt={p} />)}
@@ -131,7 +146,8 @@ export function PersonPage() {
         {(see('posts') ? userPosts.length > 0 : true) && (
           <div className="card p-4">
             <div className="flex items-center justify-between"><b className="text-[14px]">{t('사진과 게시물')}</b>{!see('posts') && <VisibilityTag value={user.fieldVisibility.posts} />}</div>
-            {see('posts') ? <div className="grid grid-cols-3 gap-1.5 mt-3">{userPosts.map((p) => <button key={p.id} onClick={() => nav('/community')}><Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={30} /></button>)}</div>
+            {see('posts') ? <div className="grid grid-cols-3 gap-1.5 mt-3">{userPosts.filter((p) => p.showOnProfile !== false).map((p) => <button key={p.id} onClick={() => nav('/community')}>{p.media[0] ? <Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={30} /> : <span className="aspect-square rounded-xl bg-surface-2 grid place-items-center p-2 text-[11px] text-ink-2 line-clamp-4">{p.text}</span>}</button>)}
+            {taggedPosts.map((p) => <button key={`tg_${p.id}`} onClick={() => nav('/community')} className="relative">{p.media[0] && <Cover emoji={p.media[0].emoji} hue={p.media[0].hue} url={p.media[0].url} className="aspect-square rounded-xl" size={30} />}<span className="absolute bottom-1 left-1 rounded bg-black/40 text-white text-[9px] px-1">{t('함께')}</span></button>)}</div>
               : <p className="text-[12px] text-ink-3 mt-2 flex items-center gap-1"><Lock size={12} />{t('공개 범위에 포함되지 않아 볼 수 없어요.')}</p>}
           </div>
         )}

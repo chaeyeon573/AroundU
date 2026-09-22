@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 
 /** 참가 신청 버튼 — 참가 방식(바로/승인/초대)에 따라 상태가 달라진다 */
-export function JoinButton({ activity: a, className, size = 'md' }: { activity: Activity; className?: string; size?: 'md' | 'lg' }) {
+export function JoinButton({ activity: a, className, size = 'md', label }: { activity: Activity; className?: string; size?: 'sm' | 'md' | 'lg'; /** 바로 참가/참가 신청 대신 쓸 라벨 (예: 같이 가기) */ label?: string }) {
   const v = useViewer();
   const nav = useNavigate();
   const run = useAppStore((s) => s.run);
@@ -42,7 +42,7 @@ export function JoinButton({ activity: a, className, size = 'md' }: { activity: 
   if (a.joinPolicy === 'approval') {
     return (
       <>
-        <Button size={size} className={className} onClick={() => setOpen(true)}>{t('참가 신청')}</Button>
+        <Button size={size} className={className} onClick={() => setOpen(true)}>{label ?? t('참가 신청')}</Button>
         <BottomSheet open={open} onClose={() => setOpen(false)} title={t('참가 신청')}>
           <p className="text-[13px] text-ink-2">{t('주최자가 승인하면 참가가 확정되고 그룹 채팅방에 입장할 수 있어요.')}</p>
           {a.conditions && <div className="mt-3 rounded-xl bg-gold-soft text-[13px] px-3 py-2"><b>{t('참가 조건')}</b> · {a.conditions}</div>}
@@ -52,5 +52,5 @@ export function JoinButton({ activity: a, className, size = 'md' }: { activity: 
       </>
     );
   }
-  return <Button size={size} className={className} onClick={() => submit()} loading={busy}>{t('바로 참가')}</Button>;
+  return <Button size={size} className={className} onClick={() => submit()} loading={busy}>{label ?? t('바로 참가')}</Button>;
 }

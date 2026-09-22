@@ -23,10 +23,10 @@ export const AVAILABILITY_LABELS: Record<Availability, string> = {
 };
 
 export const VISIBILITY_LABELS: Record<Visibility, string> = {
-  public: t('전체 공개'), school: t('같은 학교'), department: t('특정 학과·조직'), friends: t('친구'), selected: t('선택한 사람만'), private: t('비공개'),
+  public: t('전체 공개'), school: t('같은 학교'), department: t('특정 학과·조직'), friends: t('친구'), followers: t('팔로워'), selected: t('선택한 사람만'), private: t('비공개'),
 };
 
-export const VISIBILITY_ORDER: Visibility[] = ['public', 'school', 'department', 'friends', 'selected', 'private'];
+export const VISIBILITY_ORDER: Visibility[] = ['public', 'school', 'department', 'friends', 'followers', 'selected', 'private'];
 
 export const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   coffee: t('커피'), meal: t('식사'), study: t('공부'), exercise: t('운동'), club: t('동아리'), performance: t('공연'),
@@ -96,7 +96,20 @@ export const MEET_PREF_LABELS: Record<MeetPreference, string> = {
 export const MEET_PREF_EMOJI: Record<MeetPreference, string> = { same_hobby: '🎨', same_class: '📚', same_goal: '🎯', same_living: '🏠', new_people: '🌍' };
 export const ALL_MEET_PREFS = Object.keys(MEET_PREF_LABELS) as MeetPreference[];
 
-import type { OpportunityIntent } from '@/types';
+import type { OpportunityIntent, PostType, CrewType } from '@/types';
+export const POST_TYPE_LABELS: Record<PostType, string> = { story: t('그냥 이야기'), question: t('질문'), info: t('정보'), review: t('후기'), together: t('같이할 사람'), news: t('소식') };
+export const POST_TYPE_EMOJI: Record<PostType, string> = { story: '💬', question: '❓', info: '💡', review: '⭐', together: '🙋', news: '📣' };
+export const ALL_POST_TYPES = Object.keys(POST_TYPE_LABELS) as PostType[];
+/** 피드 주제 태그 */
+export const TOPIC_TAGS: { key: string; label: string }[] = [
+  { key: 'daily', label: t('일상') }, { key: 'class', label: t('수업') }, { key: 'career', label: t('진로') }, { key: 'friends', label: t('친구') }, { key: 'dating', label: t('연애') },
+  { key: 'startup', label: t('창업') }, { key: 'exercise', label: t('운동') }, { key: 'hobby', label: t('취미') }, { key: 'campus', label: t('학교생활') },
+];
+export const topicLabel = (key: string) => TOPIC_TAGS.find((x) => x.key === key)?.label ?? key;
+export const CREW_TYPE_LABELS: Record<CrewType, string> = { exam: t('시험 대비'), assignment: t('과제'), review: t('복습'), project: t('팀플') };
+export const CREW_TYPE_EMOJI: Record<CrewType, string> = { exam: '📝', assignment: '📎', review: '🔁', project: '🧩' };
+export const ALL_CREW_TYPES = Object.keys(CREW_TYPE_LABELS) as CrewType[];
+export const MODE_LABELS = { offline: t('대면'), online: t('온라인') } as const;
 export const RSVP_LABELS: Record<OpportunityIntent, string> = {
   interested: t('관심 있어요'), going: t('갈 예정이에요'), solo: t('혼자 가요'), company: t('같이 갈 사람 찾아요'), team: t('팀을 찾고 있어요'), applied: t('이미 신청했어요'), done: t('참여 경험이 있어요'),
 };

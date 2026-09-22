@@ -5,7 +5,7 @@ import { lang } from '@/i18n';
 
 const seed = lang === 'en' ? seedEn : seedKo;
 
-const STORAGE_KEY = `aroundu.mockdb.v3.${lang}`;
+const STORAGE_KEY = `aroundu.mockdb.v4.${lang}`;
 const SESSION_KEY = `aroundu.session.v1.${lang}`;
 
 export interface MockDB extends Snapshot {
@@ -15,7 +15,7 @@ export interface MockDB extends Snapshot {
 
 function freshDB(): MockDB {
   return {
-    version: 3,
+    version: 4,
     seededOn: new Date().toISOString().slice(0, 10),
     users: structuredClone(seed.users),
     schools: structuredClone(seed.schools),
@@ -39,7 +39,7 @@ export function loadDB(): MockDB {
     if (raw) {
       const parsed = JSON.parse(raw) as MockDB;
       // 날짜가 바뀌면 '오늘' 기준 예시 데이터를 다시 만든다
-      if (parsed.version === 3 && parsed.seededOn === new Date().toISOString().slice(0, 10)) return parsed;
+      if (parsed.version === 4 && parsed.seededOn === new Date().toISOString().slice(0, 10)) return parsed;
     }
   } catch { /* ignore */ }
   const db = freshDB();
