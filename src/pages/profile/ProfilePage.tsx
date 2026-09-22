@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Pencil, Clock, ChevronRight, Heart, Users, CalendarDays, Bookmark, Lock, ShieldCheck, Grid3X3, MessageCircle, CalendarCheck, Building2, History } from 'lucide-react';
+import { Settings, Pencil, Clock, ChevronRight, Heart, Users, CalendarDays, Bookmark, Lock, Grid3X3, MessageCircle, CalendarCheck, Building2, History } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, VerifiedBadge, Tag, Button, Chip, Cover, BottomSheet, Segmented, CardSkeleton, ErrorState } from '@/components/ui';
+import { Avatar, VerifiedBadge, Button, Chip, Cover, BottomSheet, Segmented, CardSkeleton, ErrorState } from '@/components/ui';
 import { ActivityCard } from '@/components/cards/ActivityCard';
 import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
@@ -62,13 +62,8 @@ export function ProfilePage() {
           <div className="flex items-center gap-4">
             <Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={76} ring />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5"><h1 className="text-[20px] font-extrabold truncate">{me.nickname}</h1>{me.affiliation.type === 'university' && me.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} />}{me.identityVerified && <VerifiedBadge kind="identity" size={18} />}</div>
+              <div className="flex items-center gap-1.5"><h1 className="text-[28px] font-bold truncate font-display">{me.nickname}</h1>{me.affiliation.type === 'university' && me.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} />}{me.identityVerified && <VerifiedBadge kind="identity" size={18} />}</div>
               <div className="text-[12px] text-ink-3 truncate">{affiliationText(me, true)}</div>
-              <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                {me.affiliation.type === 'university' && (me.affiliation.emailVerified ? <Tag tone="primary"><ShieldCheck size={11} /> {t('학교 인증')}</Tag> : <Tag tone="gold">{t('학교 미인증')}</Tag>)}
-                {me.identityVerified ? <Tag tone="mint">{t('본인 인증')}</Tag> : <Tag>{t('본인 미인증')}</Tag>}
-                {completion.complete && <Tag tone="mint">{t('프로필 완성')}</Tag>}
-              </div>
             </div>
           </div>
           <p className="text-[14px] text-ink-2 leading-relaxed mt-3">{me.bio || t('자기소개를 작성해보세요.')}</p>

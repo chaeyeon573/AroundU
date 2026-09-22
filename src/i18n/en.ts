@@ -1222,4 +1222,6 @@ export const en: Record<string, string> = {
   '내 역할': 'my role',
   '3시간 이내': 'Within 3 hours',
   '지금 시간 되는 사람': 'Free right now',
+  '님과 서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.': ' and you are both interested. You can message now.',
+  '서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.': 'Mutual interest. You can message now.',
 };

@@ -74,7 +74,7 @@ export function PersonPage() {
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
-    if (res.mutual) showToast(t('서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?'), 'success');
+    if (res.mutual) showToast(t('서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.'), 'success');
   };
   const openChat = async () => {
     try { const res = await run(() => api.chats.openDirect(v.me.id, user.id)); nav(`/chats/${res.room.id}`); } catch { /* toast */ }
@@ -91,7 +91,7 @@ export function PersonPage() {
       <div className="px-4 -mt-8 relative space-y-3">
         <div className="card p-4">
           <div className="flex items-center gap-2 flex-wrap">{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={16} label />}{user.identityVerified && <VerifiedBadge kind="identity" size={16} label />}</div>
-          {mutual && <div className="mt-3 rounded-xl bg-heart-soft text-heart text-[13px] font-semibold px-3 py-2.5 flex items-center gap-2"><Heart size={15} fill="currentColor" />{t('서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?')}</div>}
+          {mutual && <div className="mt-3 rounded-xl bg-heart-soft text-ink text-[13px] font-semibold px-3 py-2.5 flex items-center gap-2"><Heart size={15} fill="currentColor" />{t('서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.')}</div>}
           {conn !== 'none' && !mutual && <Tag tone="mint" className="mt-2"><Check size={11} />{{ friend: t('친구'), activity: t('같은 활동 참가자'), proposal: t('활동 제안 수락'), matched: t('매칭') }[conn]}</Tag>}
           {inReq && (
             <div className="mt-3 rounded-xl bg-primary-soft px-3 py-2.5 flex items-center gap-2 text-[13px]"><span className="flex-1 font-semibold text-primary">{user.nickname}{t('님이 친구 요청을 보냈어요')}</span>

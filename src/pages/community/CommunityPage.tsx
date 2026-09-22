@@ -3,15 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PenSquare, Bookmark, Sparkles, AlarmClock, Bell, Link2 } from 'lucide-react';
 import { t } from '@/i18n';
 import { TopBar } from '@/components/layout/TopBar';
-import { Chip, ChipRow, Button, CardSkeleton, EmptyState, ErrorState, Segmented } from '@/components/ui';
+import { Chip, ChipRow, Button, CardSkeleton, EmptyState, ErrorState } from '@/components/ui';
+import { cn } from '@/lib/cn';
+import { OpportunityRow } from '@/components/discover/Cards';
 import { PostCard } from '@/components/cards/PostCard';
-import { OpportunityCard } from '@/components/cards/OpportunityCard';
 import { OrgCard } from '@/components/cards/OrgCard';
 import { ShareOpportunitySheet } from '@/components/create/ShareOpportunitySheet';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { opportunityScore, daysUntil, isTogetherType } from '@/lib/recommend';
-import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI, TOPIC_TAGS } from '@/lib/labels';
+import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS, ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI } from '@/lib/labels';
 import type { OpportunityType, OrganizationType, PostType } from '@/types';
 
 type Tab = 'feed' | 'opportunities' | 'clubs';
@@ -29,7 +30,9 @@ export function CommunityPage() {
   return (
     <div className="min-h-full pb-6">
       <TopBar title={t('커뮤니티')} bell messages right={tab === 'opportunities' ? <Button size="sm" variant="ghost" icon={<Link2 size={16} />} onClick={() => setShare(true)}>{t('공유')}</Button> : <Button size="sm" variant="ghost" icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>{t('글쓰기')}</Button>} />
-      <div className="px-4 pt-1"><Segmented value={tab} onChange={setTab} options={[{ value: 'feed', label: 'Feed' }, { value: 'opportunities', label: t('기회') }, { value: 'clubs', label: 'Clubs' }]} /></div>
+      <div className="px-4 flex gap-6 border-b border-line">
+        {([['feed', 'Feed'], ['opportunities', t('기회')], ['clubs', 'Clubs']] as [Tab, string][]).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={cn('h-11 text-[15px] font-bold border-b-2 -mb-px transition', tab === k ? 'border-ink text-ink' : 'border-transparent text-ink-3')}>{l}</button>)}
+      </div>
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
       {status === 'ready' && (
@@ -48,7 +51,7 @@ function FeedTab() {
   const nav = useNavigate();
   const v = useViewer();
   const [type, setType] = useState<PostType | 'all' | 'anon'>('all');
-  const [topic, setTopic] = useState('all');
+  const topic = 'all';
   const posts = v.visiblePosts.filter((p) => p.showOnFeed !== false)
     .filter((p) => type === 'all' ? true : type === 'anon' ? p.anonymous : p.postType === type && !p.anonymous)
     .filter((p) => topic === 'all' || p.topics?.includes(topic))
@@ -56,7 +59,6 @@ function FeedTab() {
   return (
     <div className="space-y-3">
       <ChipRow className="py-0"><Chip size="sm" active={type === 'all'} onClick={() => setType('all')}>{t('전체')}</Chip>{ALL_POST_TYPES.map((pt) => <Chip key={pt} size="sm" active={type === pt} onClick={() => setType(pt)}>{POST_TYPE_EMOJI[pt]} {POST_TYPE_LABELS[pt]}</Chip>)}<Chip size="sm" active={type === 'anon'} onClick={() => setType('anon')}>🫥 {t('익명')}</Chip></ChipRow>
-      <ChipRow className="py-0 -mt-1"><Chip size="sm" active={topic === 'all'} onClick={() => setTopic('all')}>#{t('모든 주제')}</Chip>{TOPIC_TAGS.map((tg) => <Chip key={tg.key} size="sm" active={topic === tg.key} onClick={() => setTopic(tg.key)}>#{tg.label}</Chip>)}</ChipRow>
       {type === 'anon' && <p className="text-[12px] text-ink-3 px-1">{t('익명 글은 텍스트만 올릴 수 있고 학교명만 보여요. 신고가 접수되면 운영진이 작성자를 확인할 수 있어요.')}</p>}
       {posts.length === 0 ? (
         <EmptyState emoji={type === 'anon' ? '🫥' : '📝'} title={t('아직 올라온 것이 없어요')} description={t('첫 게시물을 올려보세요. 사진은 캠퍼스 생활과 활동 중심으로.')} action={<Button icon={<PenSquare size={16} />} onClick={() => nav(`/create/post${type === 'anon' ? '?anon=1' : type !== 'all' ? `?type=${type}` : ''}`)}>{t('게시물 작성')}</Button>} />
@@ -99,8 +101,7 @@ function OpportunitiesTab() {
           <div className="mt-2 space-y-1">{urgent.map((x) => <button key={x.o.id} onClick={() => nav(`/opportunities/${x.o.id}`)} className="w-full flex justify-between text-[13px] text-left"><span className="truncate">{x.o.title}</span><span className="text-danger font-bold shrink-0 ml-2">D-{daysUntil(x.o.deadline!)}</span></button>)}</div></div>
       )}
       {list.length === 0 ? <EmptyState emoji="🔭" title={sub === 'saved' ? t('저장하거나 지원 예정인 기회가 없어요') : t('아직 등록된 기회가 없어요')} description={sub === 'saved' ? t('관심 있는 기회를 저장하면 마감 전에 알려드려요.') : t('링크만 있으면 누구나 기회를 공유할 수 있어요.')} action={sub === 'saved' ? <Button onClick={() => setSub('foryou')}>{t('기회 둘러보기')}</Button> : undefined} />
-        : sub === 'notices' ? <><p className="text-[12px] text-ink-3">{t('장학금·인턴·연구실 공고는 간단히 알려드려요. 저장하면 마감 전에 알림을 보내요.')}</p>{list.map((x) => <OpportunityCard key={x.o.id} o={x.o} variant="row" />)}</>
-        : list.map((x) => <OpportunityCard key={x.o.id} o={x.o} reasons={sub === 'foryou' ? x.reasons : undefined} variant={isTogetherType(x.o.type) ? 'feed' : 'row'} />)}
+        : <div className="divide-y divide-line -mt-1">{list.map((x) => <OpportunityRow key={x.o.id} o={x.o} />)}</div>}
     </div>
   );
 }

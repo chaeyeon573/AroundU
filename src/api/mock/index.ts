@@ -340,7 +340,7 @@ export const mockApi: AroundUApi = {
           mutual = r.likes.some((l) => l.fromId === toId && l.toId === fromId);
           if (mutual) {
             const other = find(db.users, toId);
-            nts.push(notify(fromId, { type: 'mutual_like', title: t('서로 관심이 있어요'), body: `${other.nickname}${t('님과 서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?')}`, link: `/users/${toId}` }));
+            nts.push(notify(fromId, { type: 'mutual_like', title: t('서로 관심이 있어요'), body: `${other.nickname}${t('님과 서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.')}`, link: `/users/${toId}` }));
           }
         }
         return { patch: { relationships: r, notifications: nts }, mutual };

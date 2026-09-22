@@ -47,7 +47,7 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
-    if (res.mutual) useAppStore.getState().showToast(`${user.nickname}${t('님과 서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?')}`, 'success');
+    if (res.mutual) useAppStore.getState().showToast(`${user.nickname}${t('님과 서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.')}`, 'success');
   };
   const follow = () => run(() => api.relationships.toggleFollow(v.me.id, user.id, 'user'), following ? undefined : `${user.nickname}${t('님을 팔로우해요')}`);
 
