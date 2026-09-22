@@ -43,7 +43,7 @@ export interface CompanyAffiliation {
 
 export type Affiliation = UniversityAffiliation | CompanyAffiliation;
 
-export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts' | 'prompts' | 'timetable';
+export type ProfileField = 'bio' | 'likes' | 'freeTime' | 'height' | 'availability' | 'preferredPartner' | 'purposes' | 'interests' | 'posts' | 'prompts' | 'timetable' | 'goals' | 'living';
 
 /** 시간표 수업. 요일 0=월 … 6=일 */
 export interface Course {
@@ -104,6 +104,17 @@ export interface User {
   poll?: PollPrompt;
   /** 시간표 — 다른 사용자에게는 공강 여부만 공개된다 */
   timetable: Course[];
+  /** 이번 학기 목표 */
+  goals: Goal[];
+  /** 찾는 사람 */
+  lookingFor: Role[];
+  /** 내가 제공할 수 있는 것 */
+  canOffer: Role[];
+  /** 생활권 — 정확한 주소·방은 저장하지 않는다 */
+  living?: { residence: Residence; zone: string };
+  /** 관심 있는 연구실·조직 */
+  interestedOrgIds: ID[];
+  meetPreference: MeetPreference[];
   fieldVisibility: Record<ProfileField, Visibility>;
   settings: {
     messagePolicy: 'connected' | 'friends_only' | 'none';
@@ -120,6 +131,62 @@ export interface School {
   region: string;
   center: { lat: number; lng: number };
 }
+
+// ─── 기회 (행사·동아리 모집·연구실·인턴·장학금·해커톤·창업) ─────────────────
+export type OpportunityType = 'event' | 'club' | 'lab' | 'internship' | 'scholarship' | 'hackathon' | 'startup' | 'activity';
+export type OpportunityIntent = 'interested' | 'applying' | 'applied';
+
+export interface Opportunity {
+  id: ID;
+  type: OpportunityType;
+  title: string;
+  host: string;
+  orgId?: ID;
+  description: string;
+  cover: { emoji: string; hue: number };
+  /** 마감일 (지원형) */
+  deadline?: string;
+  /** 행사 일시 */
+  date?: string;
+  startTime?: string;
+  place?: Place;
+  /** 누구에게 맞는지 */
+  eligibility: string;
+  benefit?: string;
+  /** 필요한 역할 (팀 기반 기회) */
+  rolesNeeded?: Role[];
+  teamSize?: string;
+  sourceUrl: string;
+  sourceLabel: string;
+  tags: string[];
+  /** 추천 매칭용 관심사·목표 */
+  interests: Interest[];
+  goals: Goal[];
+  schoolId?: ID;
+  official?: boolean;
+  lastVerified: string;
+  qna: Comment[];
+  reviews: { id: ID; authorId: ID; text: string; result?: 'accepted' | 'rejected' | 'attended'; createdAt: string }[];
+  createdAt: string;
+}
+
+/** 사용자의 기회에 대한 의사 표시 */
+export interface OpportunityIntentRecord {
+  id: ID;
+  opportunityId: ID;
+  userId: ID;
+  intent: OpportunityIntent;
+  saved: boolean;
+  createdAt: string;
+}
+
+/** 이번 학기 목표 */
+export type Goal = 'friends' | 'lunch' | 'join_club' | 'start_club' | 'startup' | 'cofounder' | 'lab' | 'internship' | 'scholarship' | 'hackathon' | 'hobby' | 'dating';
+/** 찾는 사람 / 제공할 수 있는 역할 */
+export type Role = 'friend' | 'teammate' | 'cofounder' | 'developer' | 'designer' | 'data' | 'marketing' | 'planning' | 'presentation' | 'video' | 'research' | 'club_ops' | 'study_partner' | 'application_partner' | 'senior' | 'mentor' | 'date';
+export type Residence = 'dorm' | 'offcampus' | 'commute';
+/** 어떤 사람을 만나고 싶은지 — 추천 가중치에 반영 */
+export type MeetPreference = 'same_hobby' | 'same_class' | 'same_goal' | 'same_living' | 'new_people';
 
 // ─── 조직 (동아리·학과·연구실·학생회) ──────────────────────────────────────
 export type OrganizationType = 'club' | 'department' | 'lab' | 'council';
@@ -187,6 +254,9 @@ export interface Activity {
   fee: number;
   conditions?: string;
   invitedIds?: ID[];
+  /** 기회에서 시작된 활동 (같이 지원·팀 모집) */
+  opportunityId?: ID;
+  rolesNeeded?: Role[];
   comments: Comment[];
   /** 학교 공식 행사 여부 */
   official?: boolean;
@@ -275,7 +345,7 @@ export interface ChatRoom {
 export type NotificationType =
   | 'friend_accepted' | 'mutual_like' | 'participation_approved' | 'participation_rejected'
   | 'participation_request' | 'activity_reminder' | 'comment' | 'like' | 'follow'
-  | 'org_event' | 'nearby_activity' | 'proposal' | 'proposal_result';
+  | 'org_event' | 'nearby_activity' | 'proposal' | 'proposal_result' | 'deadline' | 'opportunity_match';
 
 export interface Notification {
   id: ID;

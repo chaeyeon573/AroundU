@@ -26,6 +26,9 @@ import { SearchPage } from '@/pages/home/SearchPage';
 import { ProfileListPage } from '@/pages/profile/ProfileListPage';
 import { EditPromptsPage } from '@/pages/profile/EditPromptsPage';
 import { TimetablePage } from '@/pages/timetable/TimetablePage';
+import { OpportunitiesPage } from '@/pages/opportunities/OpportunitiesPage';
+import { OpportunityDetailPage } from '@/pages/opportunities/OpportunityDetailPage';
+import { ProfileContextPage } from '@/pages/profile/ProfileContextPage';
 
 function RequireAuth() {
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -79,6 +82,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/opportunities" element={<OpportunitiesPage />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
@@ -97,6 +101,8 @@ export default function App() {
           <Route path="/profile/edit" element={<EditProfilePage />} />
           <Route path="/profile/prompts" element={<EditPromptsPage />} />
           <Route path="/timetable" element={<TimetablePage />} />
+          <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
+          <Route path="/profile/context" element={<ProfileContextPage />} />
           <Route path="/profile/:list" element={<ProfileListPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />

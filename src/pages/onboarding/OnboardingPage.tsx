@@ -5,7 +5,8 @@ import type { RegisterInput } from '@/api';
 import type { Availability, Gender, Interest, Purpose, School, UniversityRole, Visibility, ProfileField } from '@/types';
 import { Button, Chip, Field, Input, Textarea, Select, Segmented, Toggle, VisibilityPicker } from '@/components/ui';
 import { TopBar } from '@/components/layout/TopBar';
-import { ALL_AVAILABILITY, ALL_INTERESTS, ALL_PURPOSES, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS, GENDER_LABELS } from '@/lib/labels';
+import { ALL_AVAILABILITY, ALL_INTERESTS, ALL_PURPOSES, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS, GENDER_LABELS, ALL_GOALS, GOAL_EMOJI, GOAL_LABELS, ALL_MEET_PREFS, MEET_PREF_LABELS, MEET_PREF_EMOJI } from '@/lib/labels';
+import type { Goal, MeetPreference } from '@/types';
 import { api } from '@/api';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
@@ -16,14 +17,14 @@ const STEPS = ['basic', 'school', 'interests', 'profile', 'prompts', 'permission
 type Step = typeof STEPS[number];
 
 const EMOJIS = ['🙂', '😎', '🧑‍💻', '👩‍🎨', '🧑‍🔬', '🏃', '🎸', '📚', '🌱', '🎨', '🚀', '🧗', '☕', '🐱', '🦊', '🎧'];
-const DEFAULT_FV: Record<ProfileField, Visibility> = { bio: 'school', likes: 'school', freeTime: 'school', height: 'private', availability: 'school', preferredPartner: 'private', purposes: 'school', interests: 'public', posts: 'school', prompts: 'public', timetable: 'friends' };
+const DEFAULT_FV: Record<ProfileField, Visibility> = { bio: 'school', likes: 'school', freeTime: 'school', height: 'private', availability: 'school', preferredPartner: 'private', purposes: 'school', interests: 'public', posts: 'school', prompts: 'public', timetable: 'friends', goals: 'school', living: 'friends' };
 
 type Draft = RegisterInput & { avatarType: 'face' | 'masked' | 'back'; email: string; codeSent: boolean };
 const initial: Draft = {
   nickname: '', birthYear: 2002, gender: 'private', avatar: { emoji: '🙂', hue: 210, photoType: 'face' }, avatarType: 'face',
   schoolId: '', role: 'undergraduate', department: '', year: 2022, emailVerified: false, showSchool: true, showDepartment: true, email: '', codeSent: false,
   interests: [], purposes: [], bio: '', likes: '', freeTime: '', height: undefined, availability: 'after18', preferredPartner: '',
-  fieldVisibility: DEFAULT_FV, prompts: [], voicePrompt: undefined, poll: undefined, locationPermission: 'undecided', notifications: true,
+  fieldVisibility: DEFAULT_FV, prompts: [], voicePrompt: undefined, poll: undefined, goals: [], lookingFor: [], canOffer: [], living: undefined, meetPreference: [], locationPermission: 'undecided', notifications: true,
 };
 
 const KEY = 'aroundu.onboarding.draft';
@@ -167,14 +168,20 @@ function InterestsStep({ form, patch, next }: StepProps) {
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   return (
     <>
-      <div><h2 className="text-[22px] font-extrabold">무엇을 함께하고 싶나요?</h2><p className="text-[13px] text-ink-3 mt-1">관심 활동과 이용 목적을 여러 개 선택할 수 있어요.</p></div>
+      <div><h2 className="text-[22px] font-extrabold">무엇을 함께하고 싶나요?</h2><p className="text-[13px] text-ink-3 mt-1">이번 학기 목표와 관심 활동을 여러 개 선택할 수 있어요. 나머지는 나중에 프로필에서 채워도 돼요.</p></div>
+      <Field label="이번 학기에 하고 싶은 것" required hint="추천의 기준이 돼요">
+        <div className="flex flex-wrap gap-2">{ALL_GOALS.map((g) => <Chip key={g} active={form.goals.includes(g)} onClick={() => patch({ goals: toggle(form.goals, g) as Goal[] })}>{GOAL_EMOJI[g]} {GOAL_LABELS[g]}</Chip>)}</div>
+      </Field>
+      <Field label="어떤 사람을 만나고 싶어요?" hint="선택하면 그 기준으로 먼저 추천해요">
+        <div className="flex flex-wrap gap-2">{ALL_MEET_PREFS.map((p) => <Chip key={p} active={form.meetPreference!.includes(p)} onClick={() => patch({ meetPreference: toggle(form.meetPreference!, p) as MeetPreference[] })}>{MEET_PREF_EMOJI[p]} {MEET_PREF_LABELS[p]}</Chip>)}</div>
+      </Field>
       <Field label="관심 활동" required hint={`${form.interests.length}개 선택`}>
         <div className="flex flex-wrap gap-2">{ALL_INTERESTS.map((i) => <Chip key={i} active={form.interests.includes(i)} onClick={() => patch({ interests: toggle(form.interests, i) as Interest[] })}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div>
       </Field>
       <Field label="이용 목적" required hint="상관없음을 고르면 모든 목적의 추천을 받아요">
         <div className="flex flex-wrap gap-2">{ALL_PURPOSES.map((p) => <Chip key={p} active={form.purposes.includes(p)} onClick={() => patch({ purposes: toggle(form.purposes, p) as Purpose[] })}>{PURPOSE_LABELS[p]}</Chip>)}</div>
       </Field>
-      <Button full size="lg" disabled={form.interests.length === 0 || form.purposes.length === 0} onClick={next}>다음</Button>
+      <Button full size="lg" disabled={form.interests.length === 0 || form.purposes.length === 0 || form.goals.length === 0} onClick={next}>다음</Button>
     </>
   );
 }

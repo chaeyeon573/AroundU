@@ -12,6 +12,8 @@ const FIELDS: { key: ProfileField; label: string; desc?: string }[] = [
   { key: 'likes', label: '좋아하는 것' },
   { key: 'freeTime', label: '하고 싶은 활동' },
   { key: 'availability', label: '활동 가능한 시간', desc: '시간표가 없을 때 쓰는 수동 설정' },
+  { key: 'goals', label: '이번 학기 목표' },
+  { key: 'living', label: '생활권', desc: '기숙사·자취·통학과 대략적인 구역만' },
   { key: 'timetable', label: '시간표 공강 여부', desc: '전체 시간표와 강의실은 공개되지 않고 공강 시간만 보여요' },
   { key: 'purposes', label: '이용 목적' },
   { key: 'height', label: '키' },

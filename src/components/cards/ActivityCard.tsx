@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin, Users, Map as MapIcon, BadgeCheck, Ticket, Lock } from 'lucide-react';
 import type { Activity } from '@/types';
 import { Avatar, Button, Cover, Tag, VisibilityTag } from '@/components/ui';
-import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS } from '@/lib/labels';
+import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
 import { formatDateTime, formatFee } from '@/lib/format';
 import { useViewer } from '@/hooks/useViewer';
 import { cn } from '@/lib/cn';
@@ -77,6 +77,7 @@ export function ActivityCard({ activity: a, variant = 'feed', className, badge }
         </div>
         <button onClick={() => nav(`/activities/${a.id}`)} className="text-left"><h3 className="text-[16px] font-bold leading-snug">{a.title}</h3></button>
         <p className="text-[13px] text-ink-2 mt-1 line-clamp-2">{a.description}</p>
+        {a.rolesNeeded && a.rolesNeeded.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1 items-center text-[11px] text-ink-3">팀원 모집: {a.rolesNeeded.map((r) => <Tag key={r} tone={v.me.canOffer.includes(r) ? 'mint' : 'neutral'} className="h-5">{PERSON_ROLE_LABELS[r]}</Tag>)}</div>}
         <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] text-ink-2">
           <span className="flex items-center gap-1 truncate"><Clock size={12} className="text-ink-3" />{formatDateTime(a.date, a.startTime)}</span>
           <span className="flex items-center gap-1 truncate"><MapPin size={12} className="text-ink-3" />{a.place.name}</span>

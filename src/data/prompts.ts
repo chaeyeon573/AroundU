@@ -55,7 +55,7 @@ export const REQUIRED_TEXT_PROMPTS = 3;
 export const MAX_TEXT_PROMPTS = 6;
 
 /** 프로필 완성도 계산 */
-export function profileCompletion(u: { prompts: { answer: string }[]; voicePrompt?: unknown; poll?: unknown; bio: string; interests: unknown[]; likes: string; freeTime: string }) {
+export function profileCompletion(u: { prompts: { answer: string }[]; voicePrompt?: unknown; poll?: unknown; bio: string; interests: unknown[]; likes: string; freeTime: string; timetable?: unknown[]; goals?: unknown[]; lookingFor?: unknown[]; canOffer?: unknown[]; living?: unknown }) {
   const items = [
     { key: 'photo', label: '프로필 사진', done: true },
     { key: 'bio', label: '자기소개', done: u.bio.trim().length > 0 },
@@ -64,6 +64,10 @@ export function profileCompletion(u: { prompts: { answer: string }[]; voicePromp
     { key: 'voice', label: '음성 질문', done: !!u.voicePrompt },
     { key: 'poll', label: '투표형 질문', done: !!u.poll },
     { key: 'likes', label: '좋아하는 것', done: u.likes.trim().length > 0 },
+    { key: 'timetable', label: '시간표', done: (u.timetable?.length ?? 0) > 0 },
+    { key: 'goals', label: '이번 학기 목표', done: (u.goals?.length ?? 0) > 0 },
+    { key: 'roles', label: '찾는 사람·제공할 수 있는 것', done: (u.lookingFor?.length ?? 0) > 0 && (u.canOffer?.length ?? 0) > 0 },
+    { key: 'living', label: '생활권', done: !!u.living },
   ];
   const done = items.filter((i) => i.done).length;
   return { items, done, total: items.length, percent: Math.round((done / items.length) * 100), complete: done === items.length };

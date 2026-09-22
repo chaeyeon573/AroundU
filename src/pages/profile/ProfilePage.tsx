@@ -8,7 +8,7 @@ import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { ALL_AVAILABILITY, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS } from '@/lib/labels';
+import { ALL_AVAILABILITY, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, GOAL_LABELS } from '@/lib/labels';
 import { friendsOf, followersOf, followingOf } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
 import type { Availability } from '@/types';
@@ -86,6 +86,11 @@ export function ProfilePage() {
           )}
         </div>
 
+        <button onClick={() => nav('/profile/context')} className="card w-full p-3.5 flex items-center gap-3 text-left press">
+          <span className="h-10 w-10 rounded-xl bg-gold-soft text-[#B57A0E] grid place-items-center">🎯</span>
+          <span className="flex-1"><span className="block text-[11px] text-ink-3">이번 학기 목표 · 찾는 사람 · 생활권</span><b className="text-[14px]">{me.goals.length ? me.goals.slice(0, 3).map((g) => GOAL_LABELS[g]).join(', ') : '목표를 설정하면 추천이 정확해져요'}</b></span>
+          <ChevronRight size={18} className="text-ink-3" />
+        </button>
         <button onClick={() => nav('/timetable')} className="card w-full p-3.5 flex items-center gap-3 text-left press">
           <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center"><CalendarDays size={18} /></span>
           <span className="flex-1"><span className="block text-[11px] text-ink-3">내 시간표</span><b className="text-[14px]">{me.timetable.length ? `${me.timetable.length}개 수업 · ${statusLabel(statusNow(me.timetable))}` : '시간표 만들기'}</b></span>

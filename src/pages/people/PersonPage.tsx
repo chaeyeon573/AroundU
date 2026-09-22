@@ -18,6 +18,8 @@ import { cn } from '@/lib/cn';
 import { PromptAnswerCard, VoicePlayer, PollCard } from '@/components/prompts/PromptComponents';
 import { questionById } from '@/data/prompts';
 import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@/lib/timetable';
+import { matchReasons } from '@/lib/recommend';
+import { GOAL_EMOJI, GOAL_LABELS, PERSON_ROLE_LABELS, RESIDENCE_LABELS } from '@/lib/labels';
 
 export function PersonPage() {
   const { id } = useParams();
@@ -59,6 +61,7 @@ export function PersonPage() {
   const userPosts = v.visiblePosts.filter((p) => p.authorId === user.id && p.authorType === 'user');
   const adminOrgs = orgs.filter((o) => o.adminIds.includes(user.id));
   const pendingProposal = proposals.find((p) => p.fromId === v.me.id && p.toId === user.id && p.status === 'pending');
+  const reasons = matchReasons(v.me, user, v.snap, see('timetable'));
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
@@ -87,6 +90,7 @@ export function PersonPage() {
               <Button size="sm" variant="outline" onClick={() => run(() => api.relationships.respondFriendRequest(inReq.id, false))}>거절</Button><Button size="sm" onClick={() => run(() => api.relationships.respondFriendRequest(inReq.id, true), '친구가 되었어요!')}>수락</Button></div>
           )}
           {see('bio') && user.bio && <p className="text-[14px] text-ink-2 leading-relaxed mt-3">{user.bio}</p>}
+          {reasons.length > 0 && <ul className="mt-3 space-y-1 rounded-xl bg-surface-2 px-3 py-2.5">{reasons.slice(0, 4).map((r) => <li key={r.text} className="text-[12px] text-ink-2 flex items-start gap-1.5"><Check size={12} className="text-primary shrink-0 mt-0.5" />{r.text}</li>)}</ul>}
           {(common.length > 0 || mutualF.length > 0) && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {common.length > 0 && <Tag tone="primary"><Sparkles size={11} /> 공통 관심사 {common.map((i) => INTEREST_LABELS[i]).join(', ')}</Tag>}
@@ -104,6 +108,9 @@ export function PersonPage() {
         )}
 
         <div className="card p-4 space-y-3">
+          <Block label="이번 학기 목표" visible={see('goals') && user.goals.length > 0}><div className="flex flex-wrap gap-1.5">{user.goals.map((g) => <Tag key={g} tone={v.me.goals.includes(g) ? 'primary' : 'neutral'}>{GOAL_EMOJI[g]} {GOAL_LABELS[g]}</Tag>)}</div></Block>
+          {(user.lookingFor.length > 0 || user.canOffer.length > 0) && <Block label="찾는 사람 · 제공할 수 있는 것" visible><div className="text-[13px] text-ink-2 space-y-0.5">{user.lookingFor.length > 0 && <div>🔍 {user.lookingFor.map((r) => PERSON_ROLE_LABELS[r]).join(', ')}</div>}{user.canOffer.length > 0 && <div>🛠 {user.canOffer.map((r) => PERSON_ROLE_LABELS[r]).join(', ')}</div>}</div></Block>}
+          {user.living && <Block label="생활권" visible={see('living')}><p className="text-[13px] text-ink-2">{RESIDENCE_LABELS[user.living.residence]} · {user.living.zone}{v.me.living?.zone === user.living.zone && <span className="text-mint font-semibold ml-1">같은 생활권</span>}</p></Block>}
           <Block label="관심사" visible><div className="flex flex-wrap gap-1.5">{user.interests.map((i) => <Chip key={i} size="sm" active={common.includes(i)}>{INTEREST_EMOJI[i]} {INTEREST_LABELS[i]}</Chip>)}</div></Block>
           <Block label="하고 싶은 활동" visible={see('freeTime')}>{user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2 mb-1.5">“{user.nowWant}”</div>}<p className="text-[13px] text-ink-2">{user.freeTime || '아직 작성하지 않았어요'}</p></Block>
           <Block label="좋아하는 것" visible={see('likes')}><p className="text-[13px] text-ink-2">{user.likes || '—'}</p></Block>

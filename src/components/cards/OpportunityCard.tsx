@@ -1,0 +1,82 @@
+import { useNavigate } from 'react-router-dom';
+import { Bookmark, Clock, MapPin, Users, ExternalLink, BadgeCheck, AlarmClock } from 'lucide-react';
+import type { Opportunity } from '@/types';
+import { Cover, Tag, Button } from '@/components/ui';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
+import { formatDateTime } from '@/lib/format';
+import { dday, daysUntil } from '@/lib/recommend';
+import { useAppStore } from '@/store/useAppStore';
+import { useViewer } from '@/hooks/useViewer';
+import { api } from '@/api';
+import { cn } from '@/lib/cn';
+
+export function useOppState(o: Opportunity) {
+  const intents = useAppStore((s) => s.opportunityIntents);
+  const v = useViewer();
+  const mine = intents.find((i) => i.opportunityId === o.id && i.userId === v.me.id);
+  const others = intents.filter((i) => i.opportunityId === o.id && i.userId !== v.me.id);
+  const matchCount = others.filter((i) => { const u = v.userById(i.userId); return u && (o.rolesNeeded ? u.canOffer.some((r) => v.me.lookingFor.includes(r)) || v.me.canOffer.some((r) => u.lookingFor.includes(r)) : v.me.interests.some((x) => u.interests.includes(x))); }).length;
+  return { mine, others, matchCount };
+}
+
+export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o: Opportunity; reasons?: string[]; variant?: 'feed' | 'row'; className?: string }) {
+  const nav = useNavigate();
+  const run = useAppStore((s) => s.run);
+  const v = useViewer();
+  const { mine, others, matchCount } = useOppState(o);
+  const color = OPP_TYPE_COLORS[o.type];
+  const urgent = o.deadline && daysUntil(o.deadline) <= 7 && daysUntil(o.deadline) >= 0;
+
+  if (variant === 'row') {
+    return (
+      <button onClick={() => nav(`/opportunities/${o.id}`)} className={cn('card w-full flex gap-3 p-3 text-left press', className)}>
+        <Cover emoji={o.cover.emoji} hue={o.cover.hue} className="h-[68px] w-[68px] rounded-xl shrink-0" size={28} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color }}>{OPP_TYPE_EMOJI[o.type]} {OPP_TYPE_LABELS[o.type]}</span>{o.deadline && <Tag tone={urgent ? 'danger' : 'neutral'} className="h-5">{dday(o.deadline)}</Tag>}</div>
+          <div className="text-[14px] font-bold truncate mt-0.5">{o.title}</div>
+          <div className="text-[12px] text-ink-3 truncate">{o.host}</div>
+          <div className="text-[12px] text-ink-2 mt-1 flex items-center gap-2"><span className="flex items-center gap-1"><Users size={11} />{others.length}명 관심</span>{matchCount > 0 && <span className="text-primary font-semibold">나와 맞는 {matchCount}명</span>}</div>
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <article className={cn('card overflow-hidden', className)}>
+      <button onClick={() => nav(`/opportunities/${o.id}`)} className="block w-full text-left">
+        <div className="relative">
+          <Cover emoji={o.cover.emoji} hue={o.cover.hue} className="h-[120px]" size={48} />
+          <div className="absolute top-3 left-3 flex gap-1.5">
+            <span className="rounded-lg px-2 h-6 inline-flex items-center text-[11px] font-bold text-white" style={{ background: color }}>{OPP_TYPE_EMOJI[o.type]} {OPP_TYPE_LABELS[o.type]}</span>
+            {o.official && <Tag tone="gold"><BadgeCheck size={11} /> 공식</Tag>}
+          </div>
+          {o.deadline && <span className={cn('absolute top-3 right-3 rounded-lg px-2 h-6 inline-flex items-center gap-1 text-[11px] font-bold', urgent ? 'bg-danger text-white' : 'bg-white/90 text-ink')}><AlarmClock size={11} />{dday(o.deadline)}</span>}
+        </div>
+      </button>
+      <div className="p-3.5">
+        <button onClick={() => nav(`/opportunities/${o.id}`)} className="text-left"><h3 className="text-[16px] font-bold leading-snug">{o.title}</h3></button>
+        <div className="text-[12px] text-ink-3 mt-0.5">{o.host}</div>
+        {reasons && reasons.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{reasons.slice(0, 2).map((r) => <Tag key={r} tone="primary">{r}</Tag>)}</div>}
+        <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] text-ink-2">
+          {o.date && <span className="flex items-center gap-1 truncate"><Clock size={12} className="text-ink-3" />{formatDateTime(o.date, o.startTime ?? '00:00')}</span>}
+          {o.place && <span className="flex items-center gap-1 truncate"><MapPin size={12} className="text-ink-3" />{o.place.name}</span>}
+          <span className="flex items-center gap-1 truncate col-span-2">👤 {o.eligibility}</span>
+          {o.benefit && <span className="flex items-center gap-1 truncate col-span-2">🎁 {o.benefit}</span>}
+          {o.rolesNeeded && <span className="col-span-2 flex flex-wrap gap-1">필요한 역할: {o.rolesNeeded.map((r) => <Tag key={r} className="h-5">{PERSON_ROLE_LABELS[r]}</Tag>)}</span>}
+        </div>
+        <div className="mt-2.5 flex items-center gap-3 text-[12px]">
+          <span className="flex items-center gap-1 text-ink-2"><Users size={12} />{others.length}명 관심</span>
+          {matchCount > 0 && <span className="text-primary font-semibold">나와 맞는 사람 {matchCount}명</span>}
+          {o.sourceUrl && <a href={o.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-0.5 text-ink-3"><ExternalLink size={11} />{o.sourceLabel}</a>}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <Button size="sm" variant={mine?.intent === 'applying' || mine?.intent === 'applied' ? 'secondary' : mine ? 'secondary' : 'primary'} className="flex-1" onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine ? (mine.intent === 'interested' ? 'applying' : null) : 'interested'), mine ? undefined : '관심 표시했어요. 같은 기회에 관심 있는 사람을 보여드릴게요.')}>
+            {mine?.intent === 'applied' ? '지원 완료' : mine?.intent === 'applying' ? '지원 예정 · 취소' : mine ? '관심 있음 → 지원 예정' : '관심 있음'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => nav(`/opportunities/${o.id}?tab=people`)}>사람 찾기</Button>
+          <button onClick={() => run(() => api.opportunities.toggleSave(o.id, v.me.id), mine?.saved ? undefined : '저장했어요. 마감 3일 전에 알려드릴게요.')} className={cn('h-9 w-9 rounded-xl grid place-items-center press', mine?.saved ? 'bg-primary text-white' : 'bg-surface-2 text-ink-2')} aria-label="저장"><Bookmark size={16} fill={mine?.saved ? 'currentColor' : 'none'} /></button>
+        </div>
+      </div>
+    </article>
+  );
+}

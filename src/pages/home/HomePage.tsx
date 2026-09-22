@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, LayoutGrid } from 'lucide-react';
+import { OpportunityCard } from '@/components/cards/OpportunityCard';
+import { opportunityScore, daysUntil, matchScore } from '@/lib/recommend';
 import { TopBar } from '@/components/layout/TopBar';
 import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, IconButton } from '@/components/ui';
 import { freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, fmtBlock, toHHMM } from '@/lib/timetable';
@@ -9,7 +11,7 @@ import { ActivityCard } from '@/components/cards/ActivityCard';
 import { PostCard } from '@/components/cards/PostCard';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
-import { HOME_ACTIVITY_FILTERS, AVAILABILITY_LABELS } from '@/lib/labels';
+import { HOME_ACTIVITY_FILTERS, AVAILABILITY_LABELS, MEET_PREF_LABELS } from '@/lib/labels';
 import { commonInterests, friendsOf } from '@/lib/relations';
 import { todayISO } from '@/lib/format';
 import type { Activity } from '@/types';
@@ -20,6 +22,8 @@ export function HomePage() {
   const error = useAppStore((s) => s.error);
   const init = useAppStore((s) => s.init);
   const posts = useAppStore((s) => s.posts);
+  const opps = useAppStore((s) => s.opportunities);
+  const intents = useAppStore((s) => s.opportunityIntents);
   const v = useViewer();
   const [cat, setCat] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -34,7 +38,8 @@ export function HomePage() {
   const catActivity = (a: Activity) => (!catFilter || catFilter.includes(a.category)) && (!onlyToday || a.date === todayISO()) && (!onlyFree || a.fee === 0);
 
   const people = useMemo(() => v.visibleUsers.filter((u) => !skipped.includes(u.id))
-    .sort((a, b) => commonInterests(me, b).length - commonInterests(me, a).length), [v.visibleUsers, skipped, me]);
+    .map((u) => ({ u, s: matchScore(me, u, { opportunities: opps, opportunityIntents: intents }, v.canSeeField(u, 'timetable')).score + commonInterests(me, u).length * 0.5 }))
+    .sort((a, b) => b.s - a.s).map((x) => x.u), [v, skipped, me, opps, intents]);
   const nowPeople = people.filter((u) => u.availability === 'now' && v.canSeeField(u, 'availability'));
   const acts = useMemo(() => v.visibleActivities.filter(catActivity).filter((a) => a.date >= todayISO())
     .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime)), [v.visibleActivities, cat, onlyToday, onlyFree]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -53,6 +58,8 @@ export function HomePage() {
   const ttBest = ttOverlaps.length ? ttOverlaps.flatMap((o) => o.blocks).sort((a, b) => (b.end - b.start) - (a.end - a.start))[0] : null;
   const ttBestCount = ttBest ? ttOverlaps.filter((o) => o.blocks.some((b) => b.start <= ttBest.start && b.end >= ttBest.end)).length : 0;
 
+  const mySchoolId = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
+  const topOpps = opps.filter((o) => (!o.schoolId || o.schoolId === mySchoolId) && (!o.deadline || daysUntil(o.deadline) >= 0)).map((o) => ({ o, ...opportunityScore(me, o, intents) })).sort((a, b) => b.score - a.score).slice(0, 3);
   const isEmpty = people.length === 0 && acts.length === 0;
 
   return (
@@ -60,7 +67,7 @@ export function HomePage() {
       <TopBar
         title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : '학교 선택'} <ChevronDown size={16} className="text-ink-3" /></button>}
         bell messages
-        right={<IconButton onClick={() => nav('/timetable')} aria-label="시간표"><CalendarDays size={22} /></IconButton>}
+        right={<><IconButton onClick={() => nav('/timetable')} aria-label="시간표"><CalendarDays size={22} /></IconButton><IconButton onClick={() => nav('/community')} aria-label="커뮤니티"><LayoutGrid size={22} /></IconButton></>}
       />
       <div className="px-4 pt-2 flex gap-2">
         <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />사람, 활동, 동아리 검색</button>
@@ -101,7 +108,7 @@ export function HomePage() {
           )}
 
           {people.length > 0 && (
-            <Section title="추천 사람" subtitle="공통 관심사가 많은 순서예요" onMore={() => nav('/search?tab=people')}>
+            <Section title="추천 사람" subtitle={me.meetPreference.length ? `${me.meetPreference.map((p) => MEET_PREF_LABELS[p].replace(' 사람', '')).slice(0, 2).join(', ')} 우선` : '목표·관심사·시간이 맞는 순서예요'} onMore={() => nav('/search?tab=people')}>
               <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 snap-x snap-mandatory">
                 {people.slice(0, 8).map((u) => <PersonCard key={u.id} user={u} compact className="snap-start shrink-0" onSkip={() => setSkipped((s) => [...s, u.id])} />)}
               </div>
@@ -122,6 +129,11 @@ export function HomePage() {
             </Section>
           )}
 
+          {topOpps.length > 0 && (
+            <Section title="나에게 맞는 기회" subtitle="목표·관심사·역할 기준" onMore={() => nav('/opportunities')}>
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 snap-x">{topOpps.map((x) => <div key={x.o.id} className="w-[300px] shrink-0 snap-start"><OpportunityCard o={x.o} reasons={x.reasons} /></div>)}</div>
+            </Section>
+          )}
           {friendActs.length > 0 && <Section title="친구가 만든 활동"><Stack>{friendActs.slice(0, 2).map((a) => <ActivityCard key={a.id} activity={a} badge="친구" />)}</Stack></Section>}
           {orgEvents.length > 0 && <Section title="동아리 행사" onMore={() => nav('/search?tab=orgs')}><div className="flex gap-3 overflow-x-auto hide-scrollbar px-4">{orgEvents.map((a) => <ActivityCard key={a.id} activity={a} variant="mini" />)}</div></Section>}
           {officialEvents.length > 0 && <Section title="학교 공식 행사"><Stack>{officialEvents.map((a) => <ActivityCard key={a.id} activity={a} />)}</Stack></Section>}

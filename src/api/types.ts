@@ -1,6 +1,6 @@
 import type {
   Activity, ActivityProposal, ChatRoom, ID, Notification, Organization, Participation, Post, Relationships, Report, School, User,
-  ActivityCategory, Visibility, JoinPolicy, ActivityKind, Place, ReportTargetType, Availability,
+  ActivityCategory, Visibility, JoinPolicy, ActivityKind, Place, ReportTargetType, Availability, Opportunity, OpportunityIntentRecord, OpportunityIntent, Role,
 } from '@/types';
 
 /** 클라이언트가 보유하는 전체 데이터 스냅샷 (실제 API에서는 필요한 부분만 내려받도록 분리) */
@@ -16,12 +16,14 @@ export interface Snapshot {
   chatRooms: ChatRoom[];
   notifications: Notification[];
   reports: Report[];
+  opportunities: Opportunity[];
+  opportunityIntents: OpportunityIntentRecord[];
 }
 
 /** 변경된 엔티티만 담아 돌려주는 부분 응답. 스토어가 id 기준으로 병합한다. */
 export type Patch = Partial<Omit<Snapshot, 'relationships'>> & {
   relationships?: Relationships;
-  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals', ID[]>>;
+  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals' | 'opportunityIntents', ID[]>>;
 };
 
 export interface RegisterInput {
@@ -49,6 +51,11 @@ export interface RegisterInput {
   voicePrompt?: User['voicePrompt'];
   poll?: User['poll'];
   timetable?: User['timetable'];
+  goals: User['goals'];
+  lookingFor?: User['lookingFor'];
+  canOffer?: User['canOffer'];
+  living?: User['living'];
+  meetPreference?: User['meetPreference'];
   locationPermission: User['settings']['locationPermission'];
   notifications: boolean;
 }
@@ -71,6 +78,8 @@ export interface ActivityInput {
   visibilityTargets?: string[];
   invitedIds?: ID[];
   orgId?: ID;
+  opportunityId?: ID;
+  rolesNeeded?: Role[];
 }
 
 export interface PostInput {
@@ -136,6 +145,14 @@ export interface AroundUApi {
 
   orgs: {
     apply(orgId: ID, userId: ID): Promise<Patch>;
+  };
+
+  opportunities: {
+    /** 관심·지원 예정·지원 완료 설정 (null이면 해제) */
+    setIntent(opportunityId: ID, userId: ID, intent: OpportunityIntent | null): Promise<Patch>;
+    toggleSave(opportunityId: ID, userId: ID): Promise<Patch>;
+    ask(opportunityId: ID, authorId: ID, text: string): Promise<Patch>;
+    review(opportunityId: ID, authorId: ID, text: string, result?: 'accepted' | 'rejected' | 'attended'): Promise<Patch>;
   };
 
   proposals: {

@@ -13,6 +13,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, KIND_LABELS } from '@/lib/labels';
 import { PLACE_PRESETS } from '@/data/places';
+import { LOOKING_FOR_ROLES, OFFER_ROLES, PERSON_ROLE_LABELS } from '@/lib/labels';
+import type { Role } from '@/types';
 import { todayISO } from '@/lib/format';
 import { friendsOf } from '@/lib/relations';
 import { cn } from '@/lib/cn';
@@ -32,11 +34,17 @@ export function CreateActivityPage() {
   const presets = PLACE_PRESETS[schoolId] ?? PLACE_PRESETS.s_yonsei;
   const myOrgs = orgs.filter((o) => o.adminIds.includes(v.me.id) || o.memberIds.includes(v.me.id));
   const friends = useMemo(() => friendsOf(v.snap, v.me.id).map((fid) => v.userById(fid)!).filter(Boolean), [v]);
+  const opps = useAppStore((s) => s.opportunities);
+  const oppId = editing?.opportunityId ?? params.get('opportunity') ?? undefined;
+  const opp = oppId ? opps.find((o) => o.id === oppId) : undefined;
+  const isTeam = !!params.get('team') || !!opp?.rolesNeeded || !!editing?.rolesNeeded;
+  const inviteId = params.get('invite');
 
   const [form, setForm] = useState<ActivityInput>(() => editing ? { ...editing } : {
-    kind, category: kind === 'org_event' ? 'club' : 'coffee', title: '', description: '', cover: { emoji: '☕', hue: 30 },
+    kind, category: kind === 'org_event' ? 'club' : opp ? (opp.type === 'hackathon' || opp.type === 'startup' ? 'networking' : 'study') : 'coffee', title: opp ? `${opp.title} 같이 준비해요` : '', description: opp ? `${opp.title}에 함께 지원·참가할 사람을 찾아요.` : '', cover: opp ? opp.cover : { emoji: '☕', hue: 30 },
+    opportunityId: oppId, rolesNeeded: opp?.rolesNeeded ?? (isTeam ? [] : undefined),
     date: params.get('date') ?? todayISO(), startTime: params.get('start') ?? '18:00', endTime: params.get('end') ?? '19:30', place: presets[0], capacity: kind === 'personal' ? 4 : 10, fee: 0, conditions: '',
-    joinPolicy: kind === 'personal' ? 'open' : 'approval', visibility: 'school', visibilityTargets: [], invitedIds: [], orgId: kind === 'org_event' ? myOrgs[0]?.id : undefined,
+    joinPolicy: kind === 'personal' ? 'open' : 'approval', visibility: 'school', visibilityTargets: [], invitedIds: inviteId ? [inviteId] : [], orgId: kind === 'org_event' ? myOrgs[0]?.id : undefined,
   });
   const patch = (p: Partial<ActivityInput>) => setForm((f) => ({ ...f, ...p }));
   const setCategory = (c: ActivityCategory) => patch({ category: c, cover: { emoji: CATEGORY_EMOJI[c], hue: form.cover.hue } });
@@ -65,13 +73,20 @@ export function CreateActivityPage() {
 
   return (
     <div className="min-h-full pb-28">
-      <TopBar back title={editing ? '활동 수정' : `${KIND_LABELS[kind]} 만들기`} />
+      <TopBar back title={editing ? '활동 수정' : isTeam ? '팀·준비방 만들기' : `${KIND_LABELS[kind]} 만들기`} />
       <div className="px-4 py-4 space-y-5">
         {kind === 'org_event' && (
           <Field label="주최 조직" hint={myOrgs.length ? undefined : '가입된 조직이 없어 개인 이름으로 등록돼요. 학생 동아리 행사 등록은 무료예요.'}>
             {myOrgs.length ? <Select value={form.orgId ?? ''} onChange={(e) => patch({ orgId: e.target.value || undefined })}><option value="">개인 이름으로</option>{myOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</Select> : null}
           </Field>
         )}
+        {opp && <div className="card p-3 flex items-center gap-3"><span className="text-2xl">{opp.cover.emoji}</span><span className="flex-1 text-[13px]"><span className="text-[11px] text-ink-3 block">연결된 기회</span><b>{opp.title}</b></span></div>}
+        {isTeam && (
+          <Field label="필요한 역할" hint="맞는 역할을 가진 사람에게 먼저 추천돼요">
+            <div className="flex flex-wrap gap-2">{[...new Set([...OFFER_ROLES, ...LOOKING_FOR_ROLES.filter((r) => ['teammate', 'cofounder', 'study_partner', 'application_partner'].includes(r))])].map((r) => <Chip key={r} size="sm" active={form.rolesNeeded?.includes(r)} onClick={() => patch({ rolesNeeded: form.rolesNeeded?.includes(r) ? form.rolesNeeded.filter((x) => x !== r) : [...(form.rolesNeeded ?? []), r as Role] })}>{PERSON_ROLE_LABELS[r]}</Chip>)}</div>
+          </Field>
+        )}
+        {inviteId && form.invitedIds?.includes(inviteId) && <div className="rounded-xl bg-mint-soft text-[13px] px-3 py-2">✅ {v.userById(inviteId)?.nickname}님을 바로 참가자로 초대해요.</div>}
         <Field label="활동 종류" required>
           <div className="flex flex-wrap gap-2">{ALL_CATEGORIES.map((c) => <Chip key={c} color={CATEGORY_COLORS[c]} active={form.category === c} onClick={() => setCategory(c)}>{CATEGORY_EMOJI[c]} {CATEGORY_LABELS[c]}</Chip>)}</div>
         </Field>

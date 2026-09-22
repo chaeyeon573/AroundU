@@ -1,5 +1,5 @@
 import type {
-  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField,
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord,
 } from '@/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
 
@@ -12,7 +12,7 @@ const T9 = addDaysISO(9);
 export const DEMO_USER_ID = 'u_me';
 
 const defaultVisibility = (v: Visibility = 'school'): Record<ProfileField, Visibility> => ({
-  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v, prompts: 'public', timetable: 'friends',
+  bio: v, likes: v, freeTime: v, height: 'private', availability: v, preferredPartner: 'private', purposes: v, interests: 'public', posts: v, prompts: 'public', timetable: 'friends', goals: 'school', living: 'friends',
 });
 
 export const schools: School[] = [
@@ -43,6 +43,11 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
   region: '신촌',
   prompts: [],
   timetable: [],
+  goals: [],
+  lookingFor: [],
+  canOffer: [],
+  interestedOrgIds: [],
+  meetPreference: ['same_hobby', 'same_goal'],
   fieldVisibility: defaultVisibility(),
   settings: { messagePolicy: 'connected', notifications: true, locationPermission: 'granted' },
   createdAt: isoHoursAgo(24 * 30),
@@ -66,6 +71,7 @@ export const users: User[] = [
     voicePrompt: { questionId: 'v_now', durationSec: 18, recordedAt: isoHoursAgo(40) },
     poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 0, votes: { u_sua: 0, u_jimin: 2 } },
     timetable: [{ id: 'c1', name: '데이터베이스', day: 0, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c2', name: '운영체제', day: 0, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c3', name: '데이터베이스', day: 2, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c4', name: '운영체제', day: 2, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c5', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', room: '경영관 201', hue: 15 }, { id: 'c6', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', room: '공학관 세미나실', hue: 280 }, { id: 'c7', name: '영어 회화', day: 4, start: '11:00', end: '12:15', room: '외솔관 302', hue: 45 }],
+    goals: ['startup', 'hackathon', 'friends'], lookingFor: ['designer', 'teammate', 'cofounder'], canOffer: ['developer', 'planning'], living: { residence: 'offcampus', zone: '신촌 북쪽' }, interestedOrgIds: ['o_ailab', 'o_startup'], meetPreference: ['same_goal', 'same_class', 'same_hobby'],
   }),
   mk({
     id: 'u_jimin', nickname: '지민', birthYear: 2002, gender: 'female',
@@ -82,6 +88,7 @@ export const users: User[] = [
     voicePrompt: { questionId: 'v_campus', durationSec: 24, recordedAt: isoHoursAgo(70) },
     poll: { questionId: 'p_first', options: ['커피', '밥', '같이 운동'], ownChoice: 0, votes: { u_sua: 0, u_taeho: 1, u_hana: 0 } },
     timetable: [{ id: 'c1', name: '마케팅 원론', day: 0, start: '10:30', end: '11:45', hue: 20 }, { id: 'c2', name: '마케팅 원론', day: 2, start: '10:30', end: '11:45', hue: 20 }, { id: 'c3', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', hue: 15 }, { id: 'c4', name: '회계 원리', day: 3, start: '13:00', end: '14:15', hue: 200 }],
+    goals: ['startup', 'friends', 'dating'], lookingFor: ['developer', 'cofounder', 'friend'], canOffer: ['marketing', 'presentation', 'planning'], living: { residence: 'dorm', zone: '신촌 북쪽' }, interestedOrgIds: ['o_startup'],
   }),
   mk({
     id: 'u_dohyun', nickname: '도현', birthYear: 2000, gender: 'male',
@@ -97,6 +104,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_project', answer: '멀티모달 LLM 논문 리뷰, 학부생 세미나 준비' }, { questionId: 'q_study_type', answer: '조용히 각자 읽고 30분 토론' }, { questionId: 'q_hobby', answer: '클라이밍. 초보 같이 가요' }],
     poll: { questionId: 'p_study', options: ['중도 붙박이', '카페 노마드', '집에서 벼락치기'], ownChoice: 0, votes: { u_yuna: 0 } },
     timetable: [{ id: 'c1', name: '고급 기계학습', day: 1, start: '10:00', end: '12:45', hue: 170 }, { id: 'c2', name: '연구실 세미나', day: 2, start: '16:00', end: '17:30', hue: 190 }],
+    goals: ['lab', 'hackathon'], lookingFor: ['teammate', 'study_partner'], canOffer: ['research', 'data', 'developer'], living: { residence: 'offcampus', zone: '공학관 근처' }, interestedOrgIds: ['o_ailab'],
   }),
   mk({
     id: 'u_seoyeon', nickname: '서연', birthYear: 2003, gender: 'female',
@@ -112,6 +120,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_into', answer: '요즘 90년대 브릿팝 다시 파는 중' }, { questionId: 'q_free_day', answer: '토요일 오후. 공연 보러 가요' }, { questionId: 'q_emoji', answer: '🎸🐈🍜' }],
     voicePrompt: { questionId: 'v_song', durationSec: 29, recordedAt: isoHoursAgo(100) },
     timetable: [{ id: 'c1', name: '심리통계', day: 0, start: '09:00', end: '10:15', hue: 200 }, { id: 'c2', name: '인지심리학', day: 0, start: '15:00', end: '16:15', hue: 300 }, { id: 'c3', name: '심리통계', day: 2, start: '09:00', end: '10:15', hue: 200 }, { id: 'c4', name: '발달심리학', day: 1, start: '13:00', end: '14:15', hue: 120 }, { id: 'c5', name: '음악의 이해', day: 3, start: '10:00', end: '11:15', hue: 280 }],
+    goals: ['friends', 'hobby', 'join_club'], lookingFor: ['friend'], canOffer: ['video', 'club_ops'], living: { residence: 'dorm', zone: '신촌 북쪽' }, interestedOrgIds: ['o_band'],
   }),
   mk({
     id: 'u_minjun', nickname: '민준', birthYear: 2001, gender: 'male',
@@ -126,6 +135,7 @@ export const users: User[] = [
     nowWant: '오후 7시 러닝 같이 뛰어요',
     prompts: [{ questionId: 'q_morning', answer: '아침형. 6시에 한강 뜁니다' }, { questionId: 'q_always', answer: '러닝. 페이스 맞춰드려요' }, { questionId: 'q_first_meet', answer: '가볍게 5km 뛰고 국밥' }],
     poll: { questionId: 'p_weekend', options: ['바로 나감', '집이 좋아', '전시·공연이면 나감'], ownChoice: 0, votes: {} },
+    goals: ['hobby', 'friends', 'internship'], lookingFor: ['friend', 'senior'], canOffer: ['club_ops', 'presentation'], living: { residence: 'commute', zone: '서강대 근처' }, interestedOrgIds: [],
   }),
   mk({
     id: 'u_yuna', nickname: '유나', birthYear: 2002, gender: 'female',
@@ -139,6 +149,7 @@ export const users: User[] = [
     purposes: ['study', 'friend'],
     nowWant: '중앙도서관에서 같이 공부해요',
     prompts: [{ questionId: 'q_spot', answer: '중도 4층 창가 (오후 2시 이후)' }, { questionId: 'q_study_type', answer: '카페에서 조용히, 질문은 쪽지로' }, { questionId: 'q_ask_me', answer: 'R, 통계 과제, 크로플 맛집' }],
+    goals: ['scholarship', 'lab', 'friends'], lookingFor: ['study_partner', 'application_partner'], canOffer: ['data', 'research'], living: { residence: 'commute', zone: '이대 근처' }, interestedOrgIds: ['o_stat'],
   }),
   mk({
     id: 'u_taeho', nickname: '태호', birthYear: 1999, gender: 'male',
@@ -153,6 +164,7 @@ export const users: User[] = [
     nowWant: '창업 관심 있는 분과 커피챗',
     prompts: [{ questionId: 'q_ask_me', answer: 'MVP 만들기, 팀빌딩, 투자 미팅 준비' }, { questionId: 'q_want_person', answer: '뭔가 만들고 있는 사람' }, { questionId: 'q_3hours', answer: '정문 카페에서 후배들 커피챗' }],
     voicePrompt: { questionId: 'v_hello', durationSec: 12, recordedAt: isoHoursAgo(200) },
+    goals: ['startup', 'cofounder'], lookingFor: ['developer', 'designer', 'cofounder'], canOffer: ['planning', 'marketing', 'mentor'], living: { residence: 'offcampus', zone: '신촌 남쪽' }, interestedOrgIds: ['o_startup'],
   }),
   mk({
     id: 'u_hana', nickname: '하나', birthYear: 2003, gender: 'female',
@@ -167,6 +179,7 @@ export const users: User[] = [
     nowWant: '이번 주말 전시 같이 볼 사람',
     prompts: [{ questionId: 'q_always', answer: '전시랑 플리마켓' }, { questionId: 'q_new', answer: '필름 카메라 시작했어요' }, { questionId: 'q_emoji', answer: '🎨📷🧋' }],
     poll: { questionId: 'p_weekend', options: ['바로 나감', '집이 좋아', '전시·공연이면 나감'], ownChoice: 2, votes: { u_seoyeon: 2 } },
+    goals: ['hackathon', 'friends', 'hobby'], lookingFor: ['developer', 'teammate', 'friend'], canOffer: ['designer', 'video'], living: { residence: 'commute', zone: '홍대 근처' }, interestedOrgIds: [],
   }),
   mk({
     id: 'u_junho', nickname: '준호', birthYear: 2000, gender: 'male',
@@ -180,6 +193,7 @@ export const users: User[] = [
     purposes: ['club', 'friend'],
     prompts: [{ questionId: 'q_project', answer: '가을 정기공연 준비 중' }, { questionId: 'q_role', answer: '총무 겸 기타' }, { questionId: 'q_cafe', answer: '학생회관 지하 라멘집' }],
     timetable: [{ id: 'c1', name: '컴파일러', day: 0, start: '11:00', end: '12:15', hue: 240 }, { id: 'c2', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', hue: 280 }, { id: 'c3', name: '컴파일러', day: 2, start: '11:00', end: '12:15', hue: 240 }, { id: 'c4', name: '네트워크', day: 1, start: '09:00', end: '10:15', hue: 180 }, { id: 'c5', name: '네트워크', day: 3, start: '09:00', end: '10:15', hue: 180 }],
+    goals: ['join_club', 'friends', 'internship'], lookingFor: ['teammate'], canOffer: ['developer', 'club_ops'], living: { residence: 'offcampus', zone: '신촌 남쪽' }, interestedOrgIds: ['o_band'],
   }),
   mk({
     id: 'u_sua', nickname: '수아', birthYear: 2004, gender: 'female',
@@ -195,6 +209,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_now', answer: '백양로 산책 30분' }, { questionId: 'q_gap', answer: '알고리즘 문제 하나 풀고 산책' }, { questionId: 'q_want_person', answer: '코딩 같이 배울 사람' }],
     poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 2, votes: { u_me: 2 } },
     timetable: [{ id: 'c1', name: '자료구조', day: 0, start: '09:00', end: '10:15', hue: 220 }, { id: 'c2', name: '자료구조', day: 2, start: '09:00', end: '10:15', hue: 220 }, { id: 'c3', name: '이산수학', day: 1, start: '10:30', end: '11:45', hue: 60 }, { id: 'c4', name: '이산수학', day: 3, start: '10:30', end: '11:45', hue: 60 }, { id: 'c5', name: '글쓰기', day: 4, start: '13:00', end: '14:15', hue: 330 }],
+    goals: ['friends', 'hackathon', 'lunch'], lookingFor: ['study_partner', 'teammate', 'senior'], canOffer: ['developer'], living: { residence: 'dorm', zone: '신촌 북쪽' }, interestedOrgIds: ['o_ailab', 'o_startup'],
   }),
   mk({
     id: 'u_woojin', nickname: '우진', birthYear: 2001, gender: 'male',
@@ -207,6 +222,7 @@ export const users: User[] = [
     interests: ['study', 'exercise', 'research'],
     purposes: ['study', 'club'],
     prompts: [{ questionId: 'q_study_type', answer: '토론형. 문제 하나로 30분 싸움 가능' }, { questionId: 'q_hobby', answer: '클라이밍' }, { questionId: 'q_cafe', answer: '신촌 국밥집 (이름 비밀)' }],
+    goals: ['scholarship', 'lab', 'internship'], lookingFor: ['application_partner', 'study_partner'], canOffer: ['data', 'research', 'club_ops'], living: { residence: 'commute', zone: '신촌 남쪽' }, interestedOrgIds: ['o_stat'],
   }),
 ];
 
@@ -527,5 +543,80 @@ export const notifications: Notification[] = [
   { id: 'nt5', userId: DEMO_USER_ID, type: 'follow', title: '새 팔로워', body: '지민님이 회원님을 팔로우하기 시작했어요.', link: '/users/u_jimin', read: true, createdAt: isoHoursAgo(3) },
   { id: 'nt6', userId: DEMO_USER_ID, type: 'org_event', title: '소리울림 새 행사', body: '가을 정기공연이 등록되었어요.', link: '/activities/a_band_show', read: true, createdAt: isoHoursAgo(48) },
   { id: 'nt7', userId: DEMO_USER_ID, type: 'nearby_activity', title: '가까운 곳에서 관심 활동 시작', body: '정문 카페에서 창업 커피챗이 열려요.', link: '/activities/a_startup_chat', read: true, createdAt: isoHoursAgo(10) },
+  { id: 'nt9', userId: DEMO_USER_ID, type: 'deadline', title: '마감 4일 전', body: '저장한 "2학기 우리사랑 장학금" 신청이 곧 마감돼요.', link: '/opportunities/op_scholarship', read: false, createdAt: isoMinutesAgo(10) },
+  { id: 'nt10', userId: DEMO_USER_ID, type: 'opportunity_match', title: '같이 준비할 사람이 있어요', body: 'AI Campus Hackathon에 지원 예정인 학생 2명이 개발자를 찾고 있어요.', link: '/opportunities/op_hackathon', read: false, createdAt: isoHoursAgo(2) },
   { id: 'nt8', userId: DEMO_USER_ID, type: 'like', title: '좋아요', body: '수아, 하나님이 회원님의 게시물을 좋아해요.', link: '/community', read: true, createdAt: isoHoursAgo(24) },
+];
+
+export const opportunities: Opportunity[] = [
+  {
+    id: 'op_hackathon', type: 'hackathon', title: 'AI Campus Hackathon 2026', host: '연세대 창업지원단 × 네이버', description: '48시간 동안 캠퍼스 문제를 AI로 푸는 해커톤. 2~4인 팀, 전공 무관. 우승팀 상금 500만원과 인턴 면접 기회.',
+    cover: { emoji: '💡', hue: 230 }, deadline: addDaysISO(7), date: addDaysISO(14), startTime: '09:00', place: { name: '공학관 대강당', lat: 37.5617, lng: 126.9367 },
+    eligibility: '연세대 재학생·대학원생, 전공 무관', benefit: '상금 500만원, 인턴 면접 기회', rolesNeeded: ['developer', 'designer', 'planning'], teamSize: '2~4명',
+    sourceUrl: 'https://example.com/hackathon', sourceLabel: '창업지원단 공지', tags: ['AI', '해커톤', '팀빌딩'], interests: ['startup', 'study', 'research'], goals: ['hackathon', 'startup'],
+    schoolId: 's_yonsei', official: true, lastVerified: T, qna: [{ id: 'oq1', authorId: 'u_sua', text: '1학년도 참가 가능한가요?', createdAt: isoHoursAgo(5) }, { id: 'oq2', authorId: 'u_taeho', text: '작년에 1학년 팀도 본선 갔어요. 괜찮아요!', createdAt: isoHoursAgo(4) }],
+    reviews: [{ id: 'or1', authorId: 'u_taeho', text: '작년 참가. 심사위원이 데모 완성도를 제일 봐요. 발표 연습 필수.', result: 'attended', createdAt: isoHoursAgo(24 * 200) }], createdAt: isoHoursAgo(72),
+  },
+  {
+    id: 'op_scholarship', type: 'scholarship', title: '2학기 우리사랑 장학금', host: '연세대 장학팀', description: '성적 3.0 이상, 소득 분위 무관. 학기당 200만원. 학교 장학 포털에서 신청서와 자기소개서 제출.',
+    cover: { emoji: '🎓', hue: 45 }, deadline: addDaysISO(4), eligibility: '재학생, 직전 학기 평점 3.0 이상', benefit: '학기당 200만원, 중복 수혜 가능',
+    sourceUrl: 'https://example.com/scholarship', sourceLabel: '연세 장학 포털', tags: ['장학금', '마감임박'], interests: [], goals: ['scholarship'],
+    schoolId: 's_yonsei', official: true, lastVerified: T, qna: [], reviews: [{ id: 'or2', authorId: 'u_woojin', text: '자기소개서에 활동 계획을 구체적으로 쓰면 유리해요. 지난 학기 수혜.', result: 'accepted', createdAt: isoHoursAgo(24 * 120) }], createdAt: isoHoursAgo(48),
+  },
+  {
+    id: 'op_lab', type: 'lab', title: 'AI 연구실 학부 인턴 모집', host: 'Vision & Language Lab', orgId: 'o_ailab', description: '멀티모달 모델 연구 보조. 주 10시간, 학점 인정 또는 연구비. 파이썬 기본, 관심과 성실함이 더 중요.',
+    cover: { emoji: '🔬', hue: 175 }, deadline: addDaysISO(20), eligibility: '3학년 이상 또는 파이썬 경험자', benefit: '연구비 월 50만원 또는 연구학점', rolesNeeded: ['research', 'developer'],
+    sourceUrl: 'https://example.com/lab', sourceLabel: '연구실 홈페이지', tags: ['연구실', 'AI', '인턴'], interests: ['research', 'study'], goals: ['lab'],
+    schoolId: 's_yonsei', lastVerified: T, qna: [], reviews: [], createdAt: isoHoursAgo(100),
+  },
+  {
+    id: 'op_intern', type: 'internship', title: '토스 여름 인턴 (프로덕트 디자인·개발)', host: '토스', description: '8주 유급 인턴. 서류 → 과제 → 면접. 캠퍼스 리크루팅 설명회 다음 주 학생회관.',
+    cover: { emoji: '💼', hue: 250 }, deadline: addDaysISO(12), date: addDaysISO(5), startTime: '17:00', place: { name: '학생회관 소강당', lat: 37.5637, lng: 126.9387 },
+    eligibility: '졸업 예정자 또는 휴학 가능자', benefit: '월 300만원, 정규직 전환 기회', sourceUrl: 'https://example.com/toss', sourceLabel: '토스 채용',
+    tags: ['인턴', '설명회', '개발', '디자인'], interests: ['startup', 'networking'], goals: ['internship'], lastVerified: addDaysISO(-1), qna: [], reviews: [], createdAt: isoHoursAgo(60),
+  },
+  {
+    id: 'op_band', type: 'club', title: '소리울림 2학기 신입회원 모집', host: '소리울림 (밴드 동아리)', orgId: 'o_band', description: '악기 경험 없어도 환영. 오디션 대신 합주 체험 후 가입. 백양로 부스에서 신청.',
+    cover: { emoji: '🎸', hue: 285 }, deadline: T9, eligibility: '연세대 재학생', benefit: '합주실 사용, 정기공연 무대', sourceUrl: 'https://instagram.com/example', sourceLabel: '인스타그램',
+    tags: ['동아리', '밴드', '모집'], interests: ['club', 'exhibition'], goals: ['join_club', 'hobby'], schoolId: 's_yonsei', lastVerified: T, qna: [], reviews: [{ id: 'or3', authorId: 'u_seoyeon', text: '작년에 가입. 초보였는데 선배들이 잘 알려줘요.', result: 'accepted', createdAt: isoHoursAgo(24 * 300) }], createdAt: isoHoursAgo(30),
+  },
+  {
+    id: 'op_festival', type: 'event', title: '가을 아카라카 사전 행사', host: '연세대 총학생회', description: '노천극장 사전 축제. 학생증 지참. 동아리 부스와 푸드트럭.',
+    cover: { emoji: '🎪', hue: 355 }, date: T4, startTime: '17:00', place: { name: '노천극장', lat: 37.5668, lng: 126.9385 }, eligibility: '연세대 구성원',
+    sourceUrl: 'https://example.com/festival', sourceLabel: '총학생회 공지', tags: ['축제', '학교행사'], interests: ['exhibition', 'club', 'meal'], goals: ['friends', 'hobby'], schoolId: 's_yonsei', official: true, lastVerified: T, qna: [], reviews: [], createdAt: isoHoursAgo(100),
+  },
+  {
+    id: 'op_startup', type: 'startup', title: 'YSVC 가을 기수 · 공동창업자 매칭 데이', host: '연세 창업동아리 YSVC', orgId: 'o_startup', description: '아이디어 발표 3분 + 팀빌딩. 개발자·디자이너·기획자 골고루 모집.',
+    cover: { emoji: '🚀', hue: 15 }, deadline: addDaysISO(10), date: addDaysISO(11), startTime: '19:00', place: { name: '경영관 201', lat: 37.5605, lng: 126.9390 },
+    eligibility: '창업에 관심 있는 누구나', rolesNeeded: ['developer', 'designer', 'planning', 'marketing'], teamSize: '2~5명', sourceUrl: 'https://example.com/ysvc', sourceLabel: 'YSVC 노션',
+    tags: ['창업', '팀빌딩', '공동창업자'], interests: ['startup', 'networking'], goals: ['startup', 'cofounder'], schoolId: 's_yonsei', lastVerified: T, qna: [], reviews: [], createdAt: isoHoursAgo(40),
+  },
+  {
+    id: 'op_contest', type: 'hackathon', title: '서울시 대학생 공공데이터 공모전', host: '서울특별시', description: '공공데이터 활용 서비스 기획·개발. 개인 또는 팀. 1차 서류, 2차 발표.',
+    cover: { emoji: '📊', hue: 200 }, deadline: addDaysISO(25), eligibility: '서울 소재 대학 재학생', benefit: '대상 300만원', rolesNeeded: ['data', 'developer', 'planning'], teamSize: '1~4명',
+    sourceUrl: 'https://example.com/seoul', sourceLabel: '서울시 공고', tags: ['공모전', '데이터', '대외활동'], interests: ['research', 'study', 'startup'], goals: ['hackathon'], lastVerified: addDaysISO(-2), qna: [], reviews: [], createdAt: isoHoursAgo(80),
+  },
+  {
+    id: 'op_lunch', type: 'activity', title: '점심 같이 먹기 — 학생회관 12시', host: '수아', description: '오늘 12시~13시 공강인 사람 학생회관 식당에서 같이 점심!',
+    cover: { emoji: '🍱', hue: 30 }, date: T, startTime: '12:00', place: { name: '학생회관 식당', lat: 37.5637, lng: 126.9387 }, eligibility: '누구나',
+    sourceUrl: '', sourceLabel: '', tags: ['점심', '공강'], interests: ['meal', 'coffee'], goals: ['lunch', 'friends'], schoolId: 's_yonsei', lastVerified: T, qna: [], reviews: [], createdAt: isoHoursAgo(1),
+  },
+];
+
+export const opportunityIntents: OpportunityIntentRecord[] = [
+  { id: 'oi1', opportunityId: 'op_hackathon', userId: 'u_sua', intent: 'applying', saved: true, createdAt: isoHoursAgo(5) },
+  { id: 'oi2', opportunityId: 'op_hackathon', userId: 'u_hana', intent: 'applying', saved: true, createdAt: isoHoursAgo(9) },
+  { id: 'oi3', opportunityId: 'op_hackathon', userId: 'u_dohyun', intent: 'interested', saved: false, createdAt: isoHoursAgo(20) },
+  { id: 'oi4', opportunityId: 'op_hackathon', userId: 'u_jimin', intent: 'interested', saved: true, createdAt: isoHoursAgo(30) },
+  { id: 'oi5', opportunityId: 'op_scholarship', userId: 'u_yuna', intent: 'applying', saved: true, createdAt: isoHoursAgo(10) },
+  { id: 'oi6', opportunityId: 'op_scholarship', userId: 'u_woojin', intent: 'applied', saved: false, createdAt: isoHoursAgo(24 * 120) },
+  { id: 'oi7', opportunityId: 'op_lab', userId: 'u_sua', intent: 'interested', saved: true, createdAt: isoHoursAgo(12) },
+  { id: 'oi8', opportunityId: 'op_lab', userId: DEMO_USER_ID, intent: 'interested', saved: true, createdAt: isoHoursAgo(40) },
+  { id: 'oi9', opportunityId: 'op_startup', userId: 'u_jimin', intent: 'applying', saved: true, createdAt: isoHoursAgo(15) },
+  { id: 'oi10', opportunityId: 'op_startup', userId: 'u_taeho', intent: 'applying', saved: false, createdAt: isoHoursAgo(35) },
+  { id: 'oi11', opportunityId: 'op_band', userId: 'u_hana', intent: 'interested', saved: true, createdAt: isoHoursAgo(8) },
+  { id: 'oi12', opportunityId: 'op_intern', userId: 'u_junho', intent: 'applying', saved: true, createdAt: isoHoursAgo(50) },
+  { id: 'oi13', opportunityId: 'op_intern', userId: 'u_minjun', intent: 'interested', saved: false, createdAt: isoHoursAgo(45) },
+  { id: 'oi14', opportunityId: 'op_scholarship', userId: DEMO_USER_ID, intent: 'interested', saved: true, createdAt: isoHoursAgo(20) },
+  { id: 'oi15', opportunityId: 'op_lunch', userId: 'u_jimin', intent: 'interested', saved: false, createdAt: isoMinutesAgo(30) },
 ];

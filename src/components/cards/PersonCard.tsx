@@ -10,6 +10,8 @@ import { commonInterests } from '@/lib/relations';
 import { cn } from '@/lib/cn';
 import { PromptAnswerCard } from '@/components/prompts/PromptComponents';
 import { availabilityText } from '@/lib/timetable';
+import { matchReasons } from '@/lib/recommend';
+import { CheckCircle2 } from 'lucide-react';
 
 interface Props {
   user: User;
@@ -36,6 +38,9 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
   const liked = v.iLike(user.id);
   const following = v.isFollowing(user.id);
   const common = commonInterests(v.me, user);
+  const opps = useAppStore((s) => s.opportunities);
+  const intents = useAppStore((s) => s.opportunityIntents);
+  const reasons = matchReasons(v.me, user, { opportunities: opps, opportunityIntents: intents }, v.canSeeField(user, 'timetable')).filter((r) => r.kind !== 'school');
   const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
   const showAvail = avail.auto || (v.canSeeField(user, 'availability') && user.availability !== 'hidden');
 
@@ -70,6 +75,7 @@ export function PersonCard({ user, onSkip, compact, className }: Props) {
           {showAvail && <div className="flex items-center gap-1"><Clock size={12} className="text-ink-3" />{avail.text}{avail.auto && <span className="text-[10px] text-mint font-semibold ml-0.5">시간표</span>}</div>}
           <div className="flex items-center gap-1"><MapPin size={12} className="text-ink-3" />{user.region} 근처 · {user.purposes.slice(0, 2).map((p) => PURPOSE_LABELS[p]).join(', ')}</div>
         </div>
+        {reasons.length > 0 && <ul className="space-y-0.5">{reasons.slice(0, 2).map((r) => <li key={r.text} className="text-[12px] text-ink-2 flex items-start gap-1"><CheckCircle2 size={12} className="text-primary shrink-0 mt-0.5" /><span className="line-clamp-1">{r.text}</span></li>)}</ul>}
         {v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? <PromptAnswerCard prompt={user.prompts[0]} compact />
           : user.nowWant && <div className="rounded-xl bg-primary-soft text-primary text-[13px] font-semibold px-3 py-2">“{user.nowWant}”</div>}
         <div className="mt-auto flex items-center gap-1.5 pt-1">

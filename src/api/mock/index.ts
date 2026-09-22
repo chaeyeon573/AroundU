@@ -121,6 +121,7 @@ export const mockApi: AroundUApi = {
           bio: input.bio, likes: input.likes, freeTime: input.freeTime, height: input.height, availability: input.availability,
           interests: input.interests, purposes: input.purposes, preferredPartner: input.preferredPartner, region: school.region,
           prompts: input.prompts, voicePrompt: input.voicePrompt, poll: input.poll, timetable: input.timetable ?? [],
+          goals: input.goals, lookingFor: input.lookingFor ?? [], canOffer: input.canOffer ?? [], living: input.living, interestedOrgIds: [], meetPreference: input.meetPreference ?? [],
           fieldVisibility: input.fieldVisibility,
           settings: { messagePolicy: 'connected', notifications: input.notifications, locationPermission: input.locationPermission },
           createdAt: new Date().toISOString(),
@@ -399,6 +400,42 @@ export const mockApi: AroundUApi = {
         if (!org.applicantIds.includes(userId) && !org.memberIds.includes(userId)) org.applicantIds.push(userId);
         return { organizations: [org] };
       });
+    },
+  },
+
+  opportunities: {
+    async setIntent(opportunityId, userId, intent) {
+      return request(() => {
+        const existing = db.opportunityIntents.find((i) => i.opportunityId === opportunityId && i.userId === userId);
+        if (!intent) {
+          if (!existing) return {};
+          if (existing.saved) { existing.intent = 'interested'; return { opportunityIntents: [existing] }; }
+          db.opportunityIntents = db.opportunityIntents.filter((i) => i.id !== existing.id);
+          return { removed: { opportunityIntents: [existing.id] } };
+        }
+        if (existing) { existing.intent = intent; return { opportunityIntents: [existing] }; }
+        const rec = { id: uid('oi'), opportunityId, userId, intent, saved: false, createdAt: new Date().toISOString() };
+        db.opportunityIntents.push(rec);
+        return { opportunityIntents: [rec] };
+      });
+    },
+    async toggleSave(opportunityId, userId) {
+      return request(() => {
+        const existing = db.opportunityIntents.find((i) => i.opportunityId === opportunityId && i.userId === userId);
+        if (existing) {
+          existing.saved = !existing.saved;
+          return { opportunityIntents: [existing] };
+        }
+        const rec = { id: uid('oi'), opportunityId, userId, intent: 'interested' as const, saved: true, createdAt: new Date().toISOString() };
+        db.opportunityIntents.push(rec);
+        return { opportunityIntents: [rec] };
+      });
+    },
+    async ask(opportunityId, authorId, text) {
+      return request(() => { const o = find(db.opportunities, opportunityId); o.qna.push({ id: uid('c'), authorId, text, createdAt: new Date().toISOString() }); return { opportunities: [o] }; });
+    },
+    async review(opportunityId, authorId, text, result) {
+      return request(() => { const o = find(db.opportunities, opportunityId); o.reviews.unshift({ id: uid('r'), authorId, text, result, createdAt: new Date().toISOString() }); return { opportunities: [o] }; });
     },
   },
 
