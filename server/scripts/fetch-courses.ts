@@ -41,7 +41,7 @@ async function stanford(): Promise<CatalogCourse[]> {
         if (!days || !st || !en) continue;
         location ||= g('location', s[1]);
         instructor ||= g('name', s[1]);
-        for (const day of parseDays(days.replace(/day/g, ''))) meetings.push({ day, start: parseTime(st.replace(/:00 /, ' ')), end: parseTime(en.replace(/:00 /, ' ')) });
+        for (const day of parseDays(days)) meetings.push({ day, start: parseTime(st.replace(/:00 /, ' ')), end: parseTime(en.replace(/:00 /, ' ')) });
       }
       if (!meetings.length) continue;
       out.push({ id: courseId('s_stanford', code), schoolId: 's_stanford', code, title: g('title'), department: g('subject'), instructor: instructor || undefined, location: location || undefined, meetings: uniq(meetings), term: `${term} ${g('year') || ''}`.trim(), units: Number(g('unitsMax')) || undefined });
