@@ -59,12 +59,12 @@ export function CreateTogetherPage() {
       <TopBar back title="Plan Together" />
       <div className="px-4 py-4 space-y-5">
         <p className="text-[13px] text-ink-2 rounded-xl bg-primary-soft px-3.5 py-2.5">{t('시간을 못 정해서 못 만나는 일이 없게. 후보 시간을 보내면 각자 되는 시간에 표를 던지고, 가장 많이 겹치는 시간으로 확정해요.')}</p>
-        <Field label={t('무엇을')} required>
+        <Field label={lang === 'en' ? 'What' : t('무엇을')} required>
           <div className="flex flex-wrap gap-1.5 mb-2">{ALL_CATEGORIES.filter((c) => !['school_event', 'store_deal', 'seminar', 'club'].includes(c)).map((c) => <Chip key={c} size="sm" color={CATEGORY_COLORS[c]} active={category === c} onClick={() => setCategory(c)}>{CATEGORY_EMOJI[c]} {CATEGORY_LABELS[c]}</Chip>)}</div>
           <Input placeholder={t('예: 시험 끝 기념 저녁')} value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} />
         </Field>
         <Field label={t('장소 (선택)')}><div className="flex flex-wrap gap-1.5">{presets.map((p) => <Chip key={p.name} size="sm" active={placeName === p.name} onClick={() => setPlaceName(placeName === p.name ? '' : p.name)}>{p.name}</Chip>)}</div></Field>
-        <Field label={t('누구와')} required hint={invitees.length ? `${invitees.length}${t('명 선택')}` : t('친구를 고르면 시간표 공강이 겹치는 시간을 제안해요.')}>
+        <Field label={lang === 'en' ? 'Who' : t('누구와')} required hint={invitees.length ? `${invitees.length}${t('명 선택')}` : t('친구를 고르면 시간표 공강이 겹치는 시간을 제안해요.')}>
           <div className="flex flex-wrap gap-1.5">{friends.map((f) => <Chip key={f.id} size="sm" active={invitees.includes(f.id)} onClick={() => setInvitees((s) => s.includes(f.id) ? s.filter((x) => x !== f.id) : [...s, f.id])}><Avatar emoji={f.avatar.emoji} hue={f.avatar.hue} url={f.avatar.url} size={18} /> {f.nickname}</Chip>)}{friends.length === 0 && <span className="text-[12px] text-ink-3">{t('친구가 없어요')}</span>}</div>
         </Field>
         <Field label={t('언제 (후보 시간)')} required hint={t('2개 이상 골라주세요. 초대받은 사람이 되는 시간에 모두 표를 던져요.')}>
