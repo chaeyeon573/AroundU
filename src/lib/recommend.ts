@@ -43,8 +43,13 @@ export function matchReasons(me: User, other: User, snap: Pick<Snapshot, 'opport
     const kindToPref: Record<string, string> = { interest: 'same_hobby', class: 'same_class', goal: 'same_goal', opportunity: 'same_goal', role: 'same_goal', living: 'same_living', new: 'new_people' };
     out.forEach((r) => { const p = kindToPref[r.kind]; if (p) r.weight *= boost[p]; if (pref.includes('new_people') && (r.kind === 'interest' || r.kind === 'class')) r.weight *= 0.5; });
   }
-  return out.sort((a, b) => b.weight - a.weight);
+  // 카드에는 '역할·기회'가 아니라 같은 수업·관심사·시간처럼 공유하는 것을 먼저 보여준다
+  const order: Record<Reason['kind'], number> = { class: 0, interest: 1, time: 2, living: 3, goal: 4, new: 5, school: 6, opportunity: 7, role: 8 };
+  return out.sort((a, b) => order[a.kind] - order[b.kind] || b.weight - a.weight);
 }
+
+/** 카드·프로필에 보여줄 이유 — 역할 매칭·기회는 숨긴다 */
+export const shareableReasons = (rs: Reason[]) => rs.filter((r) => r.kind !== 'role' && r.kind !== 'opportunity' && r.kind !== 'school');
 
 /** 추천 점수 = 이유 가중치 합 × 프로필 완성도 보너스 */
 export function matchScore(me: User, other: User, snap: Pick<Snapshot, 'opportunities' | 'opportunityIntents'>, canSeeTimetable: boolean) {

@@ -10,7 +10,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { INTEREST_EMOJI, INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@/lib/labels';
 import { commonInterests } from '@/lib/relations';
-import { matchScore, type Reason } from '@/lib/recommend';
+import { matchScore, shareableReasons, type Reason } from '@/lib/recommend';
 import { statusNow, availabilityText } from '@/lib/timetable';
 import { assetUrl } from '@/lib/assets';
 import { cn } from '@/lib/cn';
@@ -136,7 +136,7 @@ export function PersonSlide({ user, reasons, onOpen }: { user: User; reasons: Re
   const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
   const common = commonInterests(v.me, user);
   const avail = availabilityText(user, v.canSeeField(user, 'timetable'));
-  const reason = reasons.filter((r) => r.kind !== 'school')[0];
+  const reason = shareableReasons(reasons)[0];
   const want = v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? user.prompts[0].answer : user.nowWant;
   const year = yearOf(user);
   const dept = user.affiliation.type === 'university' && user.affiliation.showDepartment ? user.affiliation.department : '';

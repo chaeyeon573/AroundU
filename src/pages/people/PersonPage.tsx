@@ -21,7 +21,7 @@ import type { User } from '@/types';
 import { PromptAnswerCard, VoicePlayer, PollCard } from '@/components/prompts/PromptComponents';
 import { questionById } from '@/data/prompts';
 import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@/lib/timetable';
-import { matchReasons } from '@/lib/recommend';
+import { matchReasons, shareableReasons } from '@/lib/recommend';
 import { GOAL_EMOJI, GOAL_LABELS, PERSON_ROLE_LABELS, RESIDENCE_LABELS } from '@/lib/labels';
 
 export function PersonPage() {
@@ -70,7 +70,7 @@ export function PersonPage() {
   const sharedOpps = v.snap.opportunityIntents.filter((i) => i.userId === user.id).map((i) => oppsAll.find((o) => o.id === i.opportunityId)).filter((o): o is NonNullable<typeof o> => !!o && o.date !== undefined && o.date >= todayISO());
   const adminOrgs = orgs.filter((o) => o.adminIds.includes(user.id));
   const pendingProposal = proposals.find((p) => p.fromId === v.me.id && p.toId === user.id && p.status === 'pending');
-  const reasons = matchReasons(v.me, user, v.snap, see('timetable'));
+  const reasons = shareableReasons(matchReasons(v.me, user, v.snap, see('timetable')));
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
