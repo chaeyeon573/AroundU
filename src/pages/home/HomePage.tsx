@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { t, lang } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, Bell } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, Bell, MapPin } from 'lucide-react';
 import { isTogetherType } from '@/lib/recommend';
 import { OpportunityCard } from '@/components/cards/OpportunityCard';
 import { opportunityScore, daysUntil, matchScore } from '@/lib/recommend';
 import { TopBar } from '@/components/layout/TopBar';
-import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, IconButton, Avatar } from '@/components/ui';
+import { Chip, ChipRow, BottomSheet, Button, CardSkeleton, EmptyState, ErrorState, Toggle, Avatar } from '@/components/ui';
 import { freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, fmtBlock, toHHMM } from '@/lib/timetable';
 import { PersonCard } from '@/components/cards/PersonCard';
 import { ActivityCard } from '@/components/cards/ActivityCard';
@@ -71,10 +71,10 @@ export function HomePage() {
       <TopBar
         title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : t('학교 선택')} <ChevronDown size={16} className="text-ink-3" /></button>}
         bell messages
-        right={<IconButton onClick={() => nav('/timetable')} aria-label={t('시간표')}><CalendarDays size={22} /></IconButton>}
       />
       <div className="px-4 pt-2 flex gap-2">
         <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />{t('사람, 활동, 동아리 검색')}</button>
+        <button onClick={() => nav('/map')} className="h-11 w-11 rounded-2xl bg-surface border border-line grid place-items-center press" aria-label={t('주변 활동')}><MapPin size={18} /></button>
         <button onClick={() => setFilterOpen(true)} className="h-11 w-11 rounded-2xl bg-surface border border-line grid place-items-center press" aria-label={t('필터')}><SlidersHorizontal size={18} /></button>
       </div>
       <div className="px-4 pt-3">

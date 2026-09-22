@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { t } from '@/i18n';
+import { t, lang } from '@/i18n';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -61,7 +61,7 @@ export function MapPage() {
   const [range, setRange] = useState<TimeRange>('week');
   const [cats, setCats] = useState<ActivityCategory[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [listMode, setListMode] = useState(false);
+  const [listMode, setListMode] = useState(!params.get('focus'));
   const [selectedId, setSelectedId] = useState<string | null>(params.get('focus'));
   const [bounds, setBounds] = useState<L.LatLngBounds | null>(null);
   const [q, setQ] = useState('');
@@ -75,7 +75,7 @@ export function MapPage() {
     .filter((a) => inRange(a, range) || a.id === focus)
     .filter((a) => cats.length === 0 || cats.includes(a.category))
     .filter((a) => !q || a.title.includes(q) || a.place.name.includes(q)), [v.visibleActivities, range, cats, q, focus]);
-  const inView = useMemo(() => (bounds ? filtered.filter((a) => bounds.contains([a.place.lat, a.place.lng])) : filtered), [filtered, bounds]);
+  const inView = useMemo(() => (bounds && !listMode ? filtered.filter((a) => bounds.contains([a.place.lat, a.place.lng])) : filtered), [filtered, bounds, listMode]);
   const selected = filtered.find((a) => a.id === selectedId) ?? null;
   const toggleCat = (c: ActivityCategory) => setCats((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]));
 
@@ -83,7 +83,7 @@ export function MapPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <TopBar
+      <TopBar back
         title={<button className="flex items-center gap-1 text-[16px]" onClick={() => setSchoolOpen(true)}>📍 {school.name} <span className="text-ink-3 text-[13px] font-medium">{school.region}</span> <ChevronDown size={16} className="text-ink-3" /></button>}
         messages
       />
@@ -107,7 +107,7 @@ export function MapPage() {
         <div className="flex-1 min-h-0 relative">
           {listMode ? (
             <div className="h-full overflow-y-auto hide-scrollbar px-4 py-3 space-y-3">
-              <div className="text-[12px] text-ink-3 flex items-center gap-1"><MapPin size={12} />{t('현재 지도 영역의 활동')} {inView.length}{t('개')}</div>
+              <div className="text-[12px] text-ink-3 flex items-center gap-1"><MapPin size={12} />{lang === 'en' ? `${inView.length} activities near ${school.name}` : `${school.name} 근처 활동 ${inView.length}개`} · {t('장소만 표시, 사람 위치는 비공개')}</div>
               {inView.length === 0 ? <EmptyState emoji="🗺️" title={t('이 영역에 활동이 없어요')} description={t('지도를 옮기거나 시간 범위를 넓혀보세요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal')}>{t('여기서 활동 만들기')}</Button>} /> :
                 inView.map((a) => <ActivityCard key={a.id} activity={a} variant="row" badge={a.official ? t('학교 공식') : undefined} />)}
             </div>

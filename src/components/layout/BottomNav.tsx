@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Map, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb, CalendarHeart } from 'lucide-react';
+import { Home, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb, CalendarHeart, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BottomSheet } from '@/components/ui';
 
 const items = [
   { to: '/', label: t('홈'), Icon: Home },
-  { to: '/map', label: t('지도'), Icon: Map },
-  { to: '/plans', label: t('계획'), Icon: CalendarHeart },
+  { to: '/timetable', label: t('시간표'), Icon: CalendarDays },
   { to: '/community', label: t('커뮤니티'), Icon: LayoutGrid },
   { to: '/profile', label: t('프로필'), Icon: User },
 ];
@@ -28,15 +27,15 @@ export function BottomNav() {
   return (
     <>
       <nav className="shrink-0 bg-surface border-t border-line safe-bottom">
-        <div className="grid grid-cols-6 h-[60px] items-center">
-          {items.slice(0, 3).map((it) => <NavItem key={it.to} {...it} />)}
+        <div className="grid grid-cols-5 h-[60px] items-center">
+          {items.slice(0, 2).map((it) => <NavItem key={it.to} {...it} />)}
           <div className="grid place-items-center">
             <button onClick={() => setOpen(true)} aria-label={t('만들기')}
               className="-mt-7 h-14 w-14 rounded-full bg-primary text-white grid place-items-center shadow-[var(--shadow-float)] press ring-4 ring-bg">
               <Plus size={28} strokeWidth={2.6} />
             </button>
           </div>
-          {items.slice(3).map((it) => <NavItem key={it.to} {...it} />)}
+          {items.slice(2).map((it) => <NavItem key={it.to} {...it} />)}
         </div>
       </nav>
       <BottomSheet open={open} onClose={() => setOpen(false)} title={t('무엇을 함께 시작할까요?')}>

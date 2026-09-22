@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { t, lang } from '@/i18n';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { OpenSlotSheet } from '@/components/social/OpenSlotSheet';
+import { PlansContent } from '@/pages/plans/PlansPage';
 import { slotSuggestions } from '@/lib/social';
 import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
 import type { Course } from '@/types';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState, Avatar } from '@/components/ui';
+import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, EmptyState, CardSkeleton, ErrorState, Avatar, Segmented } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
@@ -33,6 +34,7 @@ export function TimetablePage() {
   const [editing, setEditing] = useState<Course | null>(null);
   const [slot, setSlot] = useState<{ day: number; block: { start: number; end: number } } | null>(null);
   const [params, setParams] = useSearchParams();
+  const view = (params.get('tab') ?? 'timetable') as 'timetable' | 'plans';
   const orgs = useAppStore((s) => s.organizations);
   const [busy, setBusy] = useState(false);
   const today = todayIdx();
@@ -55,7 +57,7 @@ export function TimetablePage() {
       const now = nowMin();
       const b = myFree.find((x) => x.end > now) ?? myFree[0];
       if (b) setSlot({ day: today, block: { start: Math.max(b.start, now), end: b.end } });
-      setParams({}, { replace: true });
+      setParams({ tab: 'timetable' }, { replace: true });
     }
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
   const friendIds = friendsOf(v.snap, me.id);
@@ -76,13 +78,15 @@ export function TimetablePage() {
     try { await run(() => api.users.update(me.id, { timetable: me.timetable.filter((c) => c.id !== editing.id) }), t('수업을 삭제했어요.')); setEditing(null); } catch { /* */ } finally { setBusy(false); }
   };
 
-  if (status === 'loading') return <div><TopBar back title={t('시간표')} /><CardSkeleton count={2} /></div>;
-  if (status === 'error') return <div><TopBar back title={t('시간표')} /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
+  if (status === 'loading') return <div><TopBar title={t('시간표')} /><CardSkeleton count={2} /></div>;
+  if (status === 'error') return <div><TopBar title={t('시간표')} /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
 
   return (
-    <div className="min-h-full pb-28">
-      <TopBar back title={t('내 시간표')} messages right={<VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label={t('공강 시간 공개 범위')} />} />
-      <div className="px-4 pt-2 space-y-3">
+    <div className="min-h-full pb-6">
+      <TopBar title={t('시간표')} bell messages right={view === 'timetable' ? <><VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label={t('공강 시간 공개 범위')} /><Button size="sm" variant="ghost" className="ml-1" icon={<Plus size={15} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('수업')}</Button></> : undefined} />
+      <div className="px-4 pt-1"><Segmented value={view} onChange={(tb) => setParams({ tab: tb })} options={[{ value: 'timetable', label: t('내 시간표') }, { value: 'plans', label: t('계획') }]} /></div>
+      {view === 'plans' && <PlansContent />}
+      {view === 'timetable' && <div className="px-4 pt-3 space-y-3">
         {me.timetable.length > 0 && (
           <div className={cn('card p-3.5 flex items-center gap-3', now.kind === 'in_class' ? 'bg-[linear-gradient(120deg,#FFF4DE,#FFFFFF)]' : 'bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]')}>
             <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', now.kind === 'in_class' ? 'bg-gold' : 'bg-mint')} />
@@ -166,11 +170,7 @@ export function TimetablePage() {
         )}
 
         <p className="text-[11px] text-ink-3 flex items-start gap-1.5 px-1"><Lock size={12} className="shrink-0 mt-0.5" />{t('다른 사용자에게는 전체 시간표가 아닌 공강 여부만 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.')}</p>
-      </div>
-
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
-        <Button full size="lg" icon={<Plus size={18} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('수업 추가')}</Button>
-      </div>
+      </div>}
 
       <OpenSlotSheet open={!!slot} onClose={() => setSlot(null)} day={slot?.day ?? today} block={slot?.block ?? null} />
       <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? t('수업 수정') : t('수업 추가')}>

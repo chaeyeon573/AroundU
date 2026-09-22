@@ -14,6 +14,10 @@ import { toHHMM, nowMin } from '@/lib/timetable';
 import type { OpportunityIntent, Goal } from '@/types';
 
 export function PlansPage() {
+  return <div className="min-h-full pb-6"><TopBar title={t('계획')} bell messages /><PlansContent /></div>;
+}
+
+export function PlansContent() {
   const nav = useNavigate();
   const v = useViewer();
   const run = useAppStore((s) => s.run);
@@ -38,12 +42,11 @@ export function PlansPage() {
 
   const openLunch = () => nav(`/create/activity?kind=personal&start=${toHHMM(Math.max(nowMin() + 30, 12 * 60))}&end=${toHHMM(Math.max(nowMin() + 90, 13 * 60))}`);
 
-  if (status === 'loading') return <div><TopBar title={t('계획')} /><CardSkeleton /></div>;
-  if (status === 'error') return <div><TopBar title={t('계획')} /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
+  if (status === 'loading') return <CardSkeleton />;
+  if (status === 'error') return <ErrorState message={error ?? undefined} onRetry={init} />;
 
   return (
-    <div className="min-h-full pb-6">
-      <TopBar title={t('계획')} bell messages />
+    <div>
       <div className="px-4 pt-2 space-y-5">
         {/* Who's free */}
         <section>
@@ -67,7 +70,7 @@ export function PlansPage() {
           <div className="flex gap-2 mt-2">
             <Button size="sm" variant="outline" full icon={<Utensils size={14} />} onClick={openLunch}>{t('점심 열기')}</Button>
             <Button size="sm" variant="outline" full icon={<BookOpen size={14} />} onClick={() => nav('/create/activity?kind=personal&cat=study')}>{t('같이 공부하기')}</Button>
-            <Button size="sm" variant="outline" full icon={<Coffee size={14} />} onClick={() => nav('/timetable')}>{t('내 공강 열기')}</Button>
+            <Button size="sm" variant="outline" full icon={<Coffee size={14} />} onClick={() => nav('/timetable?open=1')}>{t('내 공강 열기')}</Button>
           </div>
           <div className="card mt-2 px-4"><Toggle label={t('새로운 사람에게 공개')} description={t('친구가 아니어도 시간이 맞으면 내가 보여요. 정확한 시간표는 공개되지 않아요.')} checked={!!me.openToNew} onChange={(val) => run(() => api.users.update(me.id, { openToNew: val }))} /></div>
         </section>

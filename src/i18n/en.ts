@@ -922,6 +922,7 @@ export const en: Record<string, string> = {
   '교수 (선택)': 'Instructor (optional)',
   '색상': 'Color',
   '문제가 발생했어요.': 'Something went wrong.',
+  '주변 활동': 'Nearby', '장소만 표시, 사람 위치는 비공개': 'places only, never people',
   '관심 있어요': 'Interested', '갈 예정이에요': 'Going', '혼자 가요': 'Going solo', '같이 갈 사람 찾아요': 'Find company', '팀을 찾고 있어요': 'Forming a team', '이미 신청했어요': 'Already applied', '참여 경험이 있어요': 'I’ve done this before',
   '오늘 갑자기 두 시간이 생긴다면?': 'If you suddenly had two free hours today?', '점심': 'Lunch', '낮잠': 'A nap', '새로운 사람 만나기': 'Meet someone new',
   '같은 행사': 'Same event', '새로운 사람에게 공개': 'Open to new people', '분': 'm', '공강': 'free',

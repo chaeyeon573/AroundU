@@ -29,7 +29,6 @@ import { TimetablePage } from '@/pages/timetable/TimetablePage';
 import { OpportunitiesPage } from '@/pages/opportunities/OpportunitiesPage';
 import { OpportunityDetailPage } from '@/pages/opportunities/OpportunityDetailPage';
 import { ProfileContextPage } from '@/pages/profile/ProfileContextPage';
-import { PlansPage } from '@/pages/plans/PlansPage';
 
 function RequireAuth() {
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -82,14 +81,15 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/map" element={<MapPage />} />
-          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/timetable" element={<TimetablePage />} />
+          <Route path="/plans" element={<Navigate to="/timetable?tab=plans" replace />} />
           <Route path="/opportunities" element={<OpportunitiesPage />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route element={<AppShell withNav={false} />}>
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/map" element={<MapPage />} />
           <Route path="/activities/:id" element={<ActivityDetailPage />} />
           <Route path="/activities/:id/edit" element={<CreateActivityPage />} />
           <Route path="/activities/:id/manage" element={<ManageActivityPage />} />
@@ -102,7 +102,6 @@ export default function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile/edit" element={<EditProfilePage />} />
           <Route path="/profile/prompts" element={<EditPromptsPage />} />
-          <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
           <Route path="/profile/context" element={<ProfileContextPage />} />
           <Route path="/profile/:list" element={<ProfileListPage />} />
