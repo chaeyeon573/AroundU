@@ -71,6 +71,9 @@ export function opportunityScore(me: User, o: Opportunity, intents: OpportunityI
   return { score: s, reasons };
 }
 
+/** 같이 가는 종류(사람 찾기 의미 있음) vs 정보성 공고 */
+export const isTogetherType = (type: import('@/types').OpportunityType) => ['event', 'club', 'hackathon', 'startup', 'activity'].includes(type);
+
 export function daysUntil(iso: string) {
   const today = new Date(new Date().toISOString().slice(0, 10));
   return Math.round((new Date(iso).getTime() - today.getTime()) / 86400000);

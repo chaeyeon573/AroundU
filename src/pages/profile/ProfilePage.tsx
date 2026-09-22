@@ -92,6 +92,11 @@ export function ProfilePage() {
           <span className="flex-1"><span className="block text-[11px] text-ink-3">{t('이번 학기 목표 · 찾는 사람 · 생활권')}</span><b className="text-[14px]">{me.goals.length ? me.goals.slice(0, 3).map((g) => GOAL_LABELS[g]).join(', ') : t('목표를 설정하면 추천이 정확해져요')}</b></span>
           <ChevronRight size={18} className="text-ink-3" />
         </button>
+        <button onClick={() => nav('/opportunities?tab=saved')} className="card w-full p-3.5 flex items-center gap-3 text-left press">
+          <span className="h-10 w-10 rounded-xl bg-accent-soft text-accent grid place-items-center">📌</span>
+          <span className="flex-1"><span className="block text-[11px] text-ink-3">{t('내 계획')}</span><b className="text-[14px]">{t('같이 갈 행사 · 저장한 공고 · 마감 알림')}</b></span>
+          <ChevronRight size={18} className="text-ink-3" />
+        </button>
         <button onClick={() => nav('/timetable')} className="card w-full p-3.5 flex items-center gap-3 text-left press">
           <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center"><CalendarDays size={18} /></span>
           <span className="flex-1"><span className="block text-[11px] text-ink-3">{t('내 시간표')}</span><b className="text-[14px]">{me.timetable.length ? `${me.timetable.length}${t('개 수업 · ')}${statusLabel(statusNow(me.timetable))}` : t('시간표 만들기')}</b></span>

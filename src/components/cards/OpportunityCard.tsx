@@ -5,7 +5,8 @@ import type { Opportunity } from '@/types';
 import { Cover, Tag, Button } from '@/components/ui';
 import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
 import { formatDateTime } from '@/lib/format';
-import { dday, daysUntil } from '@/lib/recommend';
+import { dday, daysUntil, isTogetherType } from '@/lib/recommend';
+import { Heart } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useViewer } from '@/hooks/useViewer';
 import { api } from '@/api';
@@ -36,7 +37,7 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
           <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color }}>{OPP_TYPE_EMOJI[o.type]} {OPP_TYPE_LABELS[o.type]}</span>{o.deadline && <Tag tone={urgent ? 'danger' : 'neutral'} className="h-5">{dday(o.deadline)}</Tag>}</div>
           <div className="text-[14px] font-bold truncate mt-0.5">{o.title}</div>
           <div className="text-[12px] text-ink-3 truncate">{o.host}</div>
-          <div className="text-[12px] text-ink-2 mt-1 flex items-center gap-2"><span className="flex items-center gap-1"><Users size={11} />{others.length}{t('명 관심')}</span>{matchCount > 0 && <span className="text-primary font-semibold">{t('나와 맞는')} {matchCount}{t('명')}</span>}</div>
+          <div className="text-[12px] text-ink-2 mt-1 flex items-center gap-2">{isTogetherType(o.type) ? <><span className="flex items-center gap-1"><Users size={11} />{others.length}{t('명 관심')}</span>{matchCount > 0 && <span className="text-primary font-semibold">{t('나와 맞는')} {matchCount}{t('명')}</span>}</> : <>{o.benefit && <span className="truncate">🎁 {o.benefit}</span>}</>}</div>
         </div>
       </button>
     );
@@ -71,10 +72,13 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
           {o.sourceUrl && <a href={o.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-0.5 text-ink-3"><ExternalLink size={11} />{o.sourceLabel}</a>}
         </div>
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant={mine?.intent === 'applying' || mine?.intent === 'applied' ? 'secondary' : mine ? 'secondary' : 'primary'} className="flex-1" onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine ? (mine.intent === 'interested' ? 'applying' : null) : 'interested'), mine ? undefined : t('관심 표시했어요. 같은 기회에 관심 있는 사람을 보여드릴게요.'))}>
-            {mine?.intent === 'applied' ? t('지원 완료') : mine?.intent === 'applying' ? t('지원 예정 · 취소') : mine ? t('관심 있음 → 지원 예정') : t('관심 있음')}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => nav(`/opportunities/${o.id}?tab=people`)}>{t('사람 찾기')}</Button>
+          {isTogetherType(o.type) ? (<>
+            <button onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine?.intent === 'interested' ? null : 'interested'), mine ? undefined : t('관심 표시했어요.'))} aria-label={t('관심')} className={cn('h-9 w-9 rounded-xl grid place-items-center press', mine?.intent === 'interested' ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={16} fill={mine?.intent === 'interested' ? 'currentColor' : 'none'} /></button>
+            <Button size="sm" variant={mine?.intent === 'applying' || mine?.intent === 'applied' ? 'secondary' : 'primary'} className="flex-1" onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine?.intent === 'applying' ? 'interested' : 'applying'), mine?.intent === 'applying' ? undefined : t('같이 갈 사람을 찾아보세요.'))}>{mine?.intent === 'applying' || mine?.intent === 'applied' ? t('같이 갈래요 ✓') : t('같이 갈래요')}</Button>
+            <Button size="sm" variant="outline" onClick={() => nav(`/opportunities/${o.id}?tab=people`)}>{t('사람 찾기')}</Button>
+          </>) : (
+            <Button size="sm" variant={mine?.intent === 'applied' ? 'secondary' : 'outline'} className="flex-1" onClick={() => nav(`/opportunities/${o.id}`)}>{mine?.intent === 'applied' ? t('지원 완료') : t('자세히')}</Button>
+          )}
           <button onClick={() => run(() => api.opportunities.toggleSave(o.id, v.me.id), mine?.saved ? undefined : t('저장했어요. 마감 3일 전에 알려드릴게요.'))} className={cn('h-9 w-9 rounded-xl grid place-items-center press', mine?.saved ? 'bg-primary text-white' : 'bg-surface-2 text-ink-2')} aria-label={t('저장')}><Bookmark size={16} fill={mine?.saved ? 'currentColor' : 'none'} /></button>
         </div>
       </div>

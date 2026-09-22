@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Map, Plus, Compass, User, Users, CalendarPlus, Megaphone, Image, Lightbulb } from 'lucide-react';
+import { Home, Map, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BottomSheet } from '@/components/ui';
 
 const items = [
   { to: '/', label: t('홈'), Icon: Home },
-  { to: '/opportunities', label: t('기회'), Icon: Compass },
   { to: '/map', label: t('지도'), Icon: Map },
+  { to: '/community', label: t('커뮤니티'), Icon: LayoutGrid },
   { to: '/profile', label: t('프로필'), Icon: User },
 ];
 
@@ -18,7 +18,7 @@ export function BottomNav() {
   const go = (path: string) => { setOpen(false); nav(path); };
   const createOptions = [
     { label: t('가볍게 만나기'), desc: t('점심·커피·공부·운동·산책 같이할 사람 찾기'), Icon: CalendarPlus, path: '/create/activity?kind=personal', color: 'bg-primary-soft text-primary' },
-    { label: t('목표 시작하기'), desc: t('해커톤·창업·스터디·프로젝트 팀 만들기, 같이 지원할 사람 찾기'), Icon: Lightbulb, path: '/create/activity?kind=group&team=1', color: 'bg-mint-soft text-mint' },
+    { label: t('팀 만들기'), desc: t('해커톤·창업·스터디·프로젝트 같이할 사람 모으기'), Icon: Lightbulb, path: '/create/activity?kind=group&team=1', color: 'bg-mint-soft text-mint' },
     { label: t('그룹 모임 만들기'), desc: t('여러 명이 함께하는 소모임·정기 모임'), Icon: Users, path: '/create/activity?kind=group', color: 'bg-gold-soft text-[#B57A0E]' },
     { label: t('동아리·학교 행사 만들기'), desc: t('조직 페이지에 연결되는 공식 행사'), Icon: Megaphone, path: '/create/activity?kind=org_event', color: 'bg-surface-2 text-ink-2' },
     { label: t('사진·글 게시물 작성'), desc: t('커뮤니티에 사진과 글 올리기'), Icon: Image, path: '/create/post', color: 'bg-accent-soft text-accent' },

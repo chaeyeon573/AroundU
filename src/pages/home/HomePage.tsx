@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { t, lang } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, LayoutGrid } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, Bell } from 'lucide-react';
+import { isTogetherType } from '@/lib/recommend';
 import { OpportunityCard } from '@/components/cards/OpportunityCard';
 import { opportunityScore, daysUntil, matchScore } from '@/lib/recommend';
 import { TopBar } from '@/components/layout/TopBar';
@@ -60,7 +61,9 @@ export function HomePage() {
   const ttBestCount = ttBest ? ttOverlaps.filter((o) => o.blocks.some((b) => b.start <= ttBest.start && b.end >= ttBest.end)).length : 0;
 
   const mySchoolId = me.affiliation.type === 'university' ? me.affiliation.schoolId : '';
-  const topOpps = opps.filter((o) => (!o.schoolId || o.schoolId === mySchoolId) && (!o.deadline || daysUntil(o.deadline) >= 0)).map((o) => ({ o, ...opportunityScore(me, o, intents) })).sort((a, b) => b.score - a.score).slice(0, 3);
+  const scoredOpps = opps.filter((o) => (!o.schoolId || o.schoolId === mySchoolId) && (!o.deadline || daysUntil(o.deadline) >= 0)).map((o) => ({ o, ...opportunityScore(me, o, intents) })).sort((a, b) => b.score - a.score);
+  const topOpps = scoredOpps.filter((x) => isTogetherType(x.o.type)).slice(0, 4);
+  const notices = scoredOpps.filter((x) => !isTogetherType(x.o.type) && x.score >= 3).slice(0, 3);
   const isEmpty = people.length === 0 && acts.length === 0;
 
   return (
@@ -68,7 +71,7 @@ export function HomePage() {
       <TopBar
         title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : t('학교 선택')} <ChevronDown size={16} className="text-ink-3" /></button>}
         bell messages
-        right={<><IconButton onClick={() => nav('/timetable')} aria-label={t('시간표')}><CalendarDays size={22} /></IconButton><IconButton onClick={() => nav('/community')} aria-label={t('커뮤니티')}><LayoutGrid size={22} /></IconButton></>}
+        right={<IconButton onClick={() => nav('/timetable')} aria-label={t('시간표')}><CalendarDays size={22} /></IconButton>}
       />
       <div className="px-4 pt-2 flex gap-2">
         <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />{t('사람, 활동, 동아리 검색')}</button>
@@ -130,8 +133,15 @@ export function HomePage() {
             </Section>
           )}
 
+          {notices.length > 0 && (
+            <button onClick={() => nav('/opportunities?tab=notices')} className="mx-4 w-[calc(100%-32px)] rounded-2xl bg-surface border border-line px-3.5 py-2.5 flex items-center gap-2.5 text-left press">
+              <Bell size={15} className="text-gold shrink-0" />
+              <span className="flex-1 text-[12px] text-ink-2 truncate">{lang === 'en' ? `${notices.length} notice${notices.length === 1 ? '' : 's'} for you · ${notices[0].o.title}` : `너에게 맞는 공고 ${notices.length}개 · ${notices[0].o.title}`}</span>
+              <ChevronRight size={15} className="text-ink-3 shrink-0" />
+            </button>
+          )}
           {topOpps.length > 0 && (
-            <Section title={t('나에게 맞는 기회')} subtitle={t('목표·관심사·역할 기준')} onMore={() => nav('/opportunities')}>
+            <Section title={t('이번 주 뭐 하지?')} subtitle={t('행사·모집·해커톤 · 같이 갈 사람 찾기')} onMore={() => nav('/opportunities')}>
               <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 snap-x">{topOpps.map((x) => <div key={x.o.id} className="w-[300px] shrink-0 snap-start"><OpportunityCard o={x.o} reasons={x.reasons} /></div>)}</div>
             </Section>
           )}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2, Heart } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Cover, Tag, BottomSheet, Input, Segmented, EmptyState, Select } from '@/components/ui';
 import { SheetItem } from '@/components/cards/PostCard';
@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
 import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
 import { formatDate, formatDateTime, relativeTime } from '@/lib/format';
-import { dday, daysUntil, matchReasons } from '@/lib/recommend';
+import { dday, daysUntil, matchReasons, isTogetherType } from '@/lib/recommend';
 import { cn } from '@/lib/cn';
 
 export function OpportunityDetailPage() {
@@ -40,6 +40,7 @@ export function OpportunityDetailPage() {
   const people = others.map((i) => ({ i, u: v.userById(i.userId)! })).filter((x) => x.u && !v.isBlocked(x.u.id))
     .map((x) => ({ ...x, reasons: matchReasons(v.me, x.u, v.snap, v.canSeeField(x.u, 'timetable')) })).sort((a, b) => b.reasons.length - a.reasons.length);
   const org = o.orgId ? v.orgById(o.orgId) : undefined;
+  const together = isTogetherType(o.type);
   const setIntent = (intent: 'interested' | 'applying' | 'applied' | null, msg?: string) => run(() => api.opportunities.setIntent(o.id, v.me.id, intent), msg);
 
   return (
@@ -55,14 +56,14 @@ export function OpportunityDetailPage() {
           </div>
           <h1 className="text-[20px] font-extrabold leading-snug mt-2">{o.title}</h1>
           <button onClick={() => org && nav(`/orgs/${org.id}`)} className="text-[13px] text-ink-2 mt-0.5 flex items-center gap-1">{o.host}{org && <span className="text-primary text-[12px]">{t('조직 페이지')}</span>}</button>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          {together && <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.length}</div><div className="text-[10px] text-ink-3">{t('관심 있는 학생')}</div></div>
-            <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.filter((i) => i.intent !== 'interested').length}</div><div className="text-[10px] text-ink-3">{t('지원 예정')}</div></div>
+            <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.filter((i) => i.intent !== 'interested').length}</div><div className="text-[10px] text-ink-3">{t('같이 갈래요')}</div></div>
             <div className="rounded-xl bg-primary-soft py-2"><div className="text-[16px] font-extrabold text-primary">{people.filter((p) => p.reasons.some((r) => r.kind === 'role' || r.kind === 'goal')).length}</div><div className="text-[10px] text-primary">{t('나와 맞는 후보')}</div></div>
-          </div>
+          </div>}
         </div>
 
-        <Segmented value={tab} onChange={(t) => setParams({ tab: t })} options={[{ value: 'info', label: t('상세') }, { value: 'people', label: `${t('함께할 사람 ')}${people.length}` }, { value: 'qna', label: `${t('Q&A·후기 ')}${o.qna.length + o.reviews.length}` }]} />
+        <Segmented value={tab} onChange={(tb) => setParams({ tab: tb })} options={together ? [{ value: 'info', label: t('상세') }, { value: 'people', label: `${t('함께할 사람 ')}${people.length}` }, { value: 'qna', label: `${t('Q&A·후기 ')}${o.qna.length + o.reviews.length}` }] : [{ value: 'info', label: t('상세') }, { value: 'qna', label: `${t('Q&A·후기 ')}${o.qna.length + o.reviews.length}` }]} />
 
         {tab === 'info' && (
           <>
@@ -76,10 +77,10 @@ export function OpportunityDetailPage() {
               {o.sourceUrl && <Row icon={<ExternalLink size={16} />} label={t('공식 출처')} value={o.sourceLabel} sub={`${t('마지막 확인 ')}${formatDate(o.lastVerified)}`} action={<a href={o.sourceUrl} target="_blank" rel="noreferrer" className="text-[12px] text-primary font-semibold">{t('열기')}</a>} />}
             </div>
             <div className="flex flex-wrap gap-1">{o.tags.map((t) => <Tag key={t}>#{t}</Tag>)}</div>
-            <div>
+            {together && <div>
               <div className="flex items-center justify-between mb-2"><h2 className="text-[15px] font-bold">{t('같이 준비하는 모임 · 팀원 모집')}</h2><button onClick={() => nav(`/create/activity?kind=group&opportunity=${o.id}`)} className="text-[12px] font-semibold text-primary flex items-center gap-1"><CalendarPlus size={13} />{t('만들기')}</button></div>
               {teamActs.length ? <div className="space-y-2">{teamActs.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</div> : <div className="card p-4 text-[13px] text-ink-3">{t('아직 없어요. 준비방이나 팀원 모집을 먼저 열어보세요.')}</div>}
-            </div>
+            </div>}
           </>
         )}
 
@@ -130,14 +131,12 @@ export function OpportunityDetailPage() {
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
         <div className="flex gap-2">
           <button onClick={() => run(() => api.opportunities.toggleSave(o.id, v.me.id), mine?.saved ? undefined : t('저장했어요. 마감 3일 전에 알려드릴게요.'))} className={cn('h-[52px] w-[52px] rounded-2xl grid place-items-center press', mine?.saved ? 'bg-primary text-white' : 'bg-surface-2 text-ink-2')} aria-label={t('저장')}><Bookmark size={20} fill={mine?.saved ? 'currentColor' : 'none'} /></button>
-          {!mine && <Button size="lg" variant="secondary" className="flex-1" onClick={() => setIntent('interested', t('관심 표시했어요.'))}>{t('관심 있음')}</Button>}
-          {mine?.intent === 'interested' && <Button size="lg" variant="outline" onClick={() => setIntent(null)}>{t('관심 해제')}</Button>}
-          {(o.deadline || o.rolesNeeded) ? (
-            mine?.intent === 'applied' ? <Button size="lg" variant="secondary" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('applying')}>{t('지원 완료')}</Button>
-            : mine?.intent === 'applying' ? <Button size="lg" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('applied', t('지원 완료로 표시했어요. 후기를 남겨주면 다음 사람에게 도움이 돼요.'))}>{t('지원했어요')}</Button>
-            : <Button size="lg" className="flex-1" onClick={() => setIntent('applying', t('지원 예정으로 표시했어요. 같이 준비할 사람을 찾아보세요.'))}>I'm applying</Button>
-          ) : (
-            mine?.intent === 'applying' ? <Button size="lg" variant="secondary" className="flex-1" onClick={() => setIntent('interested')}>{t('같이 갈래요 ✓')}</Button> : <Button size="lg" className="flex-1" onClick={() => setIntent('applying', t('같이 갈 사람을 찾아보세요.'))}>{t('같이 갈래요')}</Button>
+          {together ? (<>
+            <button onClick={() => setIntent(mine?.intent === 'interested' ? null : 'interested', mine ? undefined : t('관심 표시했어요.'))} aria-label={t('관심')} className={cn('h-[52px] w-[52px] rounded-2xl grid place-items-center press', mine?.intent === 'interested' ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={20} fill={mine?.intent === 'interested' ? 'currentColor' : 'none'} /></button>
+            {mine?.intent === 'applying' || mine?.intent === 'applied' ? <Button size="lg" variant="secondary" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('interested')}>{t('같이 갈래요 ✓')}</Button> : <Button size="lg" className="flex-1" onClick={() => setIntent('applying', t('같이 갈 사람을 찾아보세요.'))}>{t('같이 갈래요')}</Button>}
+          </>) : (
+            mine?.intent === 'applied' ? <Button size="lg" variant="secondary" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('interested')}>{t('지원 완료')}</Button>
+            : <Button size="lg" className="flex-1" onClick={() => setIntent('applied', t('지원 완료로 표시했어요. 후기를 남겨주면 다음 사람에게 도움이 돼요.'))}>{t('지원했어요')}</Button>
           )}
         </div>
       </div>
