@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { t } from '@/i18n';
 import { api, type Patch, type Snapshot } from '@/api';
 import type { ID, User } from '@/types';
 
@@ -99,7 +100,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (successMsg) get().showToast(successMsg, 'success');
       return result;
     } catch (e) {
-      get().showToast((e as Error).message || '문제가 발생했어요.', 'error');
+      get().showToast((e as Error).message || t('문제가 발생했어요.'), 'error');
       throw e;
     }
   },

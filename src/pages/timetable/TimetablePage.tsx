@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { t, lang } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
 import type { Course } from '@/types';
@@ -54,35 +55,35 @@ export function TimetablePage() {
     setBusy(true);
     const course = { ...editing, id: editing.id || uid('c'), room: editing.room?.trim() || undefined };
     const next = editing.id ? me.timetable.map((c) => (c.id === course.id ? course : c)) : [...me.timetable, course];
-    try { await run(() => api.users.update(me.id, { timetable: next }), editing.id ? '수업을 수정했어요.' : '수업을 추가했어요.'); setEditing(null); } catch { /* */ } finally { setBusy(false); }
+    try { await run(() => api.users.update(me.id, { timetable: next }), editing.id ? t('수업을 수정했어요.') : t('수업을 추가했어요.')); setEditing(null); } catch { /* */ } finally { setBusy(false); }
   };
   const remove = async () => {
     if (!editing?.id) return;
     setBusy(true);
-    try { await run(() => api.users.update(me.id, { timetable: me.timetable.filter((c) => c.id !== editing.id) }), '수업을 삭제했어요.'); setEditing(null); } catch { /* */ } finally { setBusy(false); }
+    try { await run(() => api.users.update(me.id, { timetable: me.timetable.filter((c) => c.id !== editing.id) }), t('수업을 삭제했어요.')); setEditing(null); } catch { /* */ } finally { setBusy(false); }
   };
 
-  if (status === 'loading') return <div><TopBar back title="시간표" /><CardSkeleton count={2} /></div>;
-  if (status === 'error') return <div><TopBar back title="시간표" /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
+  if (status === 'loading') return <div><TopBar back title={t('시간표')} /><CardSkeleton count={2} /></div>;
+  if (status === 'error') return <div><TopBar back title={t('시간표')} /><ErrorState message={error ?? undefined} onRetry={init} /></div>;
 
   return (
     <div className="min-h-full pb-28">
-      <TopBar back title="내 시간표" messages right={<VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label="공강 시간 공개 범위" />} />
+      <TopBar back title={t('내 시간표')} messages right={<VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label={t('공강 시간 공개 범위')} />} />
       <div className="px-4 pt-2 space-y-3">
         {me.timetable.length > 0 && (
           <div className={cn('card p-3.5 flex items-center gap-3', now.kind === 'in_class' ? 'bg-[linear-gradient(120deg,#FFF4DE,#FFFFFF)]' : 'bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]')}>
             <span className={cn('h-2.5 w-2.5 rounded-full shrink-0', now.kind === 'in_class' ? 'bg-gold' : 'bg-mint')} />
             <div className="flex-1 min-w-0">
-              <b className="text-[14px]">{DAY_LABELS[today]}요일 · {statusLabel(now)}</b>
-              <div className="text-[12px] text-ink-3 truncate">{now.kind === 'in_class' ? `${now.course.name}${now.course.room ? ` · ${now.course.room}` : ''}` : now.kind === 'free' && now.next ? `다음 수업 ${now.next.start} ${now.next.name}` : '오늘 남은 시간은 자유예요'}</div>
+              <b className="text-[14px]">{lang === 'en' ? `${DAY_LABELS[today]} · ${statusLabel(now)}` : `${DAY_LABELS[today]}요일 · ${statusLabel(now)}`}</b>
+              <div className="text-[12px] text-ink-3 truncate">{now.kind === 'in_class' ? `${now.course.name}${now.course.room ? ` · ${now.course.room}` : ''}` : now.kind === 'free' && now.next ? `${t('다음 수업 ')}${now.next.start} ${now.next.name}` : t('오늘 남은 시간은 자유예요')}</div>
             </div>
-            <Tag>{me.timetable.length}개 수업</Tag>
+            <Tag>{me.timetable.length}{t('개 수업')}</Tag>
           </div>
         )}
 
         {me.timetable.length === 0 ? (
-          <EmptyState emoji="📅" title="시간표가 비어 있어요" description="수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요."
-            action={<Button icon={<Plus size={16} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>첫 수업 추가</Button>} />
+          <EmptyState emoji="📅" title={t('시간표가 비어 있어요')} description={t('수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요.')}
+            action={<Button icon={<Plus size={16} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('첫 수업 추가')}</Button>} />
         ) : (
           <div className="card overflow-hidden">
             <div className="grid" style={{ gridTemplateColumns: `34px repeat(${days.length}, 1fr)` }}>
@@ -110,18 +111,18 @@ export function TimetablePage() {
                 </div>
               ))}
             </div>
-            <div className="px-3 py-2 text-[11px] text-ink-3 flex items-center gap-3 border-t border-line"><span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary-soft border-l-2 border-primary mr-1 align-middle" />수업</span><span><span className="inline-block h-2.5 w-2.5 rounded-sm border-2 border-dashed border-mint mr-1 align-middle" />참가 활동</span><span className="ml-auto">빈 칸을 탭해 수업 추가</span></div>
+            <div className="px-3 py-2 text-[11px] text-ink-3 flex items-center gap-3 border-t border-line"><span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary-soft border-l-2 border-primary mr-1 align-middle" />{t('수업')}</span><span><span className="inline-block h-2.5 w-2.5 rounded-sm border-2 border-dashed border-mint mr-1 align-middle" />{t('참가 활동')}</span><span className="ml-auto">{t('빈 칸을 탭해 수업 추가')}</span></div>
           </div>
         )}
 
         {me.timetable.length > 0 && (
           <div className="card p-4">
-            <b className="text-[14px] flex items-center gap-1.5"><Users size={15} className="text-primary" />오늘 공강이 겹치는 친구</b>
+            <b className="text-[14px] flex items-center gap-1.5"><Users size={15} className="text-primary" />{t('오늘 공강이 겹치는 친구')}</b>
             {overlaps.length === 0 ? (
-              <p className="text-[12px] text-ink-3 mt-2">{friendIds.length === 0 ? '친구를 추가하면 공강이 겹치는 시간을 알려드려요.' : '오늘은 겹치는 공강이 없어요. 친구가 시간표를 공개하면 여기에 보여요.'}</p>
+              <p className="text-[12px] text-ink-3 mt-2">{friendIds.length === 0 ? t('친구를 추가하면 공강이 겹치는 시간을 알려드려요.') : t('오늘은 겹치는 공강이 없어요. 친구가 시간표를 공개하면 여기에 보여요.')}</p>
             ) : (
               <>
-                <div className="mt-2 rounded-xl bg-primary-soft px-3 py-2.5 text-[13px] flex items-center gap-2"><Sparkles size={14} className="text-primary shrink-0" /><span><b>{bestBlock && fmtBlock(bestBlock)}</b>에 시간이 맞는 친구가 <b>{overlaps.filter((o) => o.blocks.some((b) => bestBlock && b.start <= bestBlock.start && b.end >= bestBlock.end)).length}명</b> 있어요. 활동을 만들어볼까요?</span></div>
+                <div className="mt-2 rounded-xl bg-primary-soft px-3 py-2.5 text-[13px] flex items-center gap-2"><Sparkles size={14} className="text-primary shrink-0" /><span>{(() => { const n = overlaps.filter((o) => o.blocks.some((b) => bestBlock && b.start <= bestBlock.start && b.end >= bestBlock.end)).length; return lang === 'en' ? <><b>{n}</b> friend{n === 1 ? '' : 's'} free at <b>{bestBlock && fmtBlock(bestBlock)}</b>. Start something?</> : <><b>{bestBlock && fmtBlock(bestBlock)}</b>에 시간이 맞는 친구가 <b>{n}명</b> 있어요. 활동을 만들어볼까요?</>; })()}</span></div>
                 <div className="mt-2 divide-y divide-line">
                   {overlaps.map(({ f, blocks }) => (
                     <button key={f.id} onClick={() => nav(`/users/${f.id}`)} className="w-full flex items-center gap-3 py-2.5 text-left press">
@@ -131,36 +132,36 @@ export function TimetablePage() {
                     </button>
                   ))}
                 </div>
-                {bestBlock && <Button full size="sm" className="mt-2" icon={<CalendarPlus size={15} />} onClick={() => nav(`/create/activity?kind=personal&start=${toHHMM(bestBlock.start)}&end=${toHHMM(Math.min(bestBlock.end, bestBlock.start + 90))}`)}>{fmtBlock({ start: bestBlock.start, end: Math.min(bestBlock.end, bestBlock.start + 90) })} 활동 만들기</Button>}
+                {bestBlock && <Button full size="sm" className="mt-2" icon={<CalendarPlus size={15} />} onClick={() => nav(`/create/activity?kind=personal&start=${toHHMM(bestBlock.start)}&end=${toHHMM(Math.min(bestBlock.end, bestBlock.start + 90))}`)}>{fmtBlock({ start: bestBlock.start, end: Math.min(bestBlock.end, bestBlock.start + 90) })} {t('활동 만들기')}</Button>}
               </>
             )}
           </div>
         )}
 
-        <p className="text-[11px] text-ink-3 flex items-start gap-1.5 px-1"><Lock size={12} className="shrink-0 mt-0.5" />다른 사용자에게는 전체 시간표가 아닌 공강 여부만 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.</p>
+        <p className="text-[11px] text-ink-3 flex items-start gap-1.5 px-1"><Lock size={12} className="shrink-0 mt-0.5" />{t('다른 사용자에게는 전체 시간표가 아닌 공강 여부만 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.')}</p>
       </div>
 
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
-        <Button full size="lg" icon={<Plus size={18} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>수업 추가</Button>
+        <Button full size="lg" icon={<Plus size={18} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('수업 추가')}</Button>
       </div>
 
-      <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? '수업 수정' : '수업 추가'}>
+      <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? t('수업 수정') : t('수업 추가')}>
         {editing && (
           <div className="space-y-4">
-            <Field label="과목명" required><Input autoFocus placeholder="예: 데이터베이스" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+            <Field label={t('과목명')} required><Input autoFocus placeholder={t('예: 데이터베이스')} value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
             <div className="grid grid-cols-3 gap-2">
-              <Field label="요일" required><Select value={editing.day} onChange={(e) => setEditing({ ...editing, day: Number(e.target.value) })}>{DAY_LABELS.map((d, i) => <option key={d} value={i}>{d}요일</option>)}</Select></Field>
-              <Field label="시작" required><Input type="time" value={editing.start} onChange={(e) => setEditing({ ...editing, start: e.target.value })} /></Field>
-              <Field label="종료" required><Input type="time" value={editing.end} onChange={(e) => setEditing({ ...editing, end: e.target.value })} /></Field>
+              <Field label={t('요일')} required><Select value={editing.day} onChange={(e) => setEditing({ ...editing, day: Number(e.target.value) })}>{DAY_LABELS.map((d, i) => <option key={d} value={i}>{d}{t('요일')}</option>)}</Select></Field>
+              <Field label={t('시작')} required><Input type="time" value={editing.start} onChange={(e) => setEditing({ ...editing, start: e.target.value })} /></Field>
+              <Field label={t('종료')} required><Input type="time" value={editing.end} onChange={(e) => setEditing({ ...editing, end: e.target.value })} /></Field>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Field label="강의실 (나만 보기)"><Input placeholder="예: 공학관 B103" value={editing.room ?? ''} onChange={(e) => setEditing({ ...editing, room: e.target.value })} /></Field>
-              <Field label="교수 (선택)"><Input value={editing.professor ?? ''} onChange={(e) => setEditing({ ...editing, professor: e.target.value })} /></Field>
+              <Field label={t('강의실 (나만 보기)')}><Input placeholder={t('예: 공학관 B103')} value={editing.room ?? ''} onChange={(e) => setEditing({ ...editing, room: e.target.value })} /></Field>
+              <Field label={t('교수 (선택)')}><Input value={editing.professor ?? ''} onChange={(e) => setEditing({ ...editing, professor: e.target.value })} /></Field>
             </div>
-            <Field label="색상"><div className="flex flex-wrap gap-1.5">{HUES.map((h) => <button key={h} type="button" onClick={() => setEditing({ ...editing, hue: h })} className={cn('h-7 w-7 rounded-full', editing.hue === h && 'ring-2 ring-offset-2 ring-ink')} style={{ background: `hsl(${h} 75% 70%)` }} aria-label={`색상 ${h}`} />)}</div></Field>
+            <Field label={t('색상')}><div className="flex flex-wrap gap-1.5">{HUES.map((h) => <button key={h} type="button" onClick={() => setEditing({ ...editing, hue: h })} className={cn('h-7 w-7 rounded-full', editing.hue === h && 'ring-2 ring-offset-2 ring-ink')} style={{ background: `hsl(${h} 75% 70%)` }} aria-label={`${t('색상 ')}${h}`} />)}</div></Field>
             <div className="flex gap-2">
-              {editing.id && <Button variant="danger" icon={<Trash2 size={16} />} onClick={remove} loading={busy}>삭제</Button>}
-              <Button full loading={busy} disabled={!editing.name.trim() || toMin(editing.start) >= toMin(editing.end)} onClick={save}>{editing.id ? '수정' : '추가'}</Button>
+              {editing.id && <Button variant="danger" icon={<Trash2 size={16} />} onClick={remove} loading={busy}>{t('삭제')}</Button>}
+              <Button full loading={busy} disabled={!editing.name.trim() || toMin(editing.start) >= toMin(editing.end)} onClick={save}>{editing.id ? t('수정') : t('추가')}</Button>
             </div>
           </div>
         )}

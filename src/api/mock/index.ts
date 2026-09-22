@@ -1,4 +1,5 @@
 import type { AroundUApi, Patch, Snapshot } from '../types';
+import { t } from '@/i18n';
 import type {
   Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User,
 } from '@/types';
@@ -16,7 +17,7 @@ const listeners = new Set<(patch: Patch) => void>();
 const AUTO_ACCEPT_FRIEND = new Set(['u_jimin', 'u_hana', 'u_yuna', 'u_seoyeon']);
 const AUTO_ACCEPT_PROPOSAL = new Set(['u_jimin', 'u_sua', 'u_seoyeon']);
 const AUTO_APPROVE_HOSTS = new Set(['u_woojin', 'u_hana']);
-const REPLIES = ['좋아요! 언제 만날까요?', 'ㅋㅋㅋ 그러게요', '저도 그 생각 했어요', '알겠어요, 이따 봐요 :)', '오 좋다 👍'];
+const REPLIES = [t('좋아요! 언제 만날까요?'), t('ㅋㅋㅋ 그러게요'), t('저도 그 생각 했어요'), t('알겠어요, 이따 봐요 :)'), t('오 좋다 👍')];
 
 const delay = (ms = 350) => new Promise((r) => setTimeout(r, ms + Math.random() * 200));
 
@@ -24,7 +25,7 @@ async function request<T>(fn: () => T): Promise<T> {
   await delay();
   if (failNextRequest) {
     failNextRequest = false;
-    throw new Error('네트워크 연결이 불안정해요. 잠시 후 다시 시도해주세요.');
+    throw new Error(t('네트워크 연결이 불안정해요. 잠시 후 다시 시도해주세요.'));
   }
   const result = fn();
   saveDB(db);
@@ -38,7 +39,7 @@ function push(patch: Patch) {
 
 const find = <T extends { id: ID }>(arr: T[], id: ID) => {
   const x = arr.find((i) => i.id === id);
-  if (!x) throw new Error('항목을 찾을 수 없어요.');
+  if (!x) throw new Error(t('항목을 찾을 수 없어요.'));
   return x;
 };
 
@@ -53,7 +54,7 @@ function ensureActivityRoom(activity: Activity): ChatRoom {
   if (!room) {
     room = {
       id: uid('cr'), type: 'activity', activityId: activity.id, memberIds: [activity.hostId], title: activity.title,
-      messages: [{ id: uid('m'), senderId: activity.hostId, text: '활동 그룹 채팅방이 열렸어요.', createdAt: new Date().toISOString(), system: true }],
+      messages: [{ id: uid('m'), senderId: activity.hostId, text: t('활동 그룹 채팅방이 열렸어요.'), createdAt: new Date().toISOString(), system: true }],
       lastReadAt: {}, createdAt: new Date().toISOString(),
     };
     db.chatRooms.push(room);
@@ -65,7 +66,7 @@ function addToRoom(room: ChatRoom, userId: ID) {
   if (!room.memberIds.includes(userId)) {
     room.memberIds.push(userId);
     const user = find(db.users, userId);
-    room.messages.push({ id: uid('m'), senderId: userId, text: `${user.nickname}님이 입장했어요.`, createdAt: new Date().toISOString(), system: true });
+    room.messages.push({ id: uid('m'), senderId: userId, text: `${user.nickname}${t('님이 입장했어요.')}`, createdAt: new Date().toISOString(), system: true });
   }
 }
 
@@ -85,7 +86,7 @@ function approveParticipation(p: Participation): Patch {
   addToRoom(room, p.userId);
   const nts: Notification[] = [];
   if (p.userId === DEMO_USER_ID) {
-    nts.push(notify(DEMO_USER_ID, { type: 'participation_approved', title: '참가가 승인되었어요', body: `"${activity.title}" 그룹 채팅방에 입장할 수 있어요.`, link: `/chats/${room.id}` }));
+    nts.push(notify(DEMO_USER_ID, { type: 'participation_approved', title: t('참가가 승인되었어요'), body: `"${activity.title}${t('" 그룹 채팅방에 입장할 수 있어요.')}`, link: `/chats/${room.id}` }));
   }
   return { participations: [p], chatRooms: [room], notifications: nts };
 }
@@ -98,7 +99,7 @@ function acceptFriend(reqId: ID): Patch {
   // 수락된 경우에만 요청자에게 알림
   const other = find(db.users, req.toId);
   if (req.fromId === DEMO_USER_ID) {
-    nts.push(notify(DEMO_USER_ID, { type: 'friend_accepted', title: '친구 요청이 수락되었어요', body: `${other.nickname}님과 친구가 되었어요. 이제 메시지를 보낼 수 있어요.`, link: `/users/${other.id}` }));
+    nts.push(notify(DEMO_USER_ID, { type: 'friend_accepted', title: t('친구 요청이 수락되었어요'), body: `${other.nickname}${t('님과 친구가 되었어요. 이제 메시지를 보낼 수 있어요.')}`, link: `/users/${other.id}` }));
   }
   return { relationships: db.relationships, notifications: nts };
 }
@@ -127,7 +128,7 @@ export const mockApi: AroundUApi = {
           createdAt: new Date().toISOString(),
         };
         db.users.push(user);
-        notify(user.id, { type: 'nearby_activity', title: 'AroundU에 오신 걸 환영해요', body: '학교 주변에서 열리는 활동을 홈에서 확인해보세요.', link: '/' });
+        notify(user.id, { type: 'nearby_activity', title: t('AroundU에 오신 걸 환영해요'), body: t('학교 주변에서 열리는 활동을 홈에서 확인해보세요.'), link: '/' });
         setSession(user.id);
         return user;
       });
@@ -155,7 +156,7 @@ export const mockApi: AroundUApi = {
       return request(() => {
         const school = find(db.schools, schoolId);
         const ok = email.toLowerCase().endsWith(`@${school.emailDomain}`);
-        return { ok, hint: ok ? '데모 인증 코드: 123456' : `@${school.emailDomain} 이메일만 사용할 수 있어요.` };
+        return { ok, hint: ok ? t('데모 인증 코드: 123456') : `@${school.emailDomain}${t(' 이메일만 사용할 수 있어요.')}` };
       });
     },
     async verifyCode(_email, code) {
@@ -173,7 +174,7 @@ export const mockApi: AroundUApi = {
     async votePoll(ownerId, voterId, optionIndex) {
       return request(() => {
         const u = find(db.users, ownerId);
-        if (!u.poll) throw new Error('투표형 질문이 없어요.');
+        if (!u.poll) throw new Error(t('투표형 질문이 없어요.'));
         u.poll.votes[voterId] = optionIndex;
         return { users: [u] };
       });
@@ -224,8 +225,8 @@ export const mockApi: AroundUApi = {
         const existing = db.participations.find((p) => p.activityId === activityId && p.userId === userId && p.status !== 'cancelled' && p.status !== 'rejected');
         if (existing) return { participations: [existing] };
         const approvedCount = db.participations.filter((p) => p.activityId === activityId && p.status === 'approved').length;
-        if (activity.joinPolicy === 'invite' && !(activity.invitedIds ?? []).includes(userId)) throw new Error('초대받은 사람만 참가할 수 있는 활동이에요.');
-        if (approvedCount >= activity.capacity) throw new Error('모집 인원이 모두 찼어요.');
+        if (activity.joinPolicy === 'invite' && !(activity.invitedIds ?? []).includes(userId)) throw new Error(t('초대받은 사람만 참가할 수 있는 활동이에요.'));
+        if (approvedCount >= activity.capacity) throw new Error(t('모집 인원이 모두 찼어요.'));
         const p: Participation = { id: uid('p'), activityId, userId, status: activity.joinPolicy === 'open' ? 'approved' : 'pending', message, createdAt: new Date().toISOString() };
         db.participations.push(p);
         if (p.status === 'approved') {
@@ -260,7 +261,7 @@ export const mockApi: AroundUApi = {
         const nts: Notification[] = [];
         if (p.userId === DEMO_USER_ID) {
           const activity = find(db.activities, p.activityId);
-          nts.push(notify(DEMO_USER_ID, { type: 'participation_rejected', title: '이번 활동은 성사되지 않았어요', body: `"${activity.title}" 참가가 승인되지 않았어요.`, link: `/activities/${activity.id}` }));
+          nts.push(notify(DEMO_USER_ID, { type: 'participation_rejected', title: t('이번 활동은 성사되지 않았어요'), body: `"${activity.title}${t('" 참가가 승인되지 않았어요.')}`, link: `/activities/${activity.id}` }));
         }
         return { participations: [p], notifications: nts };
       });
@@ -322,7 +323,7 @@ export const mockApi: AroundUApi = {
           mutual = r.likes.some((l) => l.fromId === toId && l.toId === fromId);
           if (mutual) {
             const other = find(db.users, toId);
-            nts.push(notify(fromId, { type: 'mutual_like', title: '서로 관심이 있어요', body: `${other.nickname}님과 서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?`, link: `/users/${toId}` }));
+            nts.push(notify(fromId, { type: 'mutual_like', title: t('서로 관심이 있어요'), body: `${other.nickname}${t('님과 서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?')}`, link: `/users/${toId}` }));
           }
         }
         return { patch: { relationships: r, notifications: nts }, mutual };
@@ -453,8 +454,8 @@ export const mockApi: AroundUApi = {
             p.status = 'accepted';
             const room = ensureDirectRoom(fromId, toId);
             const other = find(db.users, toId);
-            room.messages.push({ id: uid('m'), senderId: toId, text: `${CATEGORY_LABELS[p.category]} 제안 좋아요! ${p.when}에 봐요 :)`, createdAt: new Date().toISOString() });
-            const nt = notify(fromId, { type: 'proposal_result', title: '활동 제안이 수락되었어요', body: `${other.nickname}님이 제안을 수락했어요. 대화를 시작해보세요.`, link: `/chats/${room.id}` });
+            room.messages.push({ id: uid('m'), senderId: toId, text: `${CATEGORY_LABELS[p.category]}${t(' 제안 좋아요! ')}${p.when}${t('에 봐요 :)')}`, createdAt: new Date().toISOString() });
+            const nt = notify(fromId, { type: 'proposal_result', title: t('활동 제안이 수락되었어요'), body: `${other.nickname}${t('님이 제안을 수락했어요. 대화를 시작해보세요.')}`, link: `/chats/${room.id}` });
             push({ proposals: [p], chatRooms: [room], notifications: [nt] });
           }, 5000);
         }
@@ -467,7 +468,7 @@ export const mockApi: AroundUApi = {
         p.status = accept ? 'accepted' : 'declined';
         if (!accept) return { proposals: [p] }; // 거절 사유·알림 없음
         const room = ensureDirectRoom(p.fromId, p.toId);
-        room.messages.push({ id: uid('m'), senderId: p.toId, text: '활동 제안을 수락했어요. 세부 일정 이야기해요!', createdAt: new Date().toISOString(), system: true });
+        room.messages.push({ id: uid('m'), senderId: p.toId, text: t('활동 제안을 수락했어요. 세부 일정 이야기해요!'), createdAt: new Date().toISOString(), system: true });
         return { proposals: [p], chatRooms: [room] };
       });
     },

@@ -1,4 +1,5 @@
 import type { Opportunity, OpportunityIntentRecord, User } from '@/types';
+import { t } from '@/i18n';
 import type { Snapshot } from '@/api/types';
 import { GOAL_LABELS, PERSON_ROLE_LABELS, INTEREST_LABELS } from './labels';
 import { freeBlocks, overlapBlocks, todayIdx, fmtBlock } from './timetable';
@@ -13,27 +14,27 @@ export function matchReasons(me: User, other: User, snap: Pick<Snapshot, 'opport
   const shared = snap.opportunityIntents.filter((i) => i.userId === other.id && myOpps.has(i.opportunityId));
   for (const s of shared.slice(0, 1)) {
     const o = snap.opportunities.find((x) => x.id === s.opportunityId);
-    if (o) out.push({ kind: 'opportunity', weight: 5, text: `${o.title}에 ${s.intent === 'applying' ? '지원 예정' : '관심'}` });
+    if (o) out.push({ kind: 'opportunity', weight: 5, text: `${o.title}${t('에 ')}${s.intent === 'applying' ? t('지원 예정') : t('관심')}` });
   }
   const roleMatch = other.canOffer.filter((r) => me.lookingFor.includes(r));
-  if (roleMatch.length) out.push({ kind: 'role', weight: 4, text: `당신이 찾는 ${PERSON_ROLE_LABELS[roleMatch[0]]} 역할을 할 수 있어요` });
+  if (roleMatch.length) out.push({ kind: 'role', weight: 4, text: `${t('당신이 찾는 ')}${PERSON_ROLE_LABELS[roleMatch[0]]}${t(' 역할을 할 수 있어요')}` });
   const roleMatch2 = me.canOffer.filter((r) => other.lookingFor.includes(r));
-  if (roleMatch2.length) out.push({ kind: 'role', weight: 3, text: `${PERSON_ROLE_LABELS[roleMatch2[0]]}을(를) 찾고 있어요` });
+  if (roleMatch2.length) out.push({ kind: 'role', weight: 3, text: `${PERSON_ROLE_LABELS[roleMatch2[0]]}${t('을(를) 찾고 있어요')}` });
   const goals = me.goals.filter((g) => other.goals.includes(g));
-  if (goals.length) out.push({ kind: 'goal', weight: 3, text: `이번 학기 목표가 같아요: ${goals.slice(0, 2).map((g) => GOAL_LABELS[g]).join(', ')}` });
+  if (goals.length) out.push({ kind: 'goal', weight: 3, text: `${t('이번 학기 목표가 같아요: ')}${goals.slice(0, 2).map((g) => GOAL_LABELS[g]).join(', ')}` });
   if (canSeeTimetable && me.timetable.length && other.timetable.length) {
     const ov = overlapBlocks(freeBlocks(me.timetable, todayIdx()), freeBlocks(other.timetable, todayIdx()));
-    if (ov.length) { const b = ov.sort((a, c) => (c.end - c.start) - (a.end - a.start))[0]; out.push({ kind: 'time', weight: 3, text: `오늘 ${fmtBlock(b)} 공강이 겹쳐요` }); }
+    if (ov.length) { const b = ov.sort((a, c) => (c.end - c.start) - (a.end - a.start))[0]; out.push({ kind: 'time', weight: 3, text: `${t('오늘 ')}${fmtBlock(b)}${t(' 공강이 겹쳐요')}` }); }
   }
-  if (me.living && other.living && me.living.zone === other.living.zone) out.push({ kind: 'living', weight: 2, text: `같은 생활권이에요 (${me.living.zone})` });
+  if (me.living && other.living && me.living.zone === other.living.zone) out.push({ kind: 'living', weight: 2, text: `${t('같은 생활권이에요 (')}${me.living.zone})` });
   const interests = me.interests.filter((i) => other.interests.includes(i));
-  if (interests.length >= 2) out.push({ kind: 'interest', weight: 2, text: `${interests.slice(0, 3).map((i) => INTEREST_LABELS[i]).join('·')}에 관심` });
+  if (interests.length >= 2) out.push({ kind: 'interest', weight: 2, text: `${interests.slice(0, 3).map((i) => INTEREST_LABELS[i]).join('·')}${t('에 관심')}` });
   const myCourses = new Set(me.timetable.map((c) => c.name));
   const sharedCourse = other.timetable.find((c) => myCourses.has(c.name));
-  if (sharedCourse) out.push({ kind: 'class', weight: 3, text: `같은 수업을 들어요: ${sharedCourse.name}` });
+  if (sharedCourse) out.push({ kind: 'class', weight: 3, text: `${t('같은 수업을 들어요: ')}${sharedCourse.name}` });
   if (me.affiliation.type === 'university' && other.affiliation.type === 'university') {
-    if (me.affiliation.schoolId === other.affiliation.schoolId) out.push({ kind: 'school', weight: 1, text: '같은 학교' });
-    if (me.affiliation.department !== other.affiliation.department && interests.length === 0) out.push({ kind: 'new', weight: 1, text: `다른 분야 (${other.affiliation.department})` });
+    if (me.affiliation.schoolId === other.affiliation.schoolId) out.push({ kind: 'school', weight: 1, text: t('같은 학교') });
+    if (me.affiliation.department !== other.affiliation.department && interests.length === 0) out.push({ kind: 'new', weight: 1, text: `${t('다른 분야 (')}${other.affiliation.department})` });
   }
   // 어떤 사람을 만나고 싶은지에 따라 가중치 조정
   const pref = me.meetPreference;
@@ -58,11 +59,11 @@ export function opportunityScore(me: User, o: Opportunity, intents: OpportunityI
   let s = 0;
   const reasons: string[] = [];
   const g = o.goals.filter((x) => me.goals.includes(x));
-  if (g.length) { s += 5; reasons.push(`목표: ${GOAL_LABELS[g[0]]}`); }
+  if (g.length) { s += 5; reasons.push(`${t('목표: ')}${GOAL_LABELS[g[0]]}`); }
   const it = o.interests.filter((x) => me.interests.includes(x));
-  if (it.length) { s += 2 * it.length; reasons.push(`관심사: ${it.map((i) => INTEREST_LABELS[i]).join('·')}`); }
-  if (o.rolesNeeded?.some((r) => me.canOffer.includes(r))) { s += 3; reasons.push(`${PERSON_ROLE_LABELS[o.rolesNeeded.find((r) => me.canOffer.includes(r))!]} 역할 필요`); }
-  if (o.orgId && me.interestedOrgIds.includes(o.orgId)) { s += 4; reasons.push('관심 조직'); }
+  if (it.length) { s += 2 * it.length; reasons.push(`${t('관심사: ')}${it.map((i) => INTEREST_LABELS[i]).join('·')}`); }
+  if (o.rolesNeeded?.some((r) => me.canOffer.includes(r))) { s += 3; reasons.push(`${PERSON_ROLE_LABELS[o.rolesNeeded.find((r) => me.canOffer.includes(r))!]}${t(' 역할 필요')}`); }
+  if (o.orgId && me.interestedOrgIds.includes(o.orgId)) { s += 4; reasons.push(t('관심 조직')); }
   if (o.schoolId && me.affiliation.type === 'university' && o.schoolId === me.affiliation.schoolId) s += 1;
   const peers = intents.filter((i) => i.opportunityId === o.id && i.userId !== me.id).length;
   s += Math.min(peers, 5) * 0.3;
@@ -74,4 +75,4 @@ export function daysUntil(iso: string) {
   const today = new Date(new Date().toISOString().slice(0, 10));
   return Math.round((new Date(iso).getTime() - today.getTime()) / 86400000);
 }
-export function dday(iso: string) { const d = daysUntil(iso); return d < 0 ? '마감' : d === 0 ? 'D-Day' : `D-${d}`; }
+export function dday(iso: string) { const d = daysUntil(iso); return d < 0 ? t('마감') : d === 0 ? 'D-Day' : `D-${d}`; }

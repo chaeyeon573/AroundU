@@ -2,6 +2,20 @@ import type { Place } from '@/types';
 
 /** 학교별 자주 쓰는 장소 프리셋 (지도 탭으로 직접 선택도 가능) */
 export const PLACE_PRESETS: Record<string, Place[]> = {
+  s_berkeley: [
+    { name: 'Doe Library', lat: 37.8722, lng: -122.2592 },
+    { name: 'MLK Student Union', lat: 37.8692, lng: -122.2598 },
+    { name: 'Sproul Plaza', lat: 37.8697, lng: -122.2594 },
+    { name: 'Memorial Glade', lat: 37.8730, lng: -122.2596 },
+    { name: 'Soda Hall', lat: 37.8756, lng: -122.2588 },
+    { name: 'Caffe Strada', lat: 37.8690, lng: -122.2547 },
+    { name: 'Edwards Track', lat: 37.8697, lng: -122.2645 },
+    { name: 'Greek Theatre', lat: 37.8735, lng: -122.2541 },
+  ],
+  s_stanford: [{ name: 'Green Library', lat: 37.4265, lng: -122.1660 }, { name: 'Tresidder Union', lat: 37.4240, lng: -122.1705 }],
+  s_sfsu: [{ name: 'J. Paul Leonard Library', lat: 37.7219, lng: -122.4782 }],
+  s_ucla: [{ name: 'Powell Library', lat: 34.0716, lng: -118.4421 }],
+  s_mit: [{ name: 'Stata Center', lat: 42.3616, lng: -71.0908 }],
   s_yonsei: [
     { name: '중앙도서관', lat: 37.5645, lng: 126.9375 },
     { name: '학생회관', lat: 37.5637, lng: 126.9387 },

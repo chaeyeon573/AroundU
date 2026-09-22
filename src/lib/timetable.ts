@@ -1,7 +1,8 @@
 import type { Course, User } from '@/types';
+import { t } from '@/i18n';
 import { AVAILABILITY_LABELS } from './labels';
 
-export const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+export const DAY_LABELS = [t('월'), t('화'), t('수'), t('목'), t('금'), t('토'), t('일')];
 export const GRID_START = 9;   // 09:00
 export const GRID_END = 21;    // 21:00
 
@@ -60,9 +61,9 @@ export function statusNow(courses: Course[], day = todayIdx(), min = nowMin()): 
 
 export function statusLabel(s: NowStatus): string {
   switch (s.kind) {
-    case 'in_class': return `수업 중 · ${toHHMM(s.until)}까지`;
-    case 'free': return s.until ? `공강 · ${toHHMM(s.until)}까지` : '오늘 수업 없음';
-    case 'done': return '오늘 수업 끝';
+    case 'in_class': return `${t('수업 중 · ')}${toHHMM(s.until)}${t('까지')}`;
+    case 'free': return s.until ? `${t('공강 · ')}${toHHMM(s.until)}${t('까지')}` : t('오늘 수업 없음');
+    case 'done': return t('오늘 수업 끝');
     case 'none': return '';
   }
 }
@@ -77,4 +78,4 @@ export function availabilityText(u: Pick<User, 'timetable' | 'availability'>, ca
 }
 
 export function fmtBlock(b: Block) { return `${toHHMM(b.start)}–${toHHMM(b.end)}`; }
-export function fmtHours(b: Block) { const h = (b.end - b.start) / 60; return h % 1 === 0 ? `${h}시간` : `${h.toFixed(1)}시간`; }
+export function fmtHours(b: Block) { const h = (b.end - b.start) / 60; return h % 1 === 0 ? `${h}${t('시간')}` : `${h.toFixed(1)}${t('시간')}`; }

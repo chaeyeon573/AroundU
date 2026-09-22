@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { t } from '@/i18n';
 import { UserCheck, Heart, CalendarCheck, CalendarX, Inbox, Clock, MessageSquare, ThumbsUp, UserPlus, Megaphone, MapPin, Sparkles, CheckCheck, AlarmClock, Users } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, EmptyState, CardSkeleton, ErrorState } from '@/components/ui';
@@ -38,10 +39,10 @@ export function NotificationsPage() {
 
   return (
     <div className="min-h-full">
-      <TopBar back title="알림" messages right={unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck size={15} />} onClick={() => run(() => api.notifications.markAllRead(me))}>모두 읽음</Button>} />
+      <TopBar back title={t('알림')} messages right={unread > 0 && <Button size="sm" variant="ghost" icon={<CheckCheck size={15} />} onClick={() => run(() => api.notifications.markAllRead(me))}>{t('모두 읽음')}</Button>} />
       {status === 'loading' && <CardSkeleton count={3} />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
-      {status === 'ready' && (list.length === 0 ? <EmptyState emoji="🔔" title="알림이 없어요" description="참가 승인, 친구 요청 수락, 활동 시작 전 알림이 여기에 표시돼요." /> : (
+      {status === 'ready' && (list.length === 0 ? <EmptyState emoji="🔔" title={t('알림이 없어요')} description={t('참가 승인, 친구 요청 수락, 활동 시작 전 알림이 여기에 표시돼요.')} /> : (
         <div className="px-4 py-3 card divide-y divide-line">
           {list.map((n) => { const { Icon, cls } = ICONS[n.type]; return (
             <button key={n.id} onClick={async () => { if (!n.read) await run(() => api.notifications.markRead(n.id)); if (n.link) nav(n.link); }} className={cn('w-full flex items-start gap-3 px-3.5 py-3 text-left press', !n.read && 'bg-primary-soft/40')}>

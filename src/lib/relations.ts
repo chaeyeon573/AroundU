@@ -1,4 +1,5 @@
 import type { Snapshot } from '@/api/types';
+import { t } from '@/i18n';
 import type { Activity, ID, Post, User, Visibility, ProfileField } from '@/types';
 import { pairKey } from './format';
 
@@ -42,14 +43,14 @@ function hostsSharedActivity(s: Rel, a: ID, b: ID, activities?: Activity[]) {
 
 /** 직접 메시지 가능 여부: 친구 / 상호 관심 / 활동 참가 승인 / 제안 수락 중 하나 + 차단·수신 설정 확인 */
 export function canMessage(s: Rel & { activities?: Activity[] }, from: ID, to: ID): { ok: boolean; reason: string } {
-  if (from === to) return { ok: false, reason: '자기 자신에게는 보낼 수 없어요.' };
-  if (isBlocked(s, from, to)) return { ok: false, reason: '차단된 사용자와는 대화할 수 없어요.' };
+  if (from === to) return { ok: false, reason: t('자기 자신에게는 보낼 수 없어요.') };
+  if (isBlocked(s, from, to)) return { ok: false, reason: t('차단된 사용자와는 대화할 수 없어요.') };
   const target = s.users.find((u) => u.id === to);
-  if (!target) return { ok: false, reason: '사용자를 찾을 수 없어요.' };
-  if (target.settings.messagePolicy === 'none') return { ok: false, reason: '상대가 메시지 수신을 제한했어요.' };
+  if (!target) return { ok: false, reason: t('사용자를 찾을 수 없어요.') };
+  if (target.settings.messagePolicy === 'none') return { ok: false, reason: t('상대가 메시지 수신을 제한했어요.') };
   const state = connectionState(s, from, to, s.activities);
-  if (target.settings.messagePolicy === 'friends_only' && state !== 'friend') return { ok: false, reason: '상대가 친구에게만 메시지를 허용했어요.' };
-  if (state === 'none') return { ok: false, reason: '친구 요청 수락, 상호 관심, 활동 참가 승인 중 하나가 성립해야 대화할 수 있어요.' };
+  if (target.settings.messagePolicy === 'friends_only' && state !== 'friend') return { ok: false, reason: t('상대가 친구에게만 메시지를 허용했어요.') };
+  if (state === 'none') return { ok: false, reason: t('친구 요청 수락, 상호 관심, 활동 참가 승인 중 하나가 성립해야 대화할 수 있어요.') };
   return { ok: true, reason: '' };
 }
 
@@ -84,12 +85,12 @@ export const canViewField = (s: Rel, viewer: User, owner: User, field: ProfileFi
 
 export function visibilityDescription(v: Visibility) {
   switch (v) {
-    case 'public': return '누구나 볼 수 있어요';
-    case 'school': return '같은 학교 인증 사용자만 볼 수 있어요';
-    case 'department': return '지정한 학과·조직 구성원만 볼 수 있어요';
-    case 'friends': return '친구만 볼 수 있어요';
-    case 'selected': return '선택한 사람만 볼 수 있어요';
-    case 'private': return '나만 볼 수 있어요';
+    case 'public': return t('누구나 볼 수 있어요');
+    case 'school': return t('같은 학교 인증 사용자만 볼 수 있어요');
+    case 'department': return t('지정한 학과·조직 구성원만 볼 수 있어요');
+    case 'friends': return t('친구만 볼 수 있어요');
+    case 'selected': return t('선택한 사람만 볼 수 있어요');
+    case 'private': return t('나만 볼 수 있어요');
   }
 }
 

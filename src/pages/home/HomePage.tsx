@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { t, lang } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, ChevronDown, Sparkles, Zap, CalendarPlus, ChevronRight, CalendarDays, LayoutGrid } from 'lucide-react';
 import { OpportunityCard } from '@/components/cards/OpportunityCard';
@@ -65,13 +66,13 @@ export function HomePage() {
   return (
     <div className="min-h-full pb-6">
       <TopBar
-        title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : '학교 선택'} <ChevronDown size={16} className="text-ink-3" /></button>}
+        title={<button className="flex items-center gap-1 text-[16px]" onClick={() => nav('/settings')}>🏫 {me.affiliation.type === 'university' ? me.affiliation.schoolName : t('학교 선택')} <ChevronDown size={16} className="text-ink-3" /></button>}
         bell messages
-        right={<><IconButton onClick={() => nav('/timetable')} aria-label="시간표"><CalendarDays size={22} /></IconButton><IconButton onClick={() => nav('/community')} aria-label="커뮤니티"><LayoutGrid size={22} /></IconButton></>}
+        right={<><IconButton onClick={() => nav('/timetable')} aria-label={t('시간표')}><CalendarDays size={22} /></IconButton><IconButton onClick={() => nav('/community')} aria-label={t('커뮤니티')}><LayoutGrid size={22} /></IconButton></>}
       />
       <div className="px-4 pt-2 flex gap-2">
-        <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />사람, 활동, 동아리 검색</button>
-        <button onClick={() => setFilterOpen(true)} className="h-11 w-11 rounded-2xl bg-surface border border-line grid place-items-center press" aria-label="필터"><SlidersHorizontal size={18} /></button>
+        <button onClick={() => nav('/search')} className="flex-1 h-11 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3.5 text-[14px] text-ink-3 text-left press"><Search size={17} />{t('사람, 활동, 동아리 검색')}</button>
+        <button onClick={() => setFilterOpen(true)} className="h-11 w-11 rounded-2xl bg-surface border border-line grid place-items-center press" aria-label={t('필터')}><SlidersHorizontal size={18} /></button>
       </div>
       <div className="px-4 pt-3">
         <ChipRow className="py-0">{HOME_ACTIVITY_FILTERS.map((f) => <Chip key={f.key} size="sm" active={cat === f.key} onClick={() => setCat(f.key)}>{f.label}</Chip>)}</ChipRow>
@@ -80,7 +81,7 @@ export function HomePage() {
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
       {status === 'ready' && isEmpty && (
-        <EmptyState emoji="🔍" title="아직 보여줄 활동이 없어요" description="필터를 바꾸거나 직접 활동을 만들어보세요." action={<Button icon={<CalendarPlus size={16} />} onClick={() => nav('/create/activity?kind=personal')}>활동 만들기</Button>} />
+        <EmptyState emoji="🔍" title={t('아직 보여줄 활동이 없어요')} description={t('필터를 바꾸거나 직접 활동을 만들어보세요.')} action={<Button icon={<CalendarPlus size={16} />} onClick={() => nav('/create/activity?kind=personal')}>{t('활동 만들기')}</Button>} />
       )}
 
       {status === 'ready' && !isEmpty && (
@@ -88,27 +89,27 @@ export function HomePage() {
           {me.timetable.length === 0 && (
             <button onClick={() => nav('/timetable')} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press">
               <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary grid place-items-center shrink-0"><CalendarDays size={18} /></span>
-              <span className="flex-1 text-[13px] leading-snug"><b>시간표를 추가해보세요</b><br /><span className="text-ink-2">공강 시간에 맞는 친구와 활동을 추천해드려요.</span></span>
+              <span className="flex-1 text-[13px] leading-snug"><b>{t('시간표를 추가해보세요')}</b><br /><span className="text-ink-2">{t('공강 시간에 맞는 친구와 활동을 추천해드려요.')}</span></span>
               <ChevronRight size={18} className="text-ink-3" />
             </button>
           )}
           {ttBest && (
             <button onClick={() => nav(`/create/activity?kind=personal&start=${toHHMM(ttBest.start)}&end=${toHHMM(Math.min(ttBest.end, ttBest.start + 90))}`)} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]">
               <span className="h-10 w-10 rounded-xl bg-mint text-white grid place-items-center shrink-0"><CalendarDays size={18} /></span>
-              <span className="flex-1 text-[13px] leading-snug"><b>오늘 {fmtBlock(ttBest)} 공강이 겹치는 친구가 {ttBestCount}명 있어요.</b><br /><span className="text-ink-2">{statusLabel(ttNow)} · 활동을 만들어볼까요?</span></span>
+              <span className="flex-1 text-[13px] leading-snug"><b>{lang === 'en' ? `${ttBestCount} friend${ttBestCount === 1 ? '' : 's'} free with you today, ${fmtBlock(ttBest)}.` : `오늘 ${fmtBlock(ttBest)} 공강이 겹치는 친구가 ${ttBestCount}명 있어요.`}</b><br /><span className="text-ink-2">{statusLabel(ttNow)} {t('· 활동을 만들어볼까요?')}</span></span>
               <ChevronRight size={18} className="text-ink-3" />
             </button>
           )}
           {overlapFriends.length > 0 && !ttBest && (
             <button onClick={() => nav('/create/activity?kind=personal')} className="mx-4 w-[calc(100%-32px)] card p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E9EDFF,#FFFFFF)]">
               <span className="h-10 w-10 rounded-xl bg-primary text-white grid place-items-center shrink-0"><Zap size={18} /></span>
-              <span className="flex-1 text-[13px] leading-snug"><b>{AVAILABILITY_LABELS[me.availability].replace(' 가능', '')} 시간이 맞는 친구가 {overlapFriends.length}명 있어요.</b><br /><span className="text-ink-2">활동을 만들어볼까요?</span></span>
+              <span className="flex-1 text-[13px] leading-snug"><b>{lang === 'en' ? `${overlapFriends.length} friend${overlapFriends.length === 1 ? '' : 's'} match your availability (${AVAILABILITY_LABELS[me.availability]}).` : `${AVAILABILITY_LABELS[me.availability].replace(' 가능', '')} 시간이 맞는 친구가 ${overlapFriends.length}명 있어요.`}</b><br /><span className="text-ink-2">{t('활동을 만들어볼까요?')}</span></span>
               <ChevronRight size={18} className="text-ink-3" />
             </button>
           )}
 
           {people.length > 0 && (
-            <Section title="추천 사람" subtitle={me.meetPreference.length ? `${me.meetPreference.map((p) => MEET_PREF_LABELS[p].replace(' 사람', '')).slice(0, 2).join(', ')} 우선` : '목표·관심사·시간이 맞는 순서예요'} onMore={() => nav('/search?tab=people')}>
+            <Section title={t('추천 사람')} subtitle={me.meetPreference.length ? `${me.meetPreference.map((p) => MEET_PREF_LABELS[p].replace(t(' 사람'), '')).slice(0, 2).join(', ')}${t(' 우선')}` : t('목표·관심사·시간이 맞는 순서예요')} onMore={() => nav('/search?tab=people')}>
               <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 snap-x snap-mandatory">
                 {people.slice(0, 8).map((u) => <PersonCard key={u.id} user={u} compact className="snap-start shrink-0" onSkip={() => setSkipped((s) => [...s, u.id])} />)}
               </div>
@@ -116,12 +117,12 @@ export function HomePage() {
           )}
 
           {nowPeople.length > 0 && (
-            <Section title="지금 함께할 사람을 찾는 학생" subtitle="지금 가능 상태인 사람이에요">
+            <Section title={t('지금 함께할 사람을 찾는 학생')} subtitle={t('지금 가능 상태인 사람이에요')}>
               <div className="px-4 space-y-2">
                 {nowPeople.slice(0, 3).map((u) => (
                   <button key={u.id} onClick={() => nav(`/users/${u.id}`)} className="card w-full p-3 flex items-center gap-3 text-left press">
                     <span className="h-11 w-11 rounded-full grid place-items-center text-xl" style={{ background: `hsl(${u.avatar.hue} 80% 88%)` }}>{u.avatar.emoji}</span>
-                    <span className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-ink-3 text-[12px]"> · {u.affiliation.type === 'university' && u.affiliation.showDepartment ? u.affiliation.department : u.region}</span><br /><span className="text-[13px] text-primary font-medium truncate block">“{u.nowWant ?? '지금 가능해요'}”</span></span>
+                    <span className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-ink-3 text-[12px]"> · {u.affiliation.type === 'university' && u.affiliation.showDepartment ? u.affiliation.department : u.region}</span><br /><span className="text-[13px] text-primary font-medium truncate block">“{u.nowWant ?? t('지금 가능해요')}”</span></span>
                     <span className="h-2.5 w-2.5 rounded-full bg-mint shadow-[0_0_0_4px_#E1F7F0]" />
                   </button>
                 ))}
@@ -130,25 +131,25 @@ export function HomePage() {
           )}
 
           {topOpps.length > 0 && (
-            <Section title="나에게 맞는 기회" subtitle="목표·관심사·역할 기준" onMore={() => nav('/opportunities')}>
+            <Section title={t('나에게 맞는 기회')} subtitle={t('목표·관심사·역할 기준')} onMore={() => nav('/opportunities')}>
               <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 snap-x">{topOpps.map((x) => <div key={x.o.id} className="w-[300px] shrink-0 snap-start"><OpportunityCard o={x.o} reasons={x.reasons} /></div>)}</div>
             </Section>
           )}
-          {friendActs.length > 0 && <Section title="친구가 만든 활동"><Stack>{friendActs.slice(0, 2).map((a) => <ActivityCard key={a.id} activity={a} badge="친구" />)}</Stack></Section>}
-          {orgEvents.length > 0 && <Section title="동아리 행사" onMore={() => nav('/search?tab=orgs')}><div className="flex gap-3 overflow-x-auto hide-scrollbar px-4">{orgEvents.map((a) => <ActivityCard key={a.id} activity={a} variant="mini" />)}</div></Section>}
-          {officialEvents.length > 0 && <Section title="학교 공식 행사"><Stack>{officialEvents.map((a) => <ActivityCard key={a.id} activity={a} />)}</Stack></Section>}
-          {smallGroups.length > 0 && <Section title="소모임"><Stack>{smallGroups.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</Stack></Section>}
-          {popularPost && <Section title="인기 게시물" onMore={() => nav('/community')}><Stack><PostCard post={popularPost} /></Stack></Section>}
-          {others.length > 0 && <Section title="함께할 사람을 찾고 있어요" subtitle="지금 열려 있는 활동"><Stack>{others.map((a) => <ActivityCard key={a.id} activity={a} />)}</Stack></Section>}
+          {friendActs.length > 0 && <Section title={t('친구가 만든 활동')}><Stack>{friendActs.slice(0, 2).map((a) => <ActivityCard key={a.id} activity={a} badge={t('친구')} />)}</Stack></Section>}
+          {orgEvents.length > 0 && <Section title={t('동아리 행사')} onMore={() => nav('/search?tab=orgs')}><div className="flex gap-3 overflow-x-auto hide-scrollbar px-4">{orgEvents.map((a) => <ActivityCard key={a.id} activity={a} variant="mini" />)}</div></Section>}
+          {officialEvents.length > 0 && <Section title={t('학교 공식 행사')}><Stack>{officialEvents.map((a) => <ActivityCard key={a.id} activity={a} />)}</Stack></Section>}
+          {smallGroups.length > 0 && <Section title={t('소모임')}><Stack>{smallGroups.map((a) => <ActivityCard key={a.id} activity={a} variant="row" />)}</Stack></Section>}
+          {popularPost && <Section title={t('인기 게시물')} onMore={() => nav('/community')}><Stack><PostCard post={popularPost} /></Stack></Section>}
+          {others.length > 0 && <Section title={t('함께할 사람을 찾고 있어요')} subtitle={t('지금 열려 있는 활동')}><Stack>{others.map((a) => <ActivityCard key={a.id} activity={a} />)}</Stack></Section>}
         </div>
       )}
 
-      <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title="필터">
+      <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('필터')}>
         <div className="divide-y divide-line">
-          <Toggle label="오늘 열리는 활동만" checked={onlyToday} onChange={setOnlyToday} />
-          <Toggle label="무료 활동만" checked={onlyFree} onChange={setOnlyFree} />
+          <Toggle label={t('오늘 열리는 활동만')} checked={onlyToday} onChange={setOnlyToday} />
+          <Toggle label={t('무료 활동만')} checked={onlyFree} onChange={setOnlyFree} />
         </div>
-        <Button full className="mt-4" onClick={() => setFilterOpen(false)}>적용</Button>
+        <Button full className="mt-4" onClick={() => setFilterOpen(false)}>{t('적용')}</Button>
       </BottomSheet>
     </div>
   );
@@ -159,7 +160,7 @@ function Section({ title, subtitle, children, onMore }: { title: string; subtitl
     <section>
       <div className="flex items-end justify-between px-4 mb-2.5">
         <div><h2 className="text-[17px] font-bold flex items-center gap-1.5">{title}</h2>{subtitle && <p className="text-[12px] text-ink-3 flex items-center gap-1"><Sparkles size={11} />{subtitle}</p>}</div>
-        {onMore && <button onClick={onMore} className="text-[12px] font-semibold text-ink-3 flex items-center">더보기 <ChevronRight size={14} /></button>}
+        {onMore && <button onClick={onMore} className="text-[12px] font-semibold text-ink-3 flex items-center">{t('더보기')} <ChevronRight size={14} /></button>}
       </div>
       {children}
     </section>

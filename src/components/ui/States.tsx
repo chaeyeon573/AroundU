@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { t } from '@/i18n';
 import { RefreshCw } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from '@/lib/cn';
@@ -36,9 +37,9 @@ export function ErrorState({ message, onRetry, className }: { message?: string; 
   return (
     <div className={cn('flex flex-col items-center justify-center text-center px-8 py-14', className)}>
       <div className="h-16 w-16 rounded-3xl bg-danger-soft grid place-items-center text-3xl">⚠️</div>
-      <h3 className="mt-4 text-[16px] font-bold">불러오지 못했어요</h3>
-      <p className="mt-1.5 text-[13px] text-ink-3 leading-relaxed">{message ?? '네트워크 연결을 확인하고 다시 시도해주세요.'}</p>
-      {onRetry && <Button className="mt-5" variant="outline" size="sm" icon={<RefreshCw size={14} />} onClick={onRetry}>다시 시도</Button>}
+      <h3 className="mt-4 text-[16px] font-bold">{t('불러오지 못했어요')}</h3>
+      <p className="mt-1.5 text-[13px] text-ink-3 leading-relaxed">{message ?? t('네트워크 연결을 확인하고 다시 시도해주세요.')}</p>
+      {onRetry && <Button className="mt-5" variant="outline" size="sm" icon={<RefreshCw size={14} />} onClick={onRetry}>{t('다시 시도')}</Button>}
     </div>
   );
 }

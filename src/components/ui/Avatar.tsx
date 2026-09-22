@@ -1,4 +1,5 @@
 import { BadgeCheck, ShieldCheck } from 'lucide-react';
+import { t } from '@/i18n';
 import { cn } from '@/lib/cn';
 import type { User } from '@/types';
 
@@ -34,7 +35,7 @@ export function Portrait({ emoji, hue, className, photoType }: { emoji: string; 
       <span className="text-[88px] drop-shadow-sm" style={{ lineHeight: 1 }}>{emoji}</span>
       {photoType && photoType !== 'face' && (
         <span className="absolute bottom-2 left-2 rounded-lg bg-black/35 text-white text-[11px] px-2 py-0.5 backdrop-blur">
-          {photoType === 'masked' ? '얼굴 비공개' : '뒷모습'}
+          {photoType === 'masked' ? t('얼굴 비공개') : t('뒷모습')}
         </span>
       )}
     </div>
@@ -54,9 +55,9 @@ export function Cover({ emoji, hue, className, size = 40 }: { emoji: string; hue
 
 export function VerifiedBadge({ kind = 'school', size = 14, label }: { kind?: 'school' | 'identity' | 'org'; size?: number; label?: boolean }) {
   const map = {
-    school: { Icon: BadgeCheck, color: 'text-verify', text: '학교 인증' },
-    identity: { Icon: ShieldCheck, color: 'text-mint', text: '본인 인증' },
-    org: { Icon: BadgeCheck, color: 'text-gold', text: '공식 인증' },
+    school: { Icon: BadgeCheck, color: 'text-verify', text: t('학교 인증') },
+    identity: { Icon: ShieldCheck, color: 'text-mint', text: t('본인 인증') },
+    org: { Icon: BadgeCheck, color: 'text-gold', text: t('공식 인증') },
   }[kind];
   return (
     <span className={cn('inline-flex items-center gap-0.5 font-semibold', map.color)} title={map.text} style={{ fontSize: size - 2 }}>

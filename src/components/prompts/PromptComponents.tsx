@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { t, lang } from '@/i18n';
 import { Plus, X, Mic, Square, Play, Pause, Trash2, Check, BarChart3, Pencil } from 'lucide-react';
 import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@/types';
 import { BottomSheet, Chip, Textarea, Tag } from '@/components/ui';
@@ -27,25 +28,25 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
           <div key={p.questionId} className="card p-3.5">
             <div className="flex items-start justify-between gap-2">
               <button type="button" onClick={() => { setEditing(i); setPickerOpen(true); }} className="text-left text-[13px] font-bold text-primary flex items-center gap-1">{q?.text}<Pencil size={11} className="text-ink-3" /></button>
-              <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))} className="text-ink-3 h-6 w-6 grid place-items-center" aria-label="삭제"><X size={15} /></button>
+              <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))} className="text-ink-3 h-6 w-6 grid place-items-center" aria-label={t('삭제')}><X size={15} /></button>
             </div>
-            <Textarea className="mt-2 min-h-[64px]" placeholder={q?.placeholder ?? '2줄 이내로 짧게'} maxLength={80} value={p.answer} onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
+            <Textarea className="mt-2 min-h-[64px]" placeholder={q?.placeholder ?? t('2줄 이내로 짧게')} maxLength={80} value={p.answer} onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
             <div className="text-right text-[11px] text-ink-3 mt-1">{p.answer.length}/80</div>
           </div>
         );
       })}
       {value.length < MAX_TEXT_PROMPTS && (
-        <button type="button" onClick={() => { setEditing(null); setPickerOpen(true); }} className="w-full h-12 rounded-2xl border-2 border-dashed border-line text-[13px] font-semibold text-ink-2 flex items-center justify-center gap-1.5 press"><Plus size={16} />질문 {value.length < REQUIRED_TEXT_PROMPTS ? `추가 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)` : '하나 더 답하기'}</button>
+        <button type="button" onClick={() => { setEditing(null); setPickerOpen(true); }} className="w-full h-12 rounded-2xl border-2 border-dashed border-line text-[13px] font-semibold text-ink-2 flex items-center justify-center gap-1.5 press"><Plus size={16} />{value.length < REQUIRED_TEXT_PROMPTS ? (lang === 'en' ? `Add a prompt (${answered}/${REQUIRED_TEXT_PROMPTS} required)` : `질문 추가 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)`) : t('질문 하나 더 답하기')}</button>
       )}
-      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title="질문 고르기" tall>
+      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title={t('질문 고르기')} tall>
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-2 -mx-1 px-1">
-          <Chip size="sm" active={cat === 'all'} onClick={() => setCat('all')}>전체</Chip>
+          <Chip size="sm" active={cat === 'all'} onClick={() => setCat('all')}>{t('전체')}</Chip>
           {(Object.keys(PROMPT_CATEGORY_LABELS) as PromptCategory[]).map((c) => <Chip key={c} size="sm" active={cat === c} onClick={() => setCat(c)}>{PROMPT_CATEGORY_LABELS[c]}</Chip>)}
         </div>
         <div className="space-y-1.5 mt-1">
           {TEXT_PROMPTS.filter((q) => cat === 'all' || q.category === cat).map((q) => {
             const taken = used.has(q.id) && value[editing ?? -1]?.questionId !== q.id;
-            return <button key={q.id} type="button" disabled={taken} onClick={() => pick(q.id)} className={cn('w-full text-left rounded-xl px-3.5 py-3 border border-line text-[14px] font-medium press', taken ? 'opacity-40' : 'hover:bg-surface-2')}>{q.text}<span className="block text-[11px] text-ink-3 mt-0.5">{PROMPT_CATEGORY_LABELS[q.category]}{taken ? ' · 이미 답했어요' : ''}</span></button>;
+            return <button key={q.id} type="button" disabled={taken} onClick={() => pick(q.id)} className={cn('w-full text-left rounded-xl px-3.5 py-3 border border-line text-[14px] font-medium press', taken ? 'opacity-40' : 'hover:bg-surface-2')}>{q.text}<span className="block text-[11px] text-ink-3 mt-0.5">{PROMPT_CATEGORY_LABELS[q.category]}{taken ? t(' · 이미 답했어요') : ''}</span></button>;
           })}
         </div>
       </BottomSheet>
@@ -68,7 +69,7 @@ export function VoicePromptEditor({ value, onChange }: { value?: VoicePrompt; on
     return (
       <div className="card p-3.5">
         <div className="text-[13px] font-bold text-primary">{questionById(value.questionId)?.text}</div>
-        <div className="mt-2 flex items-center gap-3"><VoicePlayer duration={value.durationSec} /><button type="button" onClick={() => onChange(undefined)} className="text-ink-3" aria-label="삭제"><Trash2 size={16} /></button></div>
+        <div className="mt-2 flex items-center gap-3"><VoicePlayer duration={value.durationSec} /><button type="button" onClick={() => onChange(undefined)} className="text-ink-3" aria-label={t('삭제')}><Trash2 size={16} /></button></div>
       </div>
     );
   }
@@ -76,10 +77,10 @@ export function VoicePromptEditor({ value, onChange }: { value?: VoicePrompt; on
     <div className="card p-3.5">
       <div className="flex flex-wrap gap-1.5">{VOICE_PROMPTS.map((q) => <Chip key={q.id} size="sm" active={questionId === q.id} onClick={() => !recording && setQuestionId(q.id)}>{q.text}</Chip>)}</div>
       <div className="mt-3 flex items-center gap-3">
-        <button type="button" onClick={recording ? stop : start} className={cn('h-14 w-14 rounded-full grid place-items-center text-white press', recording ? 'bg-danger animate-pulse' : 'bg-primary')} aria-label={recording ? '녹음 중지' : '녹음 시작'}>{recording ? <Square size={20} /> : <Mic size={22} />}</button>
+        <button type="button" onClick={recording ? stop : start} className={cn('h-14 w-14 rounded-full grid place-items-center text-white press', recording ? 'bg-danger animate-pulse' : 'bg-primary')} aria-label={recording ? t('녹음 중지') : t('녹음 시작')}>{recording ? <Square size={20} /> : <Mic size={22} />}</button>
         <div className="flex-1">
-          <div className="text-[14px] font-semibold">{recording ? `녹음 중 · ${sec}초` : '탭해서 녹음 (최대 30초)'}</div>
-          <div className="text-[11px] text-ink-3">데모에서는 실제 음성 대신 녹음 길이만 저장돼요.</div>
+          <div className="text-[14px] font-semibold">{recording ? `${t('녹음 중 · ')}${sec}${t('초')}` : t('탭해서 녹음 (최대 30초)')}</div>
+          <div className="text-[11px] text-ink-3">{t('데모에서는 실제 음성 대신 녹음 길이만 저장돼요.')}</div>
           {recording && <Waveform active />}
         </div>
       </div>
@@ -97,7 +98,7 @@ export function VoicePlayer({ duration }: { duration: number }) {
   }, [playing, duration]);
   return (
     <div className="flex-1 flex items-center gap-2.5 rounded-xl bg-primary-soft px-3 py-2">
-      <button type="button" onClick={() => setPlaying((p) => !p)} className="h-9 w-9 rounded-full bg-primary text-white grid place-items-center press shrink-0" aria-label={playing ? '일시정지' : '재생'}>{playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}</button>
+      <button type="button" onClick={() => setPlaying((p) => !p)} className="h-9 w-9 rounded-full bg-primary text-white grid place-items-center press shrink-0" aria-label={playing ? t('일시정지') : t('재생')}>{playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}</button>
       <Waveform active={playing} progress={pos / duration} />
       <span className="text-[12px] font-semibold text-primary tabular-nums">{playing ? `${pos}s` : `${duration}s`}</span>
     </div>
@@ -119,9 +120,9 @@ export function PollEditor({ value, onChange }: { value?: PollPrompt; onChange: 
     const q = pollById(value.questionId);
     return (
       <div className="card p-3.5">
-        <div className="flex items-center justify-between"><div className="text-[13px] font-bold text-primary flex items-center gap-1"><BarChart3 size={13} />{q?.text}</div><button type="button" onClick={() => onChange(undefined)} className="text-ink-3" aria-label="삭제"><Trash2 size={16} /></button></div>
+        <div className="flex items-center justify-between"><div className="text-[13px] font-bold text-primary flex items-center gap-1"><BarChart3 size={13} />{q?.text}</div><button type="button" onClick={() => onChange(undefined)} className="text-ink-3" aria-label={t('삭제')}><Trash2 size={16} /></button></div>
         <div className="mt-2 flex flex-wrap gap-1.5">{value.options.map((o, i) => <Chip key={o} size="sm" active={value.ownChoice === i} onClick={() => onChange({ ...value, ownChoice: i })}>{o}</Chip>)}</div>
-        <p className="text-[11px] text-ink-3 mt-2">내 답을 고르면 방문자도 한 표씩 던질 수 있어요.</p>
+        <p className="text-[11px] text-ink-3 mt-2">{t('내 답을 고르면 방문자도 한 표씩 던질 수 있어요.')}</p>
       </div>
     );
   }
@@ -140,19 +141,19 @@ export function PollCard({ poll, ownerName, myVote, onVote, isMine }: { poll: Po
   const voted = myVote !== undefined || isMine;
   return (
     <div className="rounded-2xl bg-surface-2 p-3.5">
-      <div className="text-[12px] font-bold text-ink-3 flex items-center gap-1"><BarChart3 size={12} />{ownerName}의 투표 · {q?.text}</div>
+      <div className="text-[12px] font-bold text-ink-3 flex items-center gap-1"><BarChart3 size={12} />{ownerName}{t('의 투표 ·')} {q?.text}</div>
       <div className="mt-2 space-y-1.5">
         {poll.options.map((o, i) => {
           const pct = total ? Math.round((counts[i] / total) * 100) : 0;
           return (
             <button key={o} type="button" disabled={voted || !onVote} onClick={() => onVote?.(i)} className="relative w-full h-10 rounded-xl overflow-hidden bg-surface border border-line text-left px-3 text-[13px] font-semibold press disabled:opacity-100">
               {voted && <span className="absolute inset-y-0 left-0 bg-primary-soft" style={{ width: `${pct}%` }} />}
-              <span className="relative flex items-center justify-between"><span className="flex items-center gap-1.5">{o}{poll.ownChoice === i && <Tag tone="primary" className="h-5">{ownerName}의 답</Tag>}{myVote === i && <Check size={14} className="text-primary" />}</span>{voted && <span className="text-ink-3">{pct}%</span>}</span>
+              <span className="relative flex items-center justify-between"><span className="flex items-center gap-1.5">{o}{poll.ownChoice === i && <Tag tone="primary" className="h-5">{ownerName}{t('의 답')}</Tag>}{myVote === i && <Check size={14} className="text-primary" />}</span>{voted && <span className="text-ink-3">{pct}%</span>}</span>
             </button>
           );
         })}
       </div>
-      <div className="text-[11px] text-ink-3 mt-2">{total}명 참여{!voted && onVote ? ' · 한 표 던져보세요' : ''}</div>
+      <div className="text-[11px] text-ink-3 mt-2">{total}{t('명 참여')}{!voted && onVote ? t(' · 한 표 던져보세요') : ''}</div>
     </div>
   );
 }
@@ -173,7 +174,7 @@ export function CompletionMeter({ percent, done, total, complete }: { percent: n
     <div className="flex items-center gap-3">
       <div className="flex-1 h-2 rounded-full bg-line overflow-hidden"><div className={cn('h-full rounded-full transition-all', complete ? 'bg-mint' : 'bg-primary')} style={{ width: `${percent}%` }} /></div>
       <span className={cn('text-[12px] font-bold tabular-nums', complete ? 'text-mint' : 'text-ink-2')}>{done}/{total}</span>
-      {complete && <Tag tone="mint"><Check size={11} /> 프로필 완성</Tag>}
+      {complete && <Tag tone="mint"><Check size={11} /> {t('프로필 완성')}</Tag>}
     </div>
   );
 }

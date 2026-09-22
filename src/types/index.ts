@@ -189,7 +189,7 @@ export type Residence = 'dorm' | 'offcampus' | 'commute';
 export type MeetPreference = 'same_hobby' | 'same_class' | 'same_goal' | 'same_living' | 'new_people';
 
 // ─── 조직 (동아리·학과·연구실·학생회) ──────────────────────────────────────
-export type OrganizationType = 'club' | 'department' | 'lab' | 'council';
+export type OrganizationType = 'club' | 'department' | 'lab' | 'council' | 'greek';
 
 export interface Organization {
   id: ID;
@@ -208,6 +208,12 @@ export interface Organization {
   memberIds: ID[];
   adminIds: ID[];
   applicantIds: ID[];
+  /** 외부 링크 (인스타그램·페이스북·홈페이지·오픈채팅) */
+  links?: { label: string; url: string }[];
+  dues?: string;
+  joinProcess?: string;
+  /** Greek life 등 학교 정책 안내 */
+  policyNote?: string;
 }
 
 // ─── 활동 ─────────────────────────────────────────────────────────────────

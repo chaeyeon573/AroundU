@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { t } from '@/i18n';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -88,12 +89,12 @@ export function MapPage() {
       />
       <div className="px-4 pt-2 pb-2 space-y-2 bg-bg">
         <div className="flex gap-2">
-          <div className="flex-1 h-10 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3 text-[13px]"><Search size={15} className="text-ink-3" /><input className="flex-1 bg-transparent outline-none placeholder:text-ink-3" placeholder="장소·활동 검색" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-          <button onClick={() => setFilterOpen(true)} className={cn('h-10 w-10 rounded-2xl border grid place-items-center press', cats.length ? 'bg-ink text-white border-ink' : 'bg-surface border-line')} aria-label="필터"><SlidersHorizontal size={17} /></button>
+          <div className="flex-1 h-10 rounded-2xl bg-surface border border-line flex items-center gap-2 px-3 text-[13px]"><Search size={15} className="text-ink-3" /><input className="flex-1 bg-transparent outline-none placeholder:text-ink-3" placeholder={t('장소·활동 검색')} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+          <button onClick={() => setFilterOpen(true)} className={cn('h-10 w-10 rounded-2xl border grid place-items-center press', cats.length ? 'bg-ink text-white border-ink' : 'bg-surface border-line')} aria-label={t('필터')}><SlidersHorizontal size={17} /></button>
         </div>
         <div className="flex gap-2 items-center">
-          <Segmented className="flex-1" value={range} onChange={setRange} options={[{ value: 'now', label: '지금' }, { value: 'today', label: '오늘' }, { value: 'week', label: '이번 주' }]} />
-          <button onClick={() => setListMode((m) => !m)} className="h-11 px-3 rounded-xl bg-surface border border-line text-[13px] font-semibold flex items-center gap-1.5 press">{listMode ? <><MapIcon size={16} />지도</> : <><List size={16} />목록</>}</button>
+          <Segmented className="flex-1" value={range} onChange={setRange} options={[{ value: 'now', label: t('지금') }, { value: 'today', label: t('오늘') }, { value: 'week', label: t('이번 주') }]} />
+          <button onClick={() => setListMode((m) => !m)} className="h-11 px-3 rounded-xl bg-surface border border-line text-[13px] font-semibold flex items-center gap-1.5 press">{listMode ? <><MapIcon size={16} />{t('지도')}</> : <><List size={16} />{t('목록')}</>}</button>
         </div>
       </div>
       <ChipRow className="mx-0 px-4 pt-0 pb-2 bg-bg">
@@ -106,9 +107,9 @@ export function MapPage() {
         <div className="flex-1 min-h-0 relative">
           {listMode ? (
             <div className="h-full overflow-y-auto hide-scrollbar px-4 py-3 space-y-3">
-              <div className="text-[12px] text-ink-3 flex items-center gap-1"><MapPin size={12} />현재 지도 영역의 활동 {inView.length}개</div>
-              {inView.length === 0 ? <EmptyState emoji="🗺️" title="이 영역에 활동이 없어요" description="지도를 옮기거나 시간 범위를 넓혀보세요." action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal')}>여기서 활동 만들기</Button>} /> :
-                inView.map((a) => <ActivityCard key={a.id} activity={a} variant="row" badge={a.official ? '학교 공식' : undefined} />)}
+              <div className="text-[12px] text-ink-3 flex items-center gap-1"><MapPin size={12} />{t('현재 지도 영역의 활동')} {inView.length}{t('개')}</div>
+              {inView.length === 0 ? <EmptyState emoji="🗺️" title={t('이 영역에 활동이 없어요')} description={t('지도를 옮기거나 시간 범위를 넓혀보세요.')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal')}>{t('여기서 활동 만들기')}</Button>} /> :
+                inView.map((a) => <ActivityCard key={a.id} activity={a} variant="row" badge={a.official ? t('학교 공식') : undefined} />)}
             </div>
           ) : (
             <>
@@ -120,15 +121,15 @@ export function MapPage() {
                   <Marker key={a.id} position={[a.place.lat, a.place.lng]} icon={markerIcon(a, a.id === selectedId)} eventHandlers={{ click: () => setSelectedId(a.id) }} />
                 ))}
               </MapContainer>
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[400] rounded-full bg-white/90 backdrop-blur px-3 h-8 flex items-center gap-1.5 text-[11px] font-semibold text-ink-2 shadow"><ShieldCheck size={13} className="text-mint" />사람 위치가 아닌 활동 장소만 표시돼요</div>
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[400] rounded-full bg-white/90 backdrop-blur px-3 h-8 flex items-center gap-1.5 text-[11px] font-semibold text-ink-2 shadow"><ShieldCheck size={13} className="text-mint" />{t('사람 위치가 아닌 활동 장소만 표시돼요')}</div>
               <div className="absolute bottom-4 left-4 right-4 z-[400] flex items-center justify-between">
-                <span className="rounded-full bg-ink text-white text-[12px] font-semibold px-3 h-8 flex items-center">{inView.length}개 활동</span>
-                <button onClick={() => setListMode(true)} className="h-10 px-4 rounded-full bg-white shadow-lg text-[13px] font-bold flex items-center gap-1.5 press"><List size={16} />목록 보기</button>
+                <span className="rounded-full bg-ink text-white text-[12px] font-semibold px-3 h-8 flex items-center">{inView.length}{t('개 활동')}</span>
+                <button onClick={() => setListMode(true)} className="h-10 px-4 rounded-full bg-white shadow-lg text-[13px] font-bold flex items-center gap-1.5 press"><List size={16} />{t('목록 보기')}</button>
               </div>
               {filtered.length === 0 && (
                 <div className="absolute inset-x-6 top-1/3 z-[400] card p-4 text-center">
-                  <div className="text-2xl">🗓️</div><b className="text-[14px] block mt-1">이 시간대에 열린 활동이 없어요</b><p className="text-[12px] text-ink-3 mt-1">'이번 주'로 바꾸거나 새 활동을 만들어보세요.</p>
-                  <div className="flex gap-2 mt-3"><Button size="sm" variant="outline" full onClick={() => setRange('week')}>이번 주 보기</Button><Button size="sm" full onClick={() => nav('/create/activity?kind=personal')}>활동 만들기</Button></div>
+                  <div className="text-2xl">🗓️</div><b className="text-[14px] block mt-1">{t('이 시간대에 열린 활동이 없어요')}</b><p className="text-[12px] text-ink-3 mt-1">{t('\'이번 주\'로 바꾸거나 새 활동을 만들어보세요.')}</p>
+                  <div className="flex gap-2 mt-3"><Button size="sm" variant="outline" full onClick={() => setRange('week')}>{t('이번 주 보기')}</Button><Button size="sm" full onClick={() => nav('/create/activity?kind=personal')}>{t('활동 만들기')}</Button></div>
                 </div>
               )}
             </>
@@ -140,14 +141,14 @@ export function MapPage() {
         {selected && <MarkerSummary activity={selected} onDetail={() => nav(`/activities/${selected.id}`)} count={v.approvedCount(selected.id)} />}
       </BottomSheet>
 
-      <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title="활동 종류">
+      <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('활동 종류')}>
         <div className="grid grid-cols-2 gap-2">
           {ALL_CATEGORIES.map((c) => <Chip key={c} className="justify-start h-11" color={CATEGORY_COLORS[c]} active={cats.includes(c)} onClick={() => toggleCat(c)}>{CATEGORY_EMOJI[c]} {CATEGORY_LABELS[c]}</Chip>)}
         </div>
-        <div className="flex gap-2 mt-4"><Button variant="outline" full onClick={() => setCats([])}>초기화</Button><Button full onClick={() => setFilterOpen(false)}>적용</Button></div>
+        <div className="flex gap-2 mt-4"><Button variant="outline" full onClick={() => setCats([])}>{t('초기화')}</Button><Button full onClick={() => setFilterOpen(false)}>{t('적용')}</Button></div>
       </BottomSheet>
 
-      <BottomSheet open={schoolOpen} onClose={() => setSchoolOpen(false)} title="학교·지역 선택">
+      <BottomSheet open={schoolOpen} onClose={() => setSchoolOpen(false)} title={t('학교·지역 선택')}>
         <div className="space-y-1.5">
           {schools.map((s) => <button key={s.id} onClick={() => { setSchoolId(s.id); setSchoolOpen(false); setListMode(false); nav('/map', { replace: true }); }} className={cn('w-full flex items-center justify-between rounded-xl px-3.5 h-12 border text-left', s.id === schoolId ? 'border-primary bg-primary-soft' : 'border-line')}><span className="text-[14px] font-semibold">{s.name}</span><span className="text-[12px] text-ink-3">{s.region}</span></button>)}
         </div>
@@ -174,7 +175,7 @@ function MarkerSummary({ activity: a, onDetail, count }: { activity: Activity; o
       <div className="flex gap-3">
         <Cover emoji={a.cover.emoji} hue={a.cover.hue} className="h-[72px] w-[72px] rounded-2xl shrink-0" size={30} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color: CATEGORY_COLORS[a.category] }}>{CATEGORY_EMOJI[a.category]} {CATEGORY_LABELS[a.category]}</span>{a.official && <Tag tone="gold">학교 공식</Tag>}</div>
+          <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color: CATEGORY_COLORS[a.category] }}>{CATEGORY_EMOJI[a.category]} {CATEGORY_LABELS[a.category]}</span>{a.official && <Tag tone="gold">{t('학교 공식')}</Tag>}</div>
           <h3 className="text-[16px] font-bold leading-snug mt-0.5">{a.title}</h3>
           <div className="text-[12px] text-ink-3 mt-1">{name}</div>
         </div>
@@ -182,12 +183,12 @@ function MarkerSummary({ activity: a, onDetail, count }: { activity: Activity; o
       <div className="mt-3 grid grid-cols-2 gap-y-1 text-[13px] text-ink-2">
         <span className="flex items-center gap-1"><Clock size={13} className="text-ink-3" />{formatDateTime(a.date, a.startTime)}</span>
         <span className="flex items-center gap-1 truncate"><MapPin size={13} className="text-ink-3" />{a.place.name}</span>
-        <span className="flex items-center gap-1"><Users size={13} className="text-ink-3" />{count}/{a.capacity >= 999 ? '∞' : a.capacity}명</span>
+        <span className="flex items-center gap-1"><Users size={13} className="text-ink-3" />{count}/{a.capacity >= 999 ? '∞' : a.capacity}{t('명')}</span>
         <span>{formatFee(a.fee)}</span>
       </div>
       <div className="mt-4 flex gap-2">
         <JoinButton activity={a} className="flex-1" />
-        <Button variant="outline" onClick={onDetail} icon={<ArrowRight size={16} />}>상세</Button>
+        <Button variant="outline" onClick={onDetail} icon={<ArrowRight size={16} />}>{t('상세')}</Button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, Sparkles, AlarmClock } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -33,11 +34,11 @@ export function OpportunitiesPage() {
 
   return (
     <div className="min-h-full pb-6">
-      <TopBar title="기회" bell messages />
+      <TopBar title={t('기회')} bell messages />
       <div className="px-4 pt-1">
         <ChipRow className="py-0">
-          <Chip active={tab === 'foryou'} onClick={() => setTab('foryou')}><Sparkles size={13} /> 나에게 맞는</Chip>
-          <Chip active={tab === 'saved'} onClick={() => setTab('saved')}><Bookmark size={13} /> 내 계획</Chip>
+          <Chip active={tab === 'foryou'} onClick={() => setTab('foryou')}><Sparkles size={13} /> {t('나에게 맞는')}</Chip>
+          <Chip active={tab === 'saved'} onClick={() => setTab('saved')}><Bookmark size={13} /> {t('내 계획')}</Chip>
           {ALL_OPP_TYPES.map((t) => <Chip key={t} color={OPP_TYPE_COLORS[t]} active={tab === t} onClick={() => setTab(t)}>{OPP_TYPE_EMOJI[t]} {OPP_TYPE_LABELS[t]}</Chip>)}
         </ChipRow>
       </div>
@@ -46,15 +47,15 @@ export function OpportunitiesPage() {
       {status === 'ready' && (
         <div className="px-4 pt-4 space-y-3">
           {tab === 'foryou' && me.goals.length === 0 && (
-            <button onClick={() => nav('/profile/context')} className="card w-full p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E9EDFF,#FFFFFF)]"><span className="text-2xl">🎯</span><span className="flex-1 text-[13px]"><b>이번 학기 목표를 알려주세요</b><br /><span className="text-ink-2">목표와 역할을 설정하면 맞는 기회와 사람을 더 정확히 추천해요.</span></span></button>
+            <button onClick={() => nav('/profile/context')} className="card w-full p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E9EDFF,#FFFFFF)]"><span className="text-2xl">🎯</span><span className="flex-1 text-[13px]"><b>{t('이번 학기 목표를 알려주세요')}</b><br /><span className="text-ink-2">{t('목표와 역할을 설정하면 맞는 기회와 사람을 더 정확히 추천해요.')}</span></span></button>
           )}
           {tab === 'foryou' && urgent.length > 0 && (
-            <div className="card p-3.5 bg-[linear-gradient(120deg,#FDE8E9,#FFFFFF)]"><b className="text-[13px] flex items-center gap-1.5"><AlarmClock size={14} className="text-danger" />이번 주 마감</b>
+            <div className="card p-3.5 bg-[linear-gradient(120deg,#FDE8E9,#FFFFFF)]"><b className="text-[13px] flex items-center gap-1.5"><AlarmClock size={14} className="text-danger" />{t('이번 주 마감')}</b>
               <div className="mt-2 space-y-1">{urgent.map((x) => <button key={x.o.id} onClick={() => nav(`/opportunities/${x.o.id}`)} className="w-full flex justify-between text-[13px] text-left"><span className="truncate">{x.o.title}</span><span className="text-danger font-bold shrink-0 ml-2">D-{daysUntil(x.o.deadline!)}</span></button>)}</div></div>
           )}
-          {list.length === 0 ? <EmptyState emoji="🔭" title={tab === 'saved' ? '저장하거나 지원 예정인 기회가 없어요' : '아직 등록된 기회가 없어요'} description={tab === 'saved' ? '관심 있는 기회를 저장하면 마감 전에 알려드려요.' : '동아리·학생회가 기회를 등록하면 여기에 보여요.'} action={tab === 'saved' ? <Button onClick={() => setTab('foryou')}>기회 둘러보기</Button> : undefined} />
+          {list.length === 0 ? <EmptyState emoji="🔭" title={tab === 'saved' ? t('저장하거나 지원 예정인 기회가 없어요') : t('아직 등록된 기회가 없어요')} description={tab === 'saved' ? t('관심 있는 기회를 저장하면 마감 전에 알려드려요.') : t('동아리·학생회가 기회를 등록하면 여기에 보여요.')} action={tab === 'saved' ? <Button onClick={() => setTab('foryou')}>{t('기회 둘러보기')}</Button> : undefined} />
             : list.map((x) => <OpportunityCard key={x.o.id} o={x.o} reasons={tab === 'foryou' ? x.reasons : undefined} />)}
-          <p className="text-[11px] text-ink-3 text-center">마감일은 출처 기준이며 "마지막 확인" 날짜를 상세에서 볼 수 있어요. 잘못된 정보는 신고해주세요.</p>
+          <p className="text-[11px] text-ink-3 text-center">{t('마감일은 출처 기준이며 "마지막 확인" 날짜를 상세에서 볼 수 있어요. 잘못된 정보는 신고해주세요.')}</p>
         </div>
       )}
     </div>

@@ -1,3 +1,5 @@
+import { t, lang, locale } from '@/i18n';
+
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export function addDaysISO(days: number, from = new Date()) {
@@ -15,17 +17,19 @@ export function isThisWeek(dateISO: string) {
 
 export function formatDate(dateISO: string) {
   const today = todayISO();
-  if (dateISO === today) return '오늘';
-  if (dateISO === addDaysISO(1)) return '내일';
+  if (dateISO === today) return t('오늘');
+  if (dateISO === addDaysISO(1)) return t('내일');
   const d = new Date(dateISO);
+  if (lang === 'en') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
 }
 
 export function formatTime(hhmm: string) {
   const [h, m] = hhmm.split(':').map(Number);
-  const period = h < 12 ? '오전' : '오후';
   const hour = h % 12 === 0 ? 12 : h % 12;
+  if (lang === 'en') return `${hour}${m === 0 ? '' : `:${String(m).padStart(2, '0')}`} ${h < 12 ? 'AM' : 'PM'}`;
+  const period = h < 12 ? '오전' : '오후';
   return m === 0 ? `${period} ${hour}시` : `${period} ${hour}:${String(m).padStart(2, '0')}`;
 }
 
@@ -36,13 +40,13 @@ export function formatDateTime(dateISO: string, hhmm: string) {
 export function relativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 1) return '방금';
-  if (min < 60) return `${min}분 전`;
+  if (min < 1) return t('방금');
+  if (min < 60) return `${min}${t('분 전')}`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}시간 전`;
+  if (hr < 24) return `${hr}${t('시간 전')}`;
   const day = Math.floor(hr / 24);
-  if (day < 7) return `${day}일 전`;
-  return new Date(iso).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  if (day < 7) return `${day}${t('일 전')}`;
+  return new Date(iso).toLocaleDateString(locale(), { month: 'short', day: 'numeric' });
 }
 
 export function isoMinutesAgo(min: number) {
@@ -62,5 +66,5 @@ export function pairKey(a: string, b: string) {
 }
 
 export function formatFee(fee: number) {
-  return fee === 0 ? '무료' : `${fee.toLocaleString()}원`;
+  return fee === 0 ? t('무료') : lang === 'en' ? `$${fee.toLocaleString()}` : `${fee.toLocaleString()}원`;
 }

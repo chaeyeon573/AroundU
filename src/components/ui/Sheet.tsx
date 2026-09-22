@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { t } from '@/i18n';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -33,7 +34,7 @@ export function BottomSheet({ open, onClose, title, children, className, tall }:
         {(title !== undefined) && (
           <div className="flex items-center justify-between px-5 pt-3 pb-1">
             <h3 className="text-[17px] font-bold">{title}</h3>
-            <button onClick={onClose} className="h-8 w-8 grid place-items-center rounded-full hover:bg-surface-2" aria-label="닫기"><X size={18} /></button>
+            <button onClick={onClose} className="h-8 w-8 grid place-items-center rounded-full hover:bg-surface-2" aria-label={t('닫기')}><X size={18} /></button>
           </div>
         )}
         <div className="overflow-y-auto px-5 pb-6 pt-2 safe-bottom">{children}</div>

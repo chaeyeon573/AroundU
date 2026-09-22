@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { PenSquare } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -9,7 +10,7 @@ import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { friendsOf } from '@/lib/relations';
 
-const CATS = [{ key: 'recommend', label: '추천' }, { key: 'friends', label: '친구' }, { key: 'school', label: '내 학교' }, { key: 'club', label: '동아리' }, { key: 'public', label: '전체 공개' }] as const;
+const CATS = [{ key: 'recommend', label: t('추천') }, { key: 'friends', label: t('친구') }, { key: 'school', label: t('내 학교') }, { key: 'club', label: t('동아리') }, { key: 'public', label: t('전체 공개') }] as const;
 type Cat = typeof CATS[number]['key'];
 
 export function CommunityPage() {
@@ -40,17 +41,17 @@ export function CommunityPage() {
 
   return (
     <div className="min-h-full pb-6">
-      <TopBar title="커뮤니티" bell messages right={<Button size="sm" variant="ghost" icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>글쓰기</Button>} />
+      <TopBar title={t('커뮤니티')} bell messages right={<Button size="sm" variant="ghost" icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>{t('글쓰기')}</Button>} />
       <div className="px-4 pt-2"><ChipRow className="py-0">{CATS.map((c) => <Chip key={c.key} active={cat === c.key} onClick={() => setCat(c.key)}>{c.label}</Chip>)}</ChipRow></div>
       {status === 'loading' && <CardSkeleton />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
       {status === 'ready' && (
         <div className="px-4 pt-4 space-y-4">
           {cat === 'club' && clubs.length > 0 && (
-            <div className="space-y-2"><h2 className="text-[15px] font-bold">내 학교 동아리·조직</h2>{clubs.map((o) => <OrgCard key={o.id} org={o} />)}</div>
+            <div className="space-y-2"><h2 className="text-[15px] font-bold">{t('내 학교 동아리·조직')}</h2>{clubs.map((o) => <OrgCard key={o.id} org={o} />)}</div>
           )}
           {posts.length === 0 ? (
-            <EmptyState emoji="📝" title="아직 게시물이 없어요" description={cat === 'friends' ? '친구를 추가하면 친구의 게시물이 여기에 보여요.' : '첫 게시물을 올려보세요.'} action={<Button icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>게시물 작성</Button>} />
+            <EmptyState emoji="📝" title={t('아직 게시물이 없어요')} description={cat === 'friends' ? t('친구를 추가하면 친구의 게시물이 여기에 보여요.') : t('첫 게시물을 올려보세요.')} action={<Button icon={<PenSquare size={16} />} onClick={() => nav('/create/post')}>{t('게시물 작성')}</Button>} />
           ) : posts.map((p) => <PostCard key={p.id} post={p} />)}
         </div>
       )}

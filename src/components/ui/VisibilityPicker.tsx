@@ -1,4 +1,5 @@
 import { Globe, School, Users, UserCheck, Lock, Building2, ChevronRight } from 'lucide-react';
+import { t } from '@/i18n';
 import type { Visibility } from '@/types';
 import { VISIBILITY_LABELS, VISIBILITY_ORDER } from '@/lib/labels';
 import { visibilityDescription } from '@/lib/relations';
@@ -19,7 +20,7 @@ interface Props {
 }
 
 /** 공개 범위 선택 — compact 모드는 한 줄 버튼, 기본은 라디오 리스트 */
-export function VisibilityPicker({ value, onChange, options = VISIBILITY_ORDER, compact, label = '공개 범위' }: Props) {
+export function VisibilityPicker({ value, onChange, options = VISIBILITY_ORDER, compact, label = t('공개 범위') }: Props) {
   const [open, setOpen] = useState(false);
   const Icon = VISIBILITY_ICONS[value];
   if (compact) {

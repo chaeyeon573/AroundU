@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { t } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, MessageCircle } from 'lucide-react';
 import { IconButton } from '@/components/ui';
@@ -33,11 +34,11 @@ export function TopBar({ title, back, right, messages, bell, transparent, classN
   const counts = useUnreadCounts();
   return (
     <header className={cn('sticky top-0 z-30 flex items-center gap-1 h-14 px-2', transparent ? 'bg-transparent' : 'bg-bg/90 backdrop-blur border-b border-line/60', className)}>
-      {back && <IconButton onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))} aria-label="뒤로"><ArrowLeft size={22} /></IconButton>}
+      {back && <IconButton onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))} aria-label={t('뒤로')}><ArrowLeft size={22} /></IconButton>}
       <div className={cn('flex-1 min-w-0 text-[17px] font-bold truncate', !back && 'pl-2')}>{title}</div>
       {right}
-      {bell && <IconButton onClick={() => nav('/notifications')} badge={counts.bell} aria-label="알림"><Bell size={22} /></IconButton>}
-      {messages && <IconButton onClick={() => nav('/chats')} badge={counts.chats} aria-label="메시지"><MessageCircle size={22} /></IconButton>}
+      {bell && <IconButton onClick={() => nav('/notifications')} badge={counts.bell} aria-label={t('알림')}><Bell size={22} /></IconButton>}
+      {messages && <IconButton onClick={() => nav('/chats')} badge={counts.chats} aria-label={t('메시지')}><MessageCircle size={22} /></IconButton>}
     </header>
   );
 }
