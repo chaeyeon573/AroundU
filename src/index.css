@@ -7,10 +7,10 @@
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Noto Serif KR", "Apple SD Gothic Neo", serif;
 
   /* Wes Anderson palette: coral · mustard · blush · powder blue · sage · peach on cream */
-  --color-bg: #FBF5EC;
-  --color-surface: #FFFDF9;
-  --color-surface-2: #F5EBDD;
-  --color-line: #EADFCF;
+  --color-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F4F3F0;
+  --color-line: #ECEAE5;
   --color-ink: #2B2420;
   --color-ink-2: #5E534B;
   --color-ink-3: #9A8E83;
@@ -52,7 +52,7 @@ body {
   overscroll-behavior-y: none;
 }
 @media (min-width: 640px) {
-  body { background: #EFE3D2; }
+  body { background: #EDEAE4; }
 }
 
 * { box-sizing: border-box; }

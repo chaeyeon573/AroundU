@@ -3,7 +3,7 @@ import { t } from '@/i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, Button, Cover, Tag, BottomSheet, Input, Segmented, EmptyState, Select } from '@/components/ui';
+import { Avatar, Button, Tag, BottomSheet, Input, Segmented, EmptyState, Select } from '@/components/ui';
 import { SheetItem } from '@/components/cards/PostCard';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 import { ActivityCard } from '@/components/cards/ActivityCard';
@@ -48,7 +48,7 @@ export function OpportunityDetailPage() {
   return (
     <div className="min-h-full pb-28">
       <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label={t('더보기')}><MoreHorizontal size={20} /></button>} />
-      <Cover emoji={o.cover.emoji} hue={o.cover.hue} url={o.cover.url} className="h-[200px]" size={80} />
+      <div className="h-[150px] grid place-items-center text-[64px]" style={{ background: `linear-gradient(135deg, ${color}33, ${color}0D)` }}>{OPP_TYPE_EMOJI[o.type]}</div>
       <div className="px-4 -mt-6 relative space-y-3">
         <div className="card p-4">
           <div className="flex flex-wrap items-center gap-1.5">
