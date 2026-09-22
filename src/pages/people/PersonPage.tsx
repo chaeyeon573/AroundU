@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { t } from '@/i18n';
+import { t, lang } from '@/i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock, Mic } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -36,8 +36,10 @@ export function PersonPage() {
   const [report, setReport] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [propose, setPropose] = useState(params.get('propose') === '1');
-  const [pCat, setPCat] = useState<ActivityCategory>('coffee');
-  const [pMsg, setPMsg] = useState('');
+  const [pCat, setPCat] = useState<ActivityCategory>((params.get('cat') as ActivityCategory) || 'coffee');
+  const oppsAll = useAppStore((s) => s.opportunities);
+  const oppRef = params.get('opp') ? oppsAll.find((o) => o.id === params.get('opp')) : undefined;
+  const [pMsg, setPMsg] = useState(oppRef ? (lang === 'en' ? `Want to go to ${oppRef.title} together?` : `${oppRef.title} 같이 갈래요?`) : '');
   const [pWhen, setPWhen] = useState(`${todayISO()} 18:00`);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (params.get('propose')) setParams({}, { replace: true }); }, [params, setParams]);

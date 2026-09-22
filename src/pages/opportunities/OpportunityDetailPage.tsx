@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2, Heart } from 'lucide-react';
+import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Cover, Tag, BottomSheet, Input, Segmented, EmptyState, Select } from '@/components/ui';
 import { SheetItem } from '@/components/cards/PostCard';
@@ -12,7 +12,8 @@ import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@/lib/labels';
+import type { OpportunityIntent } from '@/types';
 import { formatDate, formatDateTime, relativeTime } from '@/lib/format';
 import { dday, daysUntil, matchReasons, isTogetherType } from '@/lib/recommend';
 import { cn } from '@/lib/cn';
@@ -29,6 +30,7 @@ export function OpportunityDetailPage() {
   const o = opps.find((x) => x.id === id);
   const [menu, setMenu] = useState(false);
   const [report, setReport] = useState(false);
+  const [rsvpOpen, setRsvpOpen] = useState(false);
   const [text, setText] = useState('');
   const [review, setReview] = useState('');
   const [result, setResult] = useState<'accepted' | 'rejected' | 'attended' | ''>('');
@@ -38,10 +40,10 @@ export function OpportunityDetailPage() {
   const color = OPP_TYPE_COLORS[o.type];
   const teamActs = v.visibleActivities.filter((a) => a.opportunityId === o.id);
   const people = others.map((i) => ({ i, u: v.userById(i.userId)! })).filter((x) => x.u && !v.isBlocked(x.u.id))
-    .map((x) => ({ ...x, reasons: matchReasons(v.me, x.u, v.snap, v.canSeeField(x.u, 'timetable')) })).sort((a, b) => b.reasons.length - a.reasons.length);
+    .map((x) => ({ ...x, reasons: matchReasons(v.me, x.u, v.snap, v.canSeeField(x.u, 'timetable')) })).sort((a, b) => (Number(b.i.intent === 'solo' || b.i.intent === 'company') - Number(a.i.intent === 'solo' || a.i.intent === 'company')) || b.reasons.length - a.reasons.length);
   const org = o.orgId ? v.orgById(o.orgId) : undefined;
   const together = isTogetherType(o.type);
-  const setIntent = (intent: 'interested' | 'applying' | 'applied' | null, msg?: string) => run(() => api.opportunities.setIntent(o.id, v.me.id, intent), msg);
+  const setIntent = (intent: OpportunityIntent | null, msg?: string) => run(() => api.opportunities.setIntent(o.id, v.me.id, intent), msg);
 
   return (
     <div className="min-h-full pb-28">
@@ -58,8 +60,8 @@ export function OpportunityDetailPage() {
           <button onClick={() => org && nav(`/orgs/${org.id}`)} className="text-[13px] text-ink-2 mt-0.5 flex items-center gap-1">{o.host}{org && <span className="text-primary text-[12px]">{t('조직 페이지')}</span>}</button>
           {together && <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.length}</div><div className="text-[10px] text-ink-3">{t('관심 있는 학생')}</div></div>
-            <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.filter((i) => i.intent !== 'interested').length}</div><div className="text-[10px] text-ink-3">{t('같이 갈래요')}</div></div>
-            <div className="rounded-xl bg-primary-soft py-2"><div className="text-[16px] font-extrabold text-primary">{people.filter((p) => p.reasons.some((r) => r.kind === 'role' || r.kind === 'goal')).length}</div><div className="text-[10px] text-primary">{t('나와 맞는 후보')}</div></div>
+            <div className="rounded-xl bg-surface-2 py-2"><div className="text-[16px] font-extrabold">{others.filter((i) => ['going', 'solo', 'company', 'team', 'applied'].includes(i.intent)).length}</div><div className="text-[10px] text-ink-3">{t('참가 예정')}</div></div>
+            <button onClick={() => setParams({ tab: 'people' })} className="rounded-xl bg-primary-soft py-2 press"><div className="text-[16px] font-extrabold text-primary">{others.filter((i) => i.intent === 'solo' || i.intent === 'company' || i.intent === 'team').length}</div><div className="text-[10px] text-primary">{t('같이 갈 사람 찾는 중')}</div></button>
           </div>}
         </div>
 
@@ -91,11 +93,12 @@ export function OpportunityDetailPage() {
               <div key={u.id} className="card p-3.5">
                 <button onClick={() => nav(`/users/${u.id}`)} className="flex items-center gap-3 text-left w-full">
                   <Avatar emoji={u.avatar.emoji} hue={u.avatar.hue} url={u.avatar.url} size={44} />
-                  <div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-[12px] text-ink-3"> · {affiliationText(u)}</span><div className="text-[12px] mt-0.5"><Tag tone={i.intent === 'interested' ? 'neutral' : 'mint'} className="h-5">{i.intent === 'interested' ? t('관심') : i.intent === 'applying' ? t('지원 예정') : t('지원 완료')}</Tag>{u.canOffer.length > 0 && <span className="text-ink-2 ml-1.5">{t('제공:')} {u.canOffer.slice(0, 3).map((r) => PERSON_ROLE_LABELS[r]).join('·')}</span>}</div></div>
+                  <div className="flex-1 min-w-0"><b className="text-[14px]">{u.nickname}</b><span className="text-[12px] text-ink-3"> · {affiliationText(u)}</span><div className="text-[12px] mt-0.5"><Tag tone={i.intent === 'solo' || i.intent === 'company' ? 'accent' : i.intent === 'interested' ? 'neutral' : 'mint'} className="h-5">{RSVP_EMOJI[i.intent]} {RSVP_LABELS[i.intent]}</Tag>{u.canOffer.length > 0 && <span className="text-ink-2 ml-1.5">{t('제공:')} {u.canOffer.slice(0, 3).map((r) => PERSON_ROLE_LABELS[r]).join('·')}</span>}</div></div>
                 </button>
                 {reasons.length > 0 && <ul className="mt-2 space-y-0.5">{reasons.slice(0, 3).map((r) => <li key={r.text} className="text-[12px] text-ink-2 flex items-center gap-1"><CheckCircle2 size={12} className="text-primary shrink-0" />{r.text}</li>)}</ul>}
                 <div className="flex gap-2 mt-3">
-                  <Button size="sm" full onClick={() => nav(`/create/activity?kind=group&opportunity=${o.id}&invite=${u.id}`)}>{o.rolesNeeded ? t('팀 제안하기') : t('같이 준비해요')}</Button>
+                  {(i.intent === 'solo' || i.intent === 'company') ? <Button size="sm" full icon={<Users size={14} />} onClick={() => nav(`/users/${u.id}?propose=1&cat=networking&opp=${o.id}`)}>{t('같이 가기 제안')}</Button>
+                    : <Button size="sm" full onClick={() => nav(`/create/activity?kind=group&opportunity=${o.id}&invite=${u.id}`)}>{o.rolesNeeded ? t('팀 제안하기') : t('같이 준비해요')}</Button>}
                   <Button size="sm" variant="outline" onClick={() => nav(`/users/${u.id}?propose=1`)} icon={<MessageCircle size={14} />}>{t('커피 한 잔')}</Button>
                 </div>
               </div>
@@ -132,8 +135,8 @@ export function OpportunityDetailPage() {
         <div className="flex gap-2">
           <button onClick={() => run(() => api.opportunities.toggleSave(o.id, v.me.id), mine?.saved ? undefined : t('저장했어요. 마감 3일 전에 알려드릴게요.'))} className={cn('h-[52px] w-[52px] rounded-2xl grid place-items-center press', mine?.saved ? 'bg-primary text-white' : 'bg-surface-2 text-ink-2')} aria-label={t('저장')}><Bookmark size={20} fill={mine?.saved ? 'currentColor' : 'none'} /></button>
           {together ? (<>
-            <button onClick={() => setIntent(mine?.intent === 'interested' ? null : 'interested', mine ? undefined : t('관심 표시했어요.'))} aria-label={t('관심')} className={cn('h-[52px] w-[52px] rounded-2xl grid place-items-center press', mine?.intent === 'interested' ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={20} fill={mine?.intent === 'interested' ? 'currentColor' : 'none'} /></button>
-            {mine?.intent === 'applying' || mine?.intent === 'applied' ? <Button size="lg" variant="secondary" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('interested')}>{t('같이 갈래요 ✓')}</Button> : <Button size="lg" className="flex-1" onClick={() => setIntent('applying', t('같이 갈 사람을 찾아보세요.'))}>{t('같이 갈래요')}</Button>}
+            <Button size="lg" variant={mine ? 'secondary' : 'primary'} className="flex-1" onClick={() => setRsvpOpen(true)}>{mine ? `${RSVP_EMOJI[mine.intent]} ${RSVP_LABELS[mine.intent]}` : t('같이 갈래요')}</Button>
+            {mine && (mine.intent === 'solo' || mine.intent === 'company') && <Button size="lg" variant="outline" onClick={() => setParams({ tab: 'people' })} icon={<Users size={18} />}>{t('사람 찾기')}</Button>}
           </>) : (
             mine?.intent === 'applied' ? <Button size="lg" variant="secondary" className="flex-1" icon={<CheckCircle2 size={18} />} onClick={() => setIntent('interested')}>{t('지원 완료')}</Button>
             : <Button size="lg" className="flex-1" onClick={() => setIntent('applied', t('지원 완료로 표시했어요. 후기를 남겨주면 다음 사람에게 도움이 돼요.'))}>{t('지원했어요')}</Button>
@@ -141,6 +144,18 @@ export function OpportunityDetailPage() {
         </div>
       </div>
 
+      <BottomSheet open={rsvpOpen} onClose={() => setRsvpOpen(false)} title={t('이 행사, 어떻게 할래요?')}>
+        <div className="space-y-1.5">
+          {(['interested', 'going', 'solo', 'company', 'team', 'applied', 'done'] as OpportunityIntent[]).filter((k) => k !== 'team' || o.rolesNeeded).map((k) => (
+            <button key={k} onClick={async () => { await setIntent(k, k === 'company' || k === 'solo' ? t('같이 갈 사람을 보여드릴게요.') : undefined); setRsvpOpen(false); if (k === 'company' || k === 'solo') setParams({ tab: 'people' }); }}
+              className={cn('w-full text-left rounded-xl px-3.5 h-12 text-[14px] font-medium border flex items-center gap-2.5', mine?.intent === k ? 'border-primary bg-primary-soft' : 'border-line')}>
+              <span className="text-lg">{RSVP_EMOJI[k]}</span>{RSVP_LABELS[k]}
+              {(k === 'solo' || k === 'company') && <span className="ml-auto text-[11px] text-ink-3">{others.filter((i) => i.intent === 'solo' || i.intent === 'company').length}{t('명')}</span>}
+            </button>
+          ))}
+          {mine && <button onClick={async () => { await setIntent(null); setRsvpOpen(false); }} className="w-full h-10 text-[13px] text-ink-3">{t('상태 지우기')}</button>}
+        </div>
+      </BottomSheet>
       <BottomSheet open={menu} onClose={() => setMenu(false)} title={t('기회')}>
         <div className="space-y-1">
           <SheetItem icon={<Share2 size={18} />} label={t('친구에게 보내기')} onClick={() => { setMenu(false); showToast(t('링크를 복사했어요.')); }} />

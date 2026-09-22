@@ -29,6 +29,7 @@ import { TimetablePage } from '@/pages/timetable/TimetablePage';
 import { OpportunitiesPage } from '@/pages/opportunities/OpportunitiesPage';
 import { OpportunityDetailPage } from '@/pages/opportunities/OpportunityDetailPage';
 import { ProfileContextPage } from '@/pages/profile/ProfileContextPage';
+import { PlansPage } from '@/pages/plans/PlansPage';
 
 function RequireAuth() {
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -82,6 +83,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/plans" element={<PlansPage />} />
           <Route path="/opportunities" element={<OpportunitiesPage />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/profile" element={<ProfilePage />} />

@@ -80,6 +80,7 @@ export interface ActivityInput {
   orgId?: ID;
   opportunityId?: ID;
   rolesNeeded?: Role[];
+  openSlot?: boolean;
 }
 
 export interface PostInput {

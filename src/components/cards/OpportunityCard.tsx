@@ -3,7 +3,7 @@ import { t } from '@/i18n';
 import { Bookmark, Clock, MapPin, Users, ExternalLink, BadgeCheck, AlarmClock } from 'lucide-react';
 import type { Opportunity } from '@/types';
 import { Cover, Tag, Button } from '@/components/ui';
-import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@/lib/labels';
 import { formatDateTime } from '@/lib/format';
 import { dday, daysUntil, isTogetherType } from '@/lib/recommend';
 import { Heart } from 'lucide-react';
@@ -68,13 +68,14 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
         </div>
         <div className="mt-2.5 flex items-center gap-3 text-[12px]">
           <span className="flex items-center gap-1 text-ink-2"><Users size={12} />{others.length}{t('명 관심')}</span>
+          {isTogetherType(o.type) && others.filter((i) => i.intent === 'solo' || i.intent === 'company').length > 0 && <span className="text-accent font-semibold">{others.filter((i) => i.intent === 'solo' || i.intent === 'company').length}{t('명이 같이 갈 사람을 찾고 있어요')}</span>}
           {matchCount > 0 && <span className="text-primary font-semibold">{t('나와 맞는 사람')} {matchCount}{t('명')}</span>}
           {o.sourceUrl && <a href={o.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-0.5 text-ink-3"><ExternalLink size={11} />{o.sourceLabel}</a>}
         </div>
         <div className="mt-3 flex gap-2">
           {isTogetherType(o.type) ? (<>
             <button onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine?.intent === 'interested' ? null : 'interested'), mine ? undefined : t('관심 표시했어요.'))} aria-label={t('관심')} className={cn('h-9 w-9 rounded-xl grid place-items-center press', mine?.intent === 'interested' ? 'bg-heart text-white' : 'bg-heart-soft text-heart')}><Heart size={16} fill={mine?.intent === 'interested' ? 'currentColor' : 'none'} /></button>
-            <Button size="sm" variant={mine?.intent === 'applying' || mine?.intent === 'applied' ? 'secondary' : 'primary'} className="flex-1" onClick={() => run(() => api.opportunities.setIntent(o.id, v.me.id, mine?.intent === 'applying' ? 'interested' : 'applying'), mine?.intent === 'applying' ? undefined : t('같이 갈 사람을 찾아보세요.'))}>{mine?.intent === 'applying' || mine?.intent === 'applied' ? t('같이 갈래요 ✓') : t('같이 갈래요')}</Button>
+            <Button size="sm" variant={mine && mine.intent !== 'interested' ? 'secondary' : 'primary'} className="flex-1" onClick={() => nav(`/opportunities/${o.id}`)}>{mine && mine.intent !== 'interested' ? `${RSVP_EMOJI[mine.intent]} ${RSVP_LABELS[mine.intent]}` : t('같이 갈래요')}</Button>
             <Button size="sm" variant="outline" onClick={() => nav(`/opportunities/${o.id}?tab=people`)}>{t('사람 찾기')}</Button>
           </>) : (
             <Button size="sm" variant={mine?.intent === 'applied' ? 'secondary' : 'outline'} className="flex-1" onClick={() => nav(`/opportunities/${o.id}`)}>{mine?.intent === 'applied' ? t('지원 완료') : t('자세히')}</Button>

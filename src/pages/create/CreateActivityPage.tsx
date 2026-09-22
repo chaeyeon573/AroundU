@@ -42,7 +42,7 @@ export function CreateActivityPage() {
   const inviteId = params.get('invite');
 
   const [form, setForm] = useState<ActivityInput>(() => editing ? { ...editing } : {
-    kind, category: kind === 'org_event' ? 'club' : opp ? (opp.type === 'hackathon' || opp.type === 'startup' ? 'networking' : 'study') : 'coffee', title: opp ? `${opp.title}${t(' 같이 준비해요')}` : '', description: opp ? `${opp.title}${t('에 함께 지원·참가할 사람을 찾아요.')}` : '', cover: opp ? opp.cover : { emoji: '☕', hue: 30 },
+    kind, category: (params.get('cat') as ActivityCategory | null) ?? (kind === 'org_event' ? 'club' : opp ? (opp.type === 'hackathon' || opp.type === 'startup' ? 'networking' : 'study') : 'coffee'), title: opp ? `${opp.title}${t(' 같이 준비해요')}` : '', description: opp ? `${opp.title}${t('에 함께 지원·참가할 사람을 찾아요.')}` : '', cover: opp ? opp.cover : { emoji: '☕', hue: 30 },
     opportunityId: oppId, rolesNeeded: opp?.rolesNeeded ?? (isTeam ? [] : undefined),
     date: params.get('date') ?? todayISO(), startTime: params.get('start') ?? '18:00', endTime: params.get('end') ?? '19:30', place: presets[0], capacity: kind === 'personal' ? 4 : 10, fee: 0, conditions: '',
     joinPolicy: kind === 'personal' ? 'open' : 'approval', visibility: 'school', visibilityTargets: [], invitedIds: inviteId ? [inviteId] : [], orgId: kind === 'org_event' ? myOrgs[0]?.id : undefined,

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { t } from '@/i18n';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Map, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb } from 'lucide-react';
+import { Home, Map, Plus, LayoutGrid, User, Users, CalendarPlus, Megaphone, Image, Lightbulb, CalendarHeart } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BottomSheet } from '@/components/ui';
 
 const items = [
   { to: '/', label: t('홈'), Icon: Home },
   { to: '/map', label: t('지도'), Icon: Map },
+  { to: '/plans', label: t('계획'), Icon: CalendarHeart },
   { to: '/community', label: t('커뮤니티'), Icon: LayoutGrid },
   { to: '/profile', label: t('프로필'), Icon: User },
 ];
@@ -17,6 +18,7 @@ export function BottomNav() {
   const nav = useNavigate();
   const go = (path: string) => { setOpen(false); nav(path); };
   const createOptions = [
+    { label: t('내 공강 열기'), desc: t('시간표의 빈 시간에 점심·커피·공부 같이할 사람 찾기'), Icon: CalendarHeart, path: '/timetable?open=1', color: 'bg-mint-soft text-mint' },
     { label: t('가볍게 만나기'), desc: t('점심·커피·공부·운동·산책 같이할 사람 찾기'), Icon: CalendarPlus, path: '/create/activity?kind=personal', color: 'bg-primary-soft text-primary' },
     { label: t('팀 만들기'), desc: t('해커톤·창업·스터디·프로젝트 같이할 사람 모으기'), Icon: Lightbulb, path: '/create/activity?kind=group&team=1', color: 'bg-mint-soft text-mint' },
     { label: t('그룹 모임 만들기'), desc: t('여러 명이 함께하는 소모임·정기 모임'), Icon: Users, path: '/create/activity?kind=group', color: 'bg-gold-soft text-[#B57A0E]' },
@@ -26,15 +28,15 @@ export function BottomNav() {
   return (
     <>
       <nav className="shrink-0 bg-surface border-t border-line safe-bottom">
-        <div className="grid grid-cols-5 h-[60px] items-center">
-          {items.slice(0, 2).map((it) => <NavItem key={it.to} {...it} />)}
+        <div className="grid grid-cols-6 h-[60px] items-center">
+          {items.slice(0, 3).map((it) => <NavItem key={it.to} {...it} />)}
           <div className="grid place-items-center">
             <button onClick={() => setOpen(true)} aria-label={t('만들기')}
               className="-mt-7 h-14 w-14 rounded-full bg-primary text-white grid place-items-center shadow-[var(--shadow-float)] press ring-4 ring-bg">
               <Plus size={28} strokeWidth={2.6} />
             </button>
           </div>
-          {items.slice(2).map((it) => <NavItem key={it.to} {...it} />)}
+          {items.slice(3).map((it) => <NavItem key={it.to} {...it} />)}
         </div>
       </nav>
       <BottomSheet open={open} onClose={() => setOpen(false)} title={t('무엇을 함께 시작할까요?')}>

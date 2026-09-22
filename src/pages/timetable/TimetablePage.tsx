@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { t, lang } from '@/i18n';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { OpenSlotSheet } from '@/components/social/OpenSlotSheet';
+import { slotSuggestions } from '@/lib/social';
 import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react';
 import type { Course } from '@/types';
 import { TopBar } from '@/components/layout/TopBar';
@@ -8,7 +10,7 @@ import { Button, BottomSheet, Field, Input, Select, Tag, VisibilityPicker, Empty
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
-import { DAY_LABELS, GRID_START, GRID_END, toMin, toHHMM, freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, jsDayToIdx, fmtBlock, fmtHours } from '@/lib/timetable';
+import { DAY_LABELS, GRID_START, GRID_END, toMin, toHHMM, freeBlocks, overlapBlocks, statusNow, statusLabel, todayIdx, jsDayToIdx, fmtBlock, fmtHours, nowMin } from '@/lib/timetable';
 import { friendsOf } from '@/lib/relations';
 import { uid, addDaysISO } from '@/lib/format';
 import { CATEGORY_COLORS, CATEGORY_EMOJI } from '@/lib/labels';
@@ -29,6 +31,9 @@ export function TimetablePage() {
   const participations = useAppStore((s) => s.participations);
   const me = v.me;
   const [editing, setEditing] = useState<Course | null>(null);
+  const [slot, setSlot] = useState<{ day: number; block: { start: number; end: number } } | null>(null);
+  const [params, setParams] = useSearchParams();
+  const orgs = useAppStore((s) => s.organizations);
   const [busy, setBusy] = useState(false);
   const today = todayIdx();
   const showWeekend = me.timetable.some((c) => c.day >= 5);
@@ -45,6 +50,14 @@ export function TimetablePage() {
 
   const now = statusNow(me.timetable);
   const myFree = freeBlocks(me.timetable, today);
+  useEffect(() => {
+    if (params.get('open') && me.timetable.length) {
+      const now = nowMin();
+      const b = myFree.find((x) => x.end > now) ?? myFree[0];
+      if (b) setSlot({ day: today, block: { start: Math.max(b.start, now), end: b.end } });
+      setParams({}, { replace: true });
+    }
+  }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
   const friendIds = friendsOf(v.snap, me.id);
   const overlaps = friendIds.map((fid) => v.userById(fid)!).filter((f) => f && f.timetable.length > 0 && v.canSeeField(f, 'timetable'))
     .map((f) => ({ f, blocks: overlapBlocks(myFree, freeBlocks(f.timetable, today)) })).filter((x) => x.blocks.length > 0);
@@ -81,6 +94,20 @@ export function TimetablePage() {
           </div>
         )}
 
+        {me.timetable.length > 0 && myFree.filter((b) => b.end > nowMin()).length > 0 && (
+          <div className="card p-3.5">
+            <b className="text-[13px]">{t('오늘 공강에 끼워 넣을 수 있는 것')}</b>
+            <div className="mt-2 space-y-1.5">
+              {myFree.filter((b) => b.end > nowMin()).slice(0, 3).map((b) => { const sg = slotSuggestions({ ...v.snap, organizations: orgs }, me, v.visibleActivities, b, today, (u) => v.canSeeField(u, 'timetable')); return (
+                <button key={b.start} onClick={() => setSlot({ day: today, block: b })} className="w-full flex items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5 text-left press">
+                  <span className="text-[12px] font-bold text-mint tabular-nums">{fmtBlock(b)}</span>
+                  <span className="flex-1 text-[12px] text-ink-2 truncate">{lang === 'en' ? `${sg.people.length} free · ${sg.acts.length} nearby` : `시간 맞는 사람 ${sg.people.length}명 · 근처 활동 ${sg.acts.length}개`}</span>
+                  <span className="text-[11px] font-bold text-primary">{t('열기')}</span>
+                </button>
+              ); })}
+            </div>
+          </div>
+        )}
         {me.timetable.length === 0 ? (
           <EmptyState emoji="📅" title={t('시간표가 비어 있어요')} description={t('수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요.')}
             action={<Button icon={<Plus size={16} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('첫 수업 추가')}</Button>} />
@@ -93,7 +120,7 @@ export function TimetablePage() {
             <div className="grid border-t border-line" style={{ gridTemplateColumns: `34px repeat(${days.length}, 1fr)`, height: hours.length * HOUR_PX }}>
               <div className="relative">{hours.map((h, i) => <div key={h} className="absolute right-1.5 text-[10px] text-ink-3 tabular-nums" style={{ top: i * HOUR_PX + 2 }}>{h}</div>)}</div>
               {days.map((d) => (
-                <div key={d} className={cn('relative border-l border-line', d === today && 'bg-primary-soft/30')} onClick={(e) => { const y = e.nativeEvent.offsetY; const h = GRID_START + Math.floor(y / HOUR_PX); setEditing({ ...emptyCourse(d), start: toHHMM(h * 60), end: toHHMM(h * 60 + 75) }); }}>
+                <div key={d} className={cn('relative border-l border-line', d === today && 'bg-primary-soft/30')} onClick={(e) => { const y = e.nativeEvent.offsetY; const min = GRID_START * 60 + Math.floor(y / HOUR_PX) * 60; const fb = freeBlocks(me.timetable, d).find((b) => b.start <= min && min < b.end); if (fb && me.timetable.length) setSlot({ day: d, block: { start: Math.max(fb.start, Math.floor(min / 30) * 30), end: fb.end } }); else setEditing({ ...emptyCourse(d), start: toHHMM(min), end: toHHMM(min + 75) }); }}>
                   {hours.map((h, i) => <div key={h} className="absolute left-0 right-0 border-t border-line/70" style={{ top: i * HOUR_PX }} />)}
                   {me.timetable.filter((c) => c.day === d).map((c) => (
                     <button key={c.id} onClick={(e) => { e.stopPropagation(); setEditing(c); }} className="absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-left overflow-hidden press"
@@ -111,7 +138,7 @@ export function TimetablePage() {
                 </div>
               ))}
             </div>
-            <div className="px-3 py-2 text-[11px] text-ink-3 flex items-center gap-3 border-t border-line"><span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary-soft border-l-2 border-primary mr-1 align-middle" />{t('수업')}</span><span><span className="inline-block h-2.5 w-2.5 rounded-sm border-2 border-dashed border-mint mr-1 align-middle" />{t('참가 활동')}</span><span className="ml-auto">{t('빈 칸을 탭해 수업 추가')}</span></div>
+            <div className="px-3 py-2 text-[11px] text-ink-3 flex items-center gap-3 border-t border-line"><span><span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary-soft border-l-2 border-primary mr-1 align-middle" />{t('수업')}</span><span><span className="inline-block h-2.5 w-2.5 rounded-sm border-2 border-dashed border-mint mr-1 align-middle" />{t('참가 활동')}</span><span className="ml-auto">{t('공강을 탭하면 활동 열기 · 빈 칸은 수업 추가')}</span></div>
           </div>
         )}
 
@@ -145,6 +172,7 @@ export function TimetablePage() {
         <Button full size="lg" icon={<Plus size={18} />} onClick={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('수업 추가')}</Button>
       </div>
 
+      <OpenSlotSheet open={!!slot} onClose={() => setSlot(null)} day={slot?.day ?? today} block={slot?.block ?? null} />
       <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing?.id ? t('수업 수정') : t('수업 추가')}>
         {editing && (
           <div className="space-y-4">

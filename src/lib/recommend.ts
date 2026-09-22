@@ -14,7 +14,7 @@ export function matchReasons(me: User, other: User, snap: Pick<Snapshot, 'opport
   const shared = snap.opportunityIntents.filter((i) => i.userId === other.id && myOpps.has(i.opportunityId));
   for (const s of shared.slice(0, 1)) {
     const o = snap.opportunities.find((x) => x.id === s.opportunityId);
-    if (o) out.push({ kind: 'opportunity', weight: 5, text: `${o.title}${t('에 ')}${s.intent === 'applying' ? t('지원 예정') : t('관심')}` });
+    if (o) out.push({ kind: 'opportunity', weight: 5, text: `${o.title}${t('에 ')}${s.intent === 'going' ? t('지원 예정') : t('관심')}` });
   }
   const roleMatch = other.canOffer.filter((r) => me.lookingFor.includes(r));
   if (roleMatch.length) out.push({ kind: 'role', weight: 4, text: `${t('당신이 찾는 ')}${PERSON_ROLE_LABELS[roleMatch[0]]}${t(' 역할을 할 수 있어요')}` });

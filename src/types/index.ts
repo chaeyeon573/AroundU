@@ -115,6 +115,10 @@ export interface User {
   /** 관심 있는 연구실·조직 */
   interestedOrgIds: ID[];
   meetPreference: MeetPreference[];
+  /** Who's free에서 친구가 아닌 사람에게도 보이기 */
+  openToNew?: boolean;
+  /** 오늘의 질문 답변 */
+  dailyAnswer?: { questionId: string; answer: string; date: string };
   fieldVisibility: Record<ProfileField, Visibility>;
   settings: {
     messagePolicy: 'connected' | 'friends_only' | 'none';
@@ -134,7 +138,8 @@ export interface School {
 
 // ─── 기회 (행사·동아리 모집·연구실·인턴·장학금·해커톤·창업) ─────────────────
 export type OpportunityType = 'event' | 'club' | 'lab' | 'internship' | 'scholarship' | 'hackathon' | 'startup' | 'activity';
-export type OpportunityIntent = 'interested' | 'applying' | 'applied';
+/** 소셜 RSVP: 관심 / 갈 예정 / 혼자 가요 / 같이 갈 사람 찾아요 / 팀 찾는 중 / 이미 신청 / 참여 경험 있음 */
+export type OpportunityIntent = 'interested' | 'going' | 'solo' | 'company' | 'team' | 'applied' | 'done';
 
 export interface Opportunity {
   id: ID;
@@ -262,6 +267,8 @@ export interface Activity {
   invitedIds?: ID[];
   /** 기회에서 시작된 활동 (같이 지원·팀 모집) */
   opportunityId?: ID;
+  /** 시간표 공강에서 열린 활동 */
+  openSlot?: boolean;
   rolesNeeded?: Role[];
   comments: Comment[];
   /** 학교 공식 행사 여부 */
