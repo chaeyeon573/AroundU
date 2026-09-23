@@ -139,15 +139,15 @@ UCLA 와 SF State 는 공개 API 가 없어서 학교 스케줄 페이지에서 
 
 **동아리·소로리티·프래터니티** — `src/data/catalog/orgs.ts` 에 5개 캠퍼스 338개 조직이 있다. 그리스 조직은 IFC / Panhellenic / NPHC(Divine Nine) / MGC / Professional / Service 계열별로 전국 조직 사전(`NATIONAL_GREEK`)에서 골라 넣었고, 동아리는 CalLink 등 각 학교 학생단체 디렉터리 기준이다. 이 목록은 외부에서 가져온 것이 아니라 직접 정리한 **시작용 목록**이라 캠퍼스별 챕터 존재 여부가 검증되지 않았고, **모두 `verified: false`** 로 시작한다.
 
-실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink · UCLA · MIT · SF State 는 모두 CampusLabs Engage 공개 API 를 쓴다):
+실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink 1,550개 · SF State 289개 — CampusLabs Engage 공개 API, 실제 확인됨):
 
 ```bash
-npm run fetch:orgs                      # 4개 학교 전부 → DB 반영 + server/.data/orgs-<school>.csv
+npm run fetch:orgs                      # Berkeley + SF State → DB 반영 + server/.data/orgs-<school>.csv
 npm run fetch:orgs -- s_berkeley        # 한 학교만
 FETCH_DRY=1 npm run fetch:orgs          # CSV 만 만들고 DB 는 건드리지 않음
 ```
 
-카테고리 이름에 fraternity/sorority/Panhellenic/IFC/NPHC 가 있으면 `greek` 으로, 학생회는 `council` 로 분류된다. Stanford 는 Engage 를 쓰지 않으므로 CSV 로 넣거나 `ENGAGE_HOSTS=s_stanford=https://…` 로 호스트를 지정한다. 손으로 고칠 때는 CSV 로:
+카테고리 이름에 fraternity/sorority/Panhellenic/IFC/NPHC 가 있으면 `greek` 으로, 학생회는 `council` 로 분류된다. UCLA(SOLE) · MIT(CampusGroups) · Stanford 는 Engage 가 아니라서 이 API 가 없다. 학교 디렉터리에서 받은 표를 CSV 로 넣고, Engage 를 쓰는 학교를 더 붙일 땐 `ENGAGE_HOSTS=s_xxx=https://xxx.campuslabs.com/engage` 로 지정한다. 손으로 고칠 때는 CSV 로:
 
 ```bash
 # school_id,name,type,category,description,emoji,hue,website,instagram,dues,join_process

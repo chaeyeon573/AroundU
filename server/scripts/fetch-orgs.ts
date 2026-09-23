@@ -1,10 +1,11 @@
 /**
  * 학생 조직 목록을 CampusLabs Engage 디렉터리에서 직접 가져온다.
  *
- * 다섯 학교 모두 Engage(구 OrgSync/CollegiateLink) 기반 디렉터리를 쓰고, 로그인 없이 공개 검색 API 가 열려 있다:
- *   Berkeley  callink.berkeley.edu         UCLA  community.ucla.edu
- *   MIT       engage.mit.edu               SFSU  gatorxperience.sfsu.edu
- *   Stanford  (Engage 를 쓰지 않으면 ENGAGE_HOSTS 로 다른 호스트를 지정하거나 CSV 로 넣는다)
+ * CampusLabs Engage 디렉터리는 로그인 없이 공개 검색 API 가 열려 있다 (실제 확인됨):
+ *   Berkeley  callink.berkeley.edu            → 1,550개
+ *   SF State  sfsu.campuslabs.com/engage      → 289개
+ * UCLA(SOLE)·MIT(CampusGroups)·Stanford 는 Engage 가 아니라 이 API 가 없다 → CSV 로 넣거나(import-orgs.ts),
+ * Engage 를 쓰는 다른 학교를 추가하려면 ENGAGE_HOSTS="s_xxx=https://xxx.campuslabs.com/engage" 로 지정한다.
  *
  *   npm run fetch:orgs                     # 모든 학교 → orgs CSV 출력 + DB 반영
  *   npm run fetch:orgs -- s_berkeley       # 한 학교만
@@ -22,9 +23,7 @@ import { createStore, emptySnapshot } from '../store';
 
 const ENGAGE_HOSTS: Record<string, string> = {
   s_berkeley: 'https://callink.berkeley.edu',
-  s_ucla: 'https://community.ucla.edu',
-  s_mit: 'https://engage.mit.edu',
-  s_sfsu: 'https://gatorxperience.sfsu.edu',
+  s_sfsu: 'https://sfsu.campuslabs.com/engage',
   ...(process.env.ENGAGE_HOSTS ? Object.fromEntries(process.env.ENGAGE_HOSTS.split(',').map((p) => p.split('=') as [string, string])) : {}),
 };
 
