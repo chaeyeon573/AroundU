@@ -20,7 +20,7 @@ export function Chip({ active, onClick, children, className, color, size = 'md' 
       className={cn(
         'inline-flex items-center gap-1 rounded-full border font-medium whitespace-nowrap press',
         size === 'md' ? 'h-9 px-3.5 text-[13px]' : 'h-7 px-2.5 text-[12px]',
-        active ? 'bg-ink text-white border-ink' : 'bg-surface text-ink-2 border-line hover:bg-surface-2',
+        active ? 'bg-primary text-white border-primary' : 'bg-surface-2 text-ink border-transparent',
         !onClick && 'pointer-events-none',
         className,
       )}

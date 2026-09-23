@@ -2,43 +2,43 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 
-  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 
-  /* Wes Anderson palette: coral · mustard · blush · powder blue · sage · peach on cream */
+  /* Pastel Breeze: white canvas, slate cobalt actions, pastel sky blue accents */
   --color-bg: #FFFFFF;
   --color-surface: #FFFFFF;
-  --color-surface-2: #F4F3F0;
-  --color-line: #ECEAE5;
-  --color-ink: #2B2420;
-  --color-ink-2: #5E534B;
-  --color-ink-3: #9A8E83;
+  --color-surface-2: #F3F4ED;
+  --color-line: #E6E8E1;
+  --color-ink: #1A1C18;
+  --color-ink-2: #43474D;
+  --color-ink-3: #74777E;
 
-  --color-primary: #FF6F61;
-  --color-primary-deep: #E85B4E;
-  --color-primary-soft: #FFD2B5;
-  --color-accent: #FBBE02;
-  --color-accent-soft: #FFF0C2;
-  --color-mint: #6F9A6B;
-  --color-mint-soft: #C7D8B8;
-  --color-gold: #FBBE02;
-  --color-gold-soft: #FFE9A8;
-  --color-danger: #E5484D;
-  --color-danger-soft: #FDE8E9;
-  --color-heart: #FF6F61;
-  --color-heart-soft: #F1A7A1;
-  --color-verify: #5A8FD6;
-  --color-sky: #A7C6ED;
-  --color-sky-soft: #DCE8F8;
+  --color-primary: #0F2B48;
+  --color-primary-deep: #00162D;
+  --color-primary-soft: #D2E4FF;
+  --color-accent: #A3D5FF;
+  --color-accent-soft: #BFF4FF;
+  --color-mint: #2E7D5B;
+  --color-mint-soft: #DDF3E6;
+  --color-gold: #B8860B;
+  --color-gold-soft: #FFF1C9;
+  --color-danger: #BA1A1A;
+  --color-danger-soft: #FFDAD6;
+  --color-heart: #0F2B48;
+  --color-heart-soft: #A3D5FF;
+  --color-verify: #2E6388;
+  --color-sky: #A3D5FF;
+  --color-sky-soft: #D2E4FF;
   --color-blush: #F1A7A1;
   --color-peach: #FFD2B5;
   --color-sage: #C7D8B8;
 
   --radius-xl2: 20px;
   --radius-xl3: 28px;
-  --shadow-card: 0 1px 2px rgba(43, 36, 32, 0.04), 0 8px 24px rgba(120, 90, 60, 0.08);
-  --shadow-float: 0 12px 32px rgba(255, 111, 97, 0.32);
+  --shadow-card: 0 12px 32px -4px rgba(15, 43, 72, 0.08);
+  --shadow-float: 0 12px 32px rgba(15, 43, 72, 0.28);
   --shadow-sheet: 0 -8px 40px rgba(20, 22, 31, 0.14);
 }
 
@@ -52,7 +52,7 @@ body {
   overscroll-behavior-y: none;
 }
 @media (min-width: 640px) {
-  body { background: #EDEAE4; }
+  body { background: #EEF0EA; }
 }
 
 * { box-sizing: border-box; }
@@ -69,12 +69,13 @@ input, textarea, select { font: inherit; }
 }
 @utility card {
   background: var(--color-surface);
-  border-radius: var(--radius-xl2);
+  border-radius: 24px;
+  border: 1px solid rgba(177, 229, 255, 0.35);
   box-shadow: var(--shadow-card);
 }
 @utility font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 @utility press {
   transition: transform 120ms ease, opacity 120ms ease;

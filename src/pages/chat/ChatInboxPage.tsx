@@ -1,8 +1,11 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { t } from '@/i18n';
-import { Users, Building2, Inbox, MessageCircle, Check, X } from 'lucide-react';
+import { Users, Building2, Inbox, MessageCircle, Check, X, Search, Plus } from 'lucide-react';
+import { useMemo } from 'react';
+import { whosFree } from '@/lib/social';
+import { lang } from '@/i18n';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, Segmented, EmptyState, Button, Tag, CardSkeleton, ErrorState } from '@/components/ui';
+import { Avatar, EmptyState, Button, Tag, CardSkeleton, ErrorState, Chip } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/api';
@@ -35,12 +38,25 @@ export function ChatInboxPage() {
 
   const list = myRooms.filter((r) => r.type === tab);
   const reqCount = inProposals.length + inRequests.length;
+  const orgs = useAppStore((s) => s.organizations);
+  const snap = useMemo(() => ({ ...v.snap, organizations: orgs }), [v.snap, orgs]);
+  const free = useMemo(() => whosFree(snap, me, (u) => v.canSeeField(u, 'timetable')), [snap, me, v]);
 
   return (
     <div className="min-h-full">
-      <TopBar back title={t('메시지')} bell />
-      <div className="px-4 pt-2">
-        <Segmented value={tab} onChange={(t) => setParams({ tab: t })} options={[{ value: 'direct', label: t('개인') }, { value: 'activity', label: t('활동') }, { value: 'org', label: t('조직') }, { value: 'requests', label: reqCount ? `${t('요청 ')}${reqCount}` : t('요청') }]} />
+      <TopBar back title={lang === 'en' ? 'Direct Messages' : t('메시지')} bell />
+      <div className="px-4 pt-2 space-y-4">
+        <button onClick={() => nav('/search?tab=people')} className="w-full h-12 rounded-full bg-surface-2 flex items-center gap-2 px-4 text-[15px] text-ink-3"><Search size={18} />{lang === 'en' ? 'Search chats or mutuals…' : '대화·친구 검색'}</button>
+        {tab === 'direct' && free.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2"><span className="text-[12px] font-bold tracking-wide text-ink-3 uppercase">{lang === 'en' ? 'Free right now' : '지금 시간 되는 사람'}</span><span className="text-[13px] text-verify">{free.length}{lang === 'en' ? ' around campus' : '명'}</span></div>
+            <div className="flex gap-4 overflow-x-auto hide-scrollbar -mx-4 px-4">
+              {free.slice(0, 8).map((p) => <button key={p.u.id} onClick={() => nav(`/users/${p.u.id}?propose=1&cat=${p.category ?? 'coffee'}`)} className="flex flex-col items-center gap-1.5 shrink-0 w-[64px]"><span className="relative"><Avatar emoji={p.u.avatar.emoji} hue={p.u.avatar.hue} url={p.u.avatar.url} size={60} /><span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-accent ring-2 ring-white" /></span><span className="text-[12px] text-primary truncate max-w-full">{p.u.nickname}</span></button>)}
+              <button onClick={() => nav('/create/activity?kind=personal&now=1')} className="flex flex-col items-center gap-1.5 shrink-0 w-[64px]"><span className="h-[60px] w-[60px] rounded-full bg-surface-2 grid place-items-center text-primary"><Plus size={22} /></span><span className="text-[12px] text-ink-3">{lang === 'en' ? 'You' : '나'}</span></button>
+            </div>
+          </div>
+        )}
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4">{([['direct', t('개인')], ['activity', t('활동')], ['org', t('단체')], ['requests', reqCount ? `${t('요청 ')}${reqCount}` : t('요청')]] as [Tab, string][]).map(([k, l]) => <Chip key={k} size="sm" active={tab === k} onClick={() => setParams({ tab: k })}>{l}</Chip>)}</div>
       </div>
       {status === 'loading' && <CardSkeleton count={2} />}
       {status === 'error' && <ErrorState message={error ?? undefined} onRetry={init} />}
@@ -52,7 +68,7 @@ export function ChatInboxPage() {
               description={tab === 'direct' ? t('친구 요청 수락, 상호 관심, 활동 참가 승인 중 하나가 성립하면 대화를 시작할 수 있어요.') : tab === 'activity' ? t('활동에 참가하면 그룹 채팅방이 열려요.') : t('동아리·조직에 가입하거나 팔로우해보세요.')}
               action={<Button variant="outline" onClick={() => nav(tab === 'direct' ? '/' : tab === 'activity' ? '/discover' : '/community')}>{t('둘러보기')}</Button>} />
           ) : (
-            <div className="card divide-y divide-line">
+            <div className="divide-y divide-line">
               {list.map((r) => {
                 const other = r.type === 'direct' ? v.userById(r.memberIds.find((m) => m !== me.id)!) : undefined;
                 const org = r.orgId ? v.orgById(r.orgId) : undefined;
@@ -60,13 +76,14 @@ export function ChatInboxPage() {
                 const n = unread(r);
                 const avatar = other?.avatar ?? org?.logo ?? { emoji: r.type === 'activity' ? '🗓️' : '🏛️', hue: 220 };
                 return (
-                  <button key={r.id} onClick={() => nav(`/chats/${r.id}`)} className="w-full flex items-center gap-3 px-3.5 py-3 text-left press">
-                    <Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={48} className={cn(r.type !== 'direct' && '!rounded-2xl')} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5"><b className={cn('text-[14px] truncate', n > 0 && 'text-ink')}>{other?.nickname ?? r.title}</b>{r.type === 'activity' && <Users size={12} className="text-ink-3" />}{r.type === 'org' && <Building2 size={12} className="text-ink-3" />}<span className="text-[11px] text-ink-3 ml-auto shrink-0">{lm ? relativeTime(lm.createdAt) : ''}</span></div>
-                      <div className={cn('text-[13px] truncate mt-0.5', n > 0 ? 'text-ink font-medium' : 'text-ink-3')}>{lm?.text ?? t('대화를 시작해보세요')}</div>
+                  <button key={r.id} onClick={() => nav(`/chats/${r.id}`)} className="w-full flex items-center gap-3 py-3.5 text-left press">
+                    {r.type === 'direct' ? <Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={52} /> : <span className="h-[52px] w-[52px] rounded-full bg-primary text-white grid place-items-center shrink-0">{r.type === 'activity' ? <Users size={20} /> : <Building2 size={20} />}</span>}
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <span className={cn('text-[16px] font-semibold text-primary truncate shrink-0 max-w-[45%]')}>{other?.nickname ?? r.title}</span>
+                      <span className={cn('text-[15px] truncate', n > 0 ? 'text-ink' : 'text-ink-2')}>· {lm?.text ?? t('대화를 시작해보세요')}</span>
                     </div>
-                    {n > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[11px] font-bold grid place-items-center">{n}</span>}
+                    <span className="text-[12px] text-ink-3 shrink-0">{lm ? relativeTime(lm.createdAt) : ''}</span>
+                    {n > 0 && <span className="h-2.5 w-2.5 rounded-full bg-accent shrink-0" />}
                   </button>
                 );
               })}

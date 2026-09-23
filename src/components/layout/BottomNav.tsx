@@ -11,7 +11,7 @@ const items = [
   { to: '/', label: t('사람'), Icon: Users },
   { to: '/discover', label: t('발견'), Icon: Compass },
   { to: '/community', label: t('캠퍼스'), Icon: Building2 },
-  { to: '/profile', label: t('나'), Icon: User },
+  { to: '/profile', label: t('프로필'), Icon: User },
 ];
 
 /** 마지막으로 본 사람 (People 카드) — `+`에서 바로 초대할 때 사용 */
@@ -55,13 +55,13 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="shrink-0 bg-surface border-t border-line safe-bottom">
-        <div className="grid grid-cols-5 h-[60px] items-center">
+      <nav className="shrink-0 bg-surface/95 backdrop-blur border-t border-line safe-bottom">
+        <div className="grid grid-cols-5 h-[64px] items-center">
           {items.slice(0, 2).map((it) => <NavItem key={it.to} {...it} />)}
           <div className="grid place-items-center">
             <button onClick={() => setOpen(true)} aria-label={t('만들기')}
-              className="-mt-7 h-14 w-14 rounded-full bg-primary text-white grid place-items-center shadow-[var(--shadow-float)] press ring-4 ring-bg">
-              <Plus size={28} strokeWidth={2.6} />
+              className="-mt-6 h-[60px] w-[60px] rounded-full bg-primary text-white grid place-items-center shadow-[var(--shadow-float)] press">
+              <Plus size={28} strokeWidth={2.4} />
             </button>
           </div>
           {items.slice(2).map((it) => <NavItem key={it.to} {...it} />)}
@@ -86,8 +86,8 @@ export function BottomNav() {
 
 function NavItem({ to, label, Icon }: { to: string; label: string; Icon: typeof Users }) {
   return (
-    <NavLink to={to} end={to === '/'} className={({ isActive }) => cn('flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-semibold', isActive ? 'text-primary' : 'text-ink-3')}>
-      {({ isActive }) => (<><Icon size={22} strokeWidth={isActive ? 2.4 : 2} />{label}</>)}
+    <NavLink to={to} end={to === '/'} className={({ isActive }) => cn('flex flex-col items-center justify-center gap-1 h-full text-[11px] font-semibold', isActive ? 'text-primary' : 'text-ink-3')}>
+      {({ isActive }) => (<><Icon size={24} strokeWidth={isActive ? 2.4 : 1.8} />{label}</>)}
     </NavLink>
   );
 }
