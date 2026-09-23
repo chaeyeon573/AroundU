@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Ticket, Newspaper } from 'lucide-react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { BottomSheet } from '@/components/ui';
-import { cn } from '@/lib/cn';
-import type { Organization } from '@/types';
+import { cn } from '@core/lib/cn';
+import type { Organization } from '@core/types';
 
 /** 조직이 글을 쓸 때 종류를 고른다 — 종류에 따라 Clubs 외에 Teams / Activities / Feed에도 자동 노출 */
 export function OrgPostTypeSheet({ open, onClose, org }: { open: boolean; onClose: () => void; org: Organization }) {

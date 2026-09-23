@@ -1,6 +1,6 @@
-import type { Snapshot } from '@/api/types';
-import type { Activity, ID, User, ActivityCategory, TimePoll } from '@/types';
-import { t } from '@/i18n';
+import type { Snapshot } from '@core/api/types';
+import type { Activity, ID, User, ActivityCategory, TimePoll } from '@core/types';
+import { t } from '@core/i18n';
 import { statusNow, todayIdx, nowMin, toHHMM } from './timetable';
 import { friendsOf } from './relations';
 import { AVAILABILITY_LABELS, CATEGORY_LABELS, DAILY_QUESTIONS } from './labels';

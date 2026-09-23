@@ -1,6 +1,6 @@
-import type { Snapshot } from '@/api/types';
-import { t } from '@/i18n';
-import type { Activity, ID, Post, User, Visibility, ProfileField } from '@/types';
+import type { Snapshot } from '@core/api/types';
+import { t } from '@core/i18n';
+import type { Activity, ID, Post, User, Visibility, ProfileField } from '@core/types';
 import { pairKey } from './format';
 
 type Rel = Pick<Snapshot, 'relationships' | 'participations' | 'proposals' | 'users'>;

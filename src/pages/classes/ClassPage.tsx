@@ -1,13 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Users, Plus } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, EmptyState } from '@/components/ui';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { classmates } from '@/lib/relations';
-import { DAY_LABELS, statusNow } from '@/lib/timetable';
-import { todayISO, formatDate, formatTime } from '@/lib/format';
+import { classmates } from '@core/lib/relations';
+import { DAY_LABELS, statusNow } from '@core/lib/timetable';
+import { todayISO, formatDate, formatTime } from '@core/lib/format';
 
 /** 수업 공간 — 지금 공강인 같은 수업 학생 + Study Crew (ultra minimal) */
 export function ClassSpaceContent({ courseName, onEdit, onClose }: { courseName: string; onEdit?: () => void; onClose?: () => void }) {

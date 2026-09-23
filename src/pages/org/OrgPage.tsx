@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { BadgeCheck, Users, Megaphone, CalendarDays, Bell, MessageCircle, ExternalLink, ShieldCheck, PenSquare, Crown } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Cover, Tag, EmptyState, Chip, ChipRow } from '@/components/ui';
@@ -10,11 +10,11 @@ import { PostCard } from '@/components/cards/PostCard';
 import { OpportunityCard } from '@/components/cards/OpportunityCard';
 import { OrgPostTypeSheet } from '@/components/create/OrgPostTypeSheet';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { ORG_TYPE_LABELS } from '@/lib/labels';
-import { relativeTime, todayISO } from '@/lib/format';
-import { isTeamActivity } from '@/lib/discover';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { ORG_TYPE_LABELS } from '@core/lib/labels';
+import { relativeTime, todayISO } from '@core/lib/format';
+import { isTeamActivity } from '@core/lib/discover';
 
 type Tab = 'about' | 'posts' | 'events' | 'recruit' | 'members';
 

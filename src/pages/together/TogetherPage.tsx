@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, Plus, Users, ArrowRight, MapPin } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, EmptyState, BottomSheet, Input, Field } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { CATEGORY_LABELS } from '@/lib/labels';
-import { tally, optionLabel, closesIn } from '@/lib/together';
-import { addDaysISO } from '@/lib/format';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { CATEGORY_LABELS } from '@core/lib/labels';
+import { tally, optionLabel, closesIn } from '@core/lib/together';
+import { addDaysISO } from '@core/lib/format';
+import { cn } from '@core/lib/cn';
 
 /** Plan Together — 겹치는 시간에 표 던지기 (pure minimal) */
 export function TogetherPage() {

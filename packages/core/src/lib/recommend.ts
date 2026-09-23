@@ -1,9 +1,9 @@
-import type { Opportunity, OpportunityIntentRecord, User } from '@/types';
-import { t } from '@/i18n';
-import type { Snapshot } from '@/api/types';
+import type { Opportunity, OpportunityIntentRecord, User } from '@core/types';
+import { t } from '@core/i18n';
+import type { Snapshot } from '@core/api/types';
 import { GOAL_LABELS, PERSON_ROLE_LABELS, INTEREST_LABELS } from './labels';
 import { freeBlocks, overlapBlocks, todayIdx, fmtBlock } from './timetable';
-import { profileCompletion } from '@/data/prompts';
+import { profileCompletion } from '@core/data/prompts';
 
 export interface Reason { text: string; weight: number; kind: 'opportunity' | 'goal' | 'role' | 'time' | 'school' | 'living' | 'interest' | 'class' | 'new' }
 
@@ -77,7 +77,7 @@ export function opportunityScore(me: User, o: Opportunity, intents: OpportunityI
 }
 
 /** 같이 가는 종류(사람 찾기 의미 있음) vs 정보성 공고 */
-export const isTogetherType = (type: import('@/types').OpportunityType) => ['event', 'club', 'hackathon', 'startup', 'activity'].includes(type);
+export const isTogetherType = (type: import('@core/types').OpportunityType) => ['event', 'club', 'hackathon', 'startup', 'activity'].includes(type);
 
 export function daysUntil(iso: string) {
   const today = new Date(new Date().toISOString().slice(0, 10));

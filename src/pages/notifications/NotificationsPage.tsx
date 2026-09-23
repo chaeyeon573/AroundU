@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { UserCheck, Heart, CalendarCheck, CalendarX, Inbox, Clock, MessageSquare, ThumbsUp, UserPlus, Megaphone, MapPin, Sparkles, CheckCheck, AlarmClock, Users, Vote } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, EmptyState, CardSkeleton, ErrorState } from '@/components/ui';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { relativeTime } from '@/lib/format';
-import type { NotificationType } from '@/types';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { relativeTime } from '@core/lib/format';
+import type { NotificationType } from '@core/types';
+import { cn } from '@core/lib/cn';
 
 const ICONS: Record<NotificationType, { Icon: typeof Heart; cls: string }> = {
   friend_accepted: { Icon: UserCheck, cls: 'bg-mint-soft text-mint' },

@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 
 export function Field({ label, hint, children, right, required }: { label: string; hint?: string; children: ReactNode; right?: ReactNode; required?: boolean }) {
   return (

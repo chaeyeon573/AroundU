@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, X, Lock, ImageOff } from 'lucide-react';
-import type { PostInput } from '@/api';
-import type { PostType, Visibility } from '@/types';
+import type { PostInput } from '@core/api';
+import type { PostType, Visibility } from '@core/types';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, Field, Input, Textarea, Select, VisibilityList, Cover, Toggle, Chip, Avatar } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI, TOPIC_TAGS } from '@/lib/labels';
-import { friendsOf } from '@/lib/relations';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { ALL_POST_TYPES, POST_TYPE_LABELS, POST_TYPE_EMOJI, TOPIC_TAGS } from '@core/lib/labels';
+import { friendsOf } from '@core/lib/relations';
 import { photo } from '@/lib/assets';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 
 const EMOJIS = ['📷', '☕', '🍜', '📚', '🏃', '🎸', '🎨', '🌅', '🐈', '🎤', '💻', '🌸'];
 /** 데모용 샘플 사진 — 실제 서비스에서는 카메라·앨범 업로드 */

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -8,8 +8,8 @@ import { PersonCard } from '@/components/cards/PersonCard';
 import { ActivityCard } from '@/components/cards/ActivityCard';
 import { OrgCard } from '@/components/cards/OrgCard';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { INTEREST_LABELS } from '@/lib/labels';
+import { useAppStore } from '@core/store/useAppStore';
+import { INTEREST_LABELS } from '@core/lib/labels';
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();

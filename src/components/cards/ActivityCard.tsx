@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Clock, MapPin, Users, Map as MapIcon, BadgeCheck, Ticket, Lock } from 'lucide-react';
-import type { Activity } from '@/types';
+import type { Activity } from '@core/types';
 import { Avatar, Button, Cover, Tag, VisibilityTag } from '@/components/ui';
-import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, PERSON_ROLE_LABELS } from '@/lib/labels';
-import { formatDateTime, formatFee, formatTime } from '@/lib/format';
+import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, PERSON_ROLE_LABELS } from '@core/lib/labels';
+import { formatDateTime, formatFee, formatTime } from '@core/lib/format';
 import { useViewer } from '@/hooks/useViewer';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 import { JoinButton } from '@/components/cards/JoinButton';
 
 interface Props {

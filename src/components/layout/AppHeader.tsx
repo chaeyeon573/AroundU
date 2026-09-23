@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Bell, MessageCircle, Search, GraduationCap, ChevronDown, User } from 'lucide-react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useUnreadCounts } from '@/components/layout/TopBar';
 import { useViewer } from '@/hooks/useViewer';
 import { Avatar } from '@/components/ui';

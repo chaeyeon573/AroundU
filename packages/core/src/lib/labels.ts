@@ -1,7 +1,7 @@
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import type {
   ActivityCategory, Availability, Interest, JoinPolicy, Purpose, UniversityRole, Visibility, OrganizationType, ActivityKind, Gender, Goal, Role, Residence, OpportunityType, MeetPreference,
-} from '@/types';
+} from '@core/types';
 
 export const INTEREST_LABELS: Record<Interest, string> = {
   coffee: t('커피'), meal: t('식사'), study: t('공부'), exercise: t('운동'), walk: t('산책'), cycling: t('사이클'),
@@ -96,7 +96,7 @@ export const MEET_PREF_LABELS: Record<MeetPreference, string> = {
 export const MEET_PREF_EMOJI: Record<MeetPreference, string> = { same_hobby: '🎨', same_class: '📚', same_goal: '🎯', same_living: '🏠', new_people: '🌍' };
 export const ALL_MEET_PREFS = Object.keys(MEET_PREF_LABELS) as MeetPreference[];
 
-import type { OpportunityIntent, PostType, CrewType } from '@/types';
+import type { OpportunityIntent, PostType, CrewType } from '@core/types';
 export const POST_TYPE_LABELS: Record<PostType, string> = { story: t('그냥 이야기'), question: t('질문'), info: t('정보'), review: t('후기'), together: t('같이할 사람'), news: t('소식') };
 export const POST_TYPE_EMOJI: Record<PostType, string> = { story: '💬', question: '❓', info: '💡', review: '⭐', together: '🙋', news: '📣' };
 export const ALL_POST_TYPES = Object.keys(POST_TYPE_LABELS) as PostType[];
@@ -114,6 +114,6 @@ export const RSVP_LABELS: Record<OpportunityIntent, string> = {
   interested: t('관심 있어요'), going: t('갈 예정이에요'), solo: t('혼자 가요'), company: t('같이 갈 사람 찾아요'), team: t('팀을 찾고 있어요'), applied: t('이미 신청했어요'), done: t('참여 경험이 있어요'),
 };
 export const RSVP_EMOJI: Record<OpportunityIntent, string> = { interested: '👀', going: '✅', solo: '🚶', company: '🙋', team: '🧩', applied: '📨', done: '🏅' };
-export const DAILY_QUESTIONS: { id: string; text: string; options: { key: string; label: string; category?: import('@/types').ActivityCategory }[] }[] = [
+export const DAILY_QUESTIONS: { id: string; text: string; options: { key: string; label: string; category?: import('@core/types').ActivityCategory }[] }[] = [
   { id: 'd_free2h', text: t('오늘 갑자기 두 시간이 생긴다면?'), options: [{ key: 'lunch', label: t('점심'), category: 'meal' }, { key: 'nap', label: t('낮잠') }, { key: 'coffee', label: t('카페'), category: 'coffee' }, { key: 'exercise', label: t('운동'), category: 'exercise' }, { key: 'new_people', label: t('새로운 사람 만나기'), category: 'coffee' }] },
 ];

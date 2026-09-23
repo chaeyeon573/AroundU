@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Coffee, Sparkles, Utensils, BookOpen } from 'lucide-react';
 import { Avatar, Button, Chip, Toggle } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { t, lang } from '@/i18n';
-import { whosFree } from '@/lib/social';
-import { DAILY_QUESTIONS } from '@/lib/labels';
-import { todayISO } from '@/lib/format';
-import { toHHMM, nowMin } from '@/lib/timetable';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { t, lang } from '@core/i18n';
+import { whosFree } from '@core/lib/social';
+import { DAILY_QUESTIONS } from '@core/lib/labels';
+import { todayISO } from '@core/lib/format';
+import { toHHMM, nowMin } from '@core/lib/timetable';
 
 /** Who's free right now? — 친구·같은 행사·같은 조직·공개 동의한 사람만, 남은 공강 시간만 */
 export function WhosFreeSection({ limit = 4, compact }: { limit?: number; compact?: boolean }) {

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { Plus, X, Mic, Square, Play, Pause, Trash2, Check, BarChart3, Pencil } from 'lucide-react';
-import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@/types';
+import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@core/types';
 import { BottomSheet, Chip, Textarea, Tag } from '@/components/ui';
-import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, type PromptCategory } from '@/data/prompts';
-import { cn } from '@/lib/cn';
+import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, type PromptCategory } from '@core/data/prompts';
+import { cn } from '@core/lib/cn';
 
 // ─── 텍스트 질문 편집 ──────────────────────────────────────────────────────
 export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onChange: (v: ProfilePrompt[]) => void }) {

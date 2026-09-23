@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock, MapPin, ExternalLink, Users, Bookmark, Share2, Flag, MoreHorizontal, BadgeCheck, AlarmClock, CalendarPlus, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -10,13 +10,13 @@ import { ActivityCard } from '@/components/cards/ActivityCard';
 import { useOppState } from '@/components/cards/OpportunityCard';
 import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@/lib/labels';
-import type { OpportunityIntent } from '@/types';
-import { formatDate, formatDateTime, relativeTime } from '@/lib/format';
-import { dday, daysUntil, matchReasons, isTogetherType } from '@/lib/recommend';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@core/lib/labels';
+import type { OpportunityIntent } from '@core/types';
+import { formatDate, formatDateTime, relativeTime } from '@core/lib/format';
+import { dday, daysUntil, matchReasons, isTogetherType } from '@core/lib/recommend';
+import { cn } from '@core/lib/cn';
 
 export function OpportunityDetailPage() {
   const { id } = useParams();

@@ -1,7 +1,8 @@
 import type { Snapshot } from '../types';
-import * as seedKo from '@/data/seed';
-import * as seedEn from '@/data/seed.en';
-import { lang } from '@/i18n';
+import * as seedKo from '@core/data/seed';
+import * as seedEn from '@core/data/seed.en';
+import { lang } from '@core/i18n';
+import { getPlatform } from '@core/platform';
 
 const seed = lang === 'en' ? seedEn : seedKo;
 
@@ -36,7 +37,7 @@ function freshDB(): MockDB {
 
 export function loadDB(): MockDB {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = getPlatform().getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as MockDB;
       // 날짜가 바뀌면 '오늘' 기준 예시 데이터를 다시 만든다
@@ -49,7 +50,7 @@ export function loadDB(): MockDB {
 }
 
 export function saveDB(db: MockDB) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch { /* ignore quota */ }
+  try { getPlatform().setItem(STORAGE_KEY, JSON.stringify(db)); } catch { /* ignore quota */ }
 }
 
 export function resetDB(): MockDB {
@@ -59,8 +60,8 @@ export function resetDB(): MockDB {
 }
 
 export function getSession(): string | null {
-  try { return localStorage.getItem(SESSION_KEY); } catch { return null; }
+  try { return getPlatform().getItem(SESSION_KEY); } catch { return null; }
 }
 export function setSession(id: string | null) {
-  try { id ? localStorage.setItem(SESSION_KEY, id) : localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+  try { id ? getPlatform().setItem(SESSION_KEY, id) : getPlatform().removeItem(SESSION_KEY); } catch { /* ignore */ }
 }

@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, MessageCircle } from 'lucide-react';
 import { IconButton } from '@/components/ui';
-import { useAppStore } from '@/store/useAppStore';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { cn } from '@core/lib/cn';
 
 interface Props {
   title?: ReactNode;

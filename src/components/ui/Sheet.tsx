@@ -1,8 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 
 interface SheetProps {
   open: boolean;

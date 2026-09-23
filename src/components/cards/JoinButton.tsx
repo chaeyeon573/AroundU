@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Check, Clock, Settings2 } from 'lucide-react';
-import type { Activity } from '@/types';
+import type { Activity } from '@core/types';
 import { Button, BottomSheet, Textarea } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
 
 /** 참가 신청 버튼 — 참가 방식(바로/승인/초대)에 따라 상태가 달라진다 */
 export function JoinButton({ activity: a, className, size = 'md', label }: { activity: Activity; className?: string; size?: 'sm' | 'md' | 'lg'; /** 바로 참가/참가 신청 대신 쓸 라벨 (예: 같이 가기) */ label?: string }) {

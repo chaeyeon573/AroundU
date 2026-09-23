@@ -1,5 +1,5 @@
-import type { TimePoll, TimeOption, User, ID } from '@/types';
-import { t, lang } from '@/i18n';
+import type { TimePoll, TimeOption, User, ID } from '@core/types';
+import { t, lang } from '@core/i18n';
 import { freeBlocks, overlapBlocks, todayIdx, toHHMM, toMin, jsDayToIdx, type Block } from './timetable';
 import { addDaysISO, formatDate, formatTime } from './format';
 

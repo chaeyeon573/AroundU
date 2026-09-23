@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Heart } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, EmptyState, VerifiedBadge } from '@/components/ui';
 import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { friendsOf, followersOf, followingOf } from '@/lib/relations';
+import { useAppStore } from '@core/store/useAppStore';
+import { friendsOf, followersOf, followingOf } from '@core/lib/relations';
 
 const TITLES: Record<string, string> = { friends: t('친구'), followers: t('팔로워'), following: t('팔로잉'), likes: t('관심 목록') };
 

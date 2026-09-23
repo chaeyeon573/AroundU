@@ -1,4 +1,4 @@
-import { t, lang, locale } from '@/i18n';
+import { t, lang, locale } from '@core/i18n';
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 

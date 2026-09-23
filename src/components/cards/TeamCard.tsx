@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { Users, Clock, BookOpen, Wifi, MapPin } from 'lucide-react';
-import { t } from '@/i18n';
-import type { Activity } from '@/types';
+import { t } from '@core/i18n';
+import type { Activity } from '@core/types';
 import { Avatar, Tag } from '@/components/ui';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { PERSON_ROLE_LABELS, CREW_TYPE_LABELS, CREW_TYPE_EMOJI, MODE_LABELS } from '@/lib/labels';
-import { formatDateTime } from '@/lib/format';
+import { PERSON_ROLE_LABELS, CREW_TYPE_LABELS, CREW_TYPE_EMOJI, MODE_LABELS } from '@core/lib/labels';
+import { formatDateTime } from '@core/lib/format';
 
 /** 팀 모집·Study Crew 카드 — 필요한 역할과 내 역할이 맞는지 먼저 보여준다 */
 export function TeamCard({ activity: a }: { activity: Activity }) {

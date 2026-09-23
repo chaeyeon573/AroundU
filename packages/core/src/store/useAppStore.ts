@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { t } from '@/i18n';
-import { api, type Patch, type Snapshot } from '@/api';
-import type { ID, User } from '@/types';
+import { t } from '@core/i18n';
+import { api, type Patch, type Snapshot } from '@core/api';
+import type { ID, User } from '@core/types';
 
 type Status = 'idle' | 'loading' | 'ready' | 'error';
 

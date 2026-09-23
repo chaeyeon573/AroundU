@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { BadgeCheck, Users } from 'lucide-react';
-import type { Organization } from '@/types';
+import type { Organization } from '@core/types';
 import { Avatar, Tag } from '@/components/ui';
-import { ORG_TYPE_LABELS } from '@/lib/labels';
+import { ORG_TYPE_LABELS } from '@core/lib/labels';
 
 export function OrgCard({ org }: { org: Organization }) {
   const nav = useNavigate();

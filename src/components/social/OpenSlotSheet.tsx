@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarPlus, Coffee } from 'lucide-react';
-import type { ActivityCategory, Visibility } from '@/types';
+import type { ActivityCategory, Visibility } from '@core/types';
 import { BottomSheet, Button, Chip, Avatar, VisibilityList, Tag } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { t, lang } from '@/i18n';
-import { DAY_LABELS, toHHMM, todayIdx } from '@/lib/timetable';
-import { slotSuggestions } from '@/lib/social';
-import { PLACE_PRESETS } from '@/data/places';
-import { addDaysISO } from '@/lib/format';
-import { CATEGORY_EMOJI } from '@/lib/labels';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { t, lang } from '@core/i18n';
+import { DAY_LABELS, toHHMM, todayIdx } from '@core/lib/timetable';
+import { slotSuggestions } from '@core/lib/social';
+import { PLACE_PRESETS } from '@core/data/places';
+import { addDaysISO } from '@core/lib/format';
+import { CATEGORY_EMOJI } from '@core/lib/labels';
 
 const OPTIONS: { key: ActivityCategory | 'unknown'; label: string; emoji: string }[] = [
   { key: 'meal', label: t('점심'), emoji: '🍱' }, { key: 'coffee', label: t('커피'), emoji: '☕' }, { key: 'study', label: t('공부'), emoji: '📚' },

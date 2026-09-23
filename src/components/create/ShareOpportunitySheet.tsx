@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link2 } from 'lucide-react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { BottomSheet, Button, Chip, Field, Input, Textarea } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS } from '@/lib/labels';
-import type { OpportunityType } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { ALL_OPP_TYPES, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, OPP_TYPE_COLORS } from '@core/lib/labels';
+import type { OpportunityType } from '@core/types';
 
 /** 기회 공유하기 — 링크·제목·종류만 넣으면 Community > Opportunities에 올라간다 */
 export function ShareOpportunitySheet({ open, onClose }: { open: boolean; onClose: () => void }) {

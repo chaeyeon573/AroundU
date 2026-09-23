@@ -1,9 +1,9 @@
 /** English demo: a US campus (UC Berkeley) with Greek life, .edu verification and US-style opportunities */
 import type {
   Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll,
-} from '@/types';
-import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@/lib/format';
-import { photo } from '@/lib/assets';
+} from '@core/types';
+import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@core/lib/format';
+import { photo } from '@core/lib/assets';
 
 const T = todayISO();
 const T1 = addDaysISO(1);

@@ -1,5 +1,5 @@
-import type { Activity, ActivityCategory, Organization, Opportunity, Role } from '@/types';
-import { t } from '@/i18n';
+import type { Activity, ActivityCategory, Organization, Opportunity, Role } from '@core/types';
+import { t } from '@core/i18n';
 import { toMin, nowMin } from './timetable';
 import { todayISO } from './format';
 

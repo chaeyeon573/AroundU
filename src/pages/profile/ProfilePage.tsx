@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { Settings, Pencil, ShieldCheck, BadgeCheck, CalendarDays, ChevronRight, Users, CalendarCheck, Bookmark, MessageCircle, Building2, Quote } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Avatar, Button, CardSkeleton, ErrorState, Tag } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { INTEREST_LABELS } from '@/lib/labels';
-import { friendsOf } from '@/lib/relations';
-import { todayISO, formatDateTime } from '@/lib/format';
-import { DAY_LABELS, toMin, statusNow, freeBlocks, todayIdx, nowMin, fmtBlock, toHHMM } from '@/lib/timetable';
-import { profileCompletion, questionById } from '@/data/prompts';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { INTEREST_LABELS } from '@core/lib/labels';
+import { friendsOf } from '@core/lib/relations';
+import { todayISO, formatDateTime } from '@core/lib/format';
+import { DAY_LABELS, toMin, statusNow, freeBlocks, todayIdx, nowMin, fmtBlock, toHHMM } from '@core/lib/timetable';
+import { profileCompletion, questionById } from '@core/data/prompts';
+import { cn } from '@core/lib/cn';
 
 const H0 = 9, H1 = 18, PX = 26;
 

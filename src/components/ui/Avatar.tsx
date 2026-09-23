@@ -1,7 +1,7 @@
 import { BadgeCheck, ShieldCheck } from 'lucide-react';
-import { t } from '@/i18n';
-import { cn } from '@/lib/cn';
-import type { User } from '@/types';
+import { t } from '@core/i18n';
+import { cn } from '@core/lib/cn';
+import type { User } from '@core/types';
 import { assetUrl } from '@/lib/assets';
 
 interface AvatarProps {

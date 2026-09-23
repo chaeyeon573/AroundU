@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Bookmark, Clock, MapPin, Users, ExternalLink, BadgeCheck, AlarmClock } from 'lucide-react';
-import type { Opportunity } from '@/types';
+import type { Opportunity } from '@core/types';
 import { Cover, Tag, Button } from '@/components/ui';
-import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@/lib/labels';
-import { formatDateTime } from '@/lib/format';
-import { dday, daysUntil, isTogetherType } from '@/lib/recommend';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@core/lib/labels';
+import { formatDateTime } from '@core/lib/format';
+import { dday, daysUntil, isTogetherType } from '@core/lib/recommend';
 import { Heart } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '@core/store/useAppStore';
 import { useViewer } from '@/hooks/useViewer';
-import { api } from '@/api';
-import { cn } from '@/lib/cn';
+import { api } from '@core/api';
+import { cn } from '@core/lib/cn';
 
 export function useOppState(o: Opportunity) {
   const intents = useAppStore((s) => s.opportunityIntents);

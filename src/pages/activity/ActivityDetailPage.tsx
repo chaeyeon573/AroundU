@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -11,10 +11,10 @@ import { JoinButton } from '@/components/cards/JoinButton';
 import { SheetItem } from '@/components/cards/PostCard';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, KIND_LABELS } from '@/lib/labels';
-import { formatDate, formatTime, formatFee, relativeTime } from '@/lib/format';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS, JOIN_POLICY_LABELS, KIND_LABELS } from '@core/lib/labels';
+import { formatDate, formatTime, formatFee, relativeTime } from '@core/lib/format';
 
 export function ActivityDetailPage() {
   const { id } = useParams();

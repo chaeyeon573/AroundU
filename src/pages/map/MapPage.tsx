@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -9,11 +9,11 @@ import { Chip, ChipRow, BottomSheet, Button, Segmented, EmptyState, ErrorState, 
 import { ActivityCard, useHostInfo } from '@/components/cards/ActivityCard';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS } from '@/lib/labels';
-import { formatDateTime, isThisWeek, todayISO, formatFee } from '@/lib/format';
-import type { Activity, ActivityCategory } from '@/types';
-import { PLACE_PRESETS } from '@/data/places';
+import { useAppStore } from '@core/store/useAppStore';
+import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS } from '@core/lib/labels';
+import { formatDateTime, isThisWeek, todayISO, formatFee } from '@core/lib/format';
+import type { Activity, ActivityCategory } from '@core/types';
+import { PLACE_PRESETS } from '@core/data/places';
 
 /** 외부 타일을 불러올 수 없는 환경(VITE_MAP_TILES=off)에서는 캠퍼스 랜드마크 라벨로 대체 */
 export const TILES_ENABLED = import.meta.env.VITE_MAP_TILES !== 'off';
@@ -23,7 +23,7 @@ export function LandmarkLayer({ schoolId }: { schoolId: string }) {
   const places = PLACE_PRESETS[schoolId] ?? [];
   return <>{places.map((p) => <Marker key={p.name} position={[p.lat, p.lng]} interactive={false} icon={L.divIcon({ className: 'leaflet-div-icon', html: `<div class="au-landmark">${p.name}</div>`, iconSize: [0, 0], iconAnchor: [0, 0] })} />)}</>;
 }
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 
 type TimeRange = 'now' | 'today' | 'week';
 

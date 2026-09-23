@@ -1,14 +1,14 @@
 import type { AroundUApi, Patch, Snapshot } from '../types';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import type {
   Activity, ActivityProposal, ChatRoom, ID, Notification, Participation, Post, User, Opportunity, TimePoll,
-} from '@/types';
-import { freeBlocks, jsDayToIdx, toMin } from '@/lib/timetable';
+} from '@core/types';
+import { freeBlocks, jsDayToIdx, toMin } from '@core/lib/timetable';
 import { loadDB, resetDB, saveDB, getSession, setSession, type MockDB } from './db';
-import { DEMO_USER_ID } from '@/data/seed';
-import { uid, pairKey } from '@/lib/format';
-import { CATEGORY_LABELS } from '@/lib/labels';
-import { canMessage } from '@/lib/relations';
+import { DEMO_USER_ID } from '@core/data/seed';
+import { uid, pairKey } from '@core/lib/format';
+import { CATEGORY_LABELS } from '@core/lib/labels';
+import { canMessage } from '@core/lib/relations';
 
 let db: MockDB = loadDB();
 let failNextRequest = false;

@@ -1,5 +1,5 @@
 /** 프로필 질문 풀. Hinge식 구조: 텍스트 3개 필수 + 음성 1개·투표 1개 선택 */
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 export type PromptCategory = 'activity' | 'campus' | 'time' | 'style' | 'connect' | 'me';
 
 export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {

@@ -1,5 +1,5 @@
 import { Coffee, Utensils, BookOpen, Dumbbell, Music, Mic2, GraduationCap, FlaskConical, Handshake, Tag, Sparkles, Plane, type LucideIcon } from 'lucide-react';
-import type { ActivityCategory, OpportunityType } from '@/types';
+import type { ActivityCategory, OpportunityType } from '@core/types';
 
 /** 카테고리 아이콘 — 이모지 대신 단색 아이콘 */
 export const CATEGORY_ICON: Record<ActivityCategory, LucideIcon> = {

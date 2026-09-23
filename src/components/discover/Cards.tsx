@@ -1,17 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import { Lock, Users, ArrowUpRight } from 'lucide-react';
-import { t, lang } from '@/i18n';
-import type { Activity, Opportunity } from '@/types';
+import { t, lang } from '@core/i18n';
+import type { Activity, Opportunity } from '@core/types';
 import { Avatar } from '@/components/ui';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { CATEGORY_LABELS, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, CREW_TYPE_LABELS } from '@/lib/labels';
+import { useAppStore } from '@core/store/useAppStore';
+import { CATEGORY_LABELS, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, CREW_TYPE_LABELS } from '@core/lib/labels';
 import { CATEGORY_ICON, CATEGORY_TINT, OPP_ICON, OPP_TINT } from '@/lib/icons';
-import { placeLabel } from '@/lib/relations';
-import { formatDate, formatTime } from '@/lib/format';
-import { dday } from '@/lib/recommend';
-import { cn } from '@/lib/cn';
+import { placeLabel } from '@core/lib/relations';
+import { formatDate, formatTime } from '@core/lib/format';
+import { dday } from '@core/lib/recommend';
+import { cn } from '@core/lib/cn';
 
 /** Now: 큰 색 면 카드 하나에 무엇·언제·어디 — 글 3줄 */
 export function NowCard({ activity: a, inMin }: { activity: Activity; inMin: number }) {

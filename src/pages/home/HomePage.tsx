@@ -1,20 +1,20 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SlidersHorizontal, X, Clock, Zap, Bookmark, Heart, BadgeCheck, Hand } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { LAST_SEEN_KEY } from '@/components/layout/BottomNav';
 import { CardSkeleton, EmptyState, ErrorState, Button, BottomSheet, Chip } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@/lib/labels';
-import { commonInterests } from '@/lib/relations';
-import { matchScore, shareableReasons, type Reason } from '@/lib/recommend';
-import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@/lib/timetable';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@core/lib/labels';
+import { commonInterests } from '@core/lib/relations';
+import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
+import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
 import { assetUrl } from '@/lib/assets';
-import { cn } from '@/lib/cn';
-import type { User, Interest, Goal } from '@/types';
+import { cn } from '@core/lib/cn';
+import type { User, Interest, Goal } from '@core/types';
 
 interface Filters { years: number[]; sameDept: boolean; sameClass: boolean; freeNow: boolean; interests: Interest[]; goals: Goal[] }
 const EMPTY: Filters = { years: [], sameDept: false, sameClass: false, freeNow: false, interests: [], goals: [] };

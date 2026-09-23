@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Send, MoreVertical, Flag, Ban, Users, CalendarDays, LogOut } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -7,9 +7,9 @@ import { Avatar, Button, BottomSheet, Dialog, EmptyState } from '@/components/ui
 import { SheetItem } from '@/components/cards/PostCard';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { cn } from '@core/lib/cn';
 
 export function ChatRoomPage() {
   const { roomId } = useParams();

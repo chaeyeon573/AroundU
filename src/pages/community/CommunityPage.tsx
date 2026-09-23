@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, ArrowRight, PenSquare, Heart, MessageCircle } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Chip, Button, CardSkeleton, EmptyState, ErrorState, Avatar, Cover } from '@/components/ui';
 import { PostCard } from '@/components/cards/PostCard';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { opportunityScore, daysUntil, isTogetherType, dday } from '@/lib/recommend';
-import { ALL_POST_TYPES, POST_TYPE_LABELS, OPP_TYPE_LABELS } from '@/lib/labels';
-import { relativeTime } from '@/lib/format';
-import { cn } from '@/lib/cn';
-import type { OpportunityType, OrganizationType, PostType, Post } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { opportunityScore, daysUntil, isTogetherType, dday } from '@core/lib/recommend';
+import { ALL_POST_TYPES, POST_TYPE_LABELS, OPP_TYPE_LABELS } from '@core/lib/labels';
+import { relativeTime } from '@core/lib/format';
+import { cn } from '@core/lib/cn';
+import type { OpportunityType, OrganizationType, PostType, Post } from '@core/types';
 
 type Tab = 'feed' | 'opportunities' | 'clubs';
 

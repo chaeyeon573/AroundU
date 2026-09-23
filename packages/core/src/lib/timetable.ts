@@ -1,5 +1,5 @@
-import type { Course, User } from '@/types';
-import { t } from '@/i18n';
+import type { Course, User } from '@core/types';
+import { t } from '@core/i18n';
 import { AVAILABILITY_LABELS } from './labels';
 
 export const DAY_LABELS = [t('월'), t('화'), t('수'), t('목'), t('금'), t('토'), t('일')];

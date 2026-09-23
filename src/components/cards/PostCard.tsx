@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, CalendarCheck, Flag, Trash2, BadgeCheck, Users, Sparkles, Puzzle, Check } from 'lucide-react';
-import type { Post } from '@/types';
+import type { Post } from '@core/types';
 import { Avatar, Cover, Button, BottomSheet, Input } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { relativeTime } from '@/lib/format';
-import { POST_TYPE_LABELS, topicLabel, CATEGORY_EMOJI } from '@/lib/labels';
-import { isTeamActivity } from '@/lib/discover';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { relativeTime } from '@core/lib/format';
+import { POST_TYPE_LABELS, topicLabel, CATEGORY_EMOJI } from '@core/lib/labels';
+import { isTeamActivity } from '@core/lib/discover';
+import { cn } from '@core/lib/cn';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 
 export function PostCard({ post: p, className }: { post: Post; className?: string }) {

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { RefreshCw } from 'lucide-react';
 import { Button } from './Button';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={cn('skeleton', className)} />;

@@ -1,13 +1,14 @@
 import { en } from './en';
+import { getPlatform } from '@core/platform';
 
 export type Lang = 'ko' | 'en';
 const KEY = 'aroundu.lang';
 
 function readLang(): Lang {
   try {
-    const v = localStorage.getItem(KEY);
+    const v = getPlatform().getItem(KEY);
     if (v === 'en' || v === 'ko') return v;
-    return navigator.language.toLowerCase().startsWith('ko') ? 'ko' : 'en';
+    return getPlatform().locale().toLowerCase().startsWith('ko') ? 'ko' : 'en';
   } catch { return 'ko'; }
 }
 
@@ -15,9 +16,9 @@ export let lang: Lang = readLang();
 
 /** 언어 변경 — mock DB도 언어별로 분리되어 있어 새로고침으로 전체를 다시 그린다 */
 export function setLang(next: Lang) {
-  try { localStorage.setItem(KEY, next); } catch { /* */ }
+  try { getPlatform().setItem(KEY, next); } catch { /* */ }
   lang = next;
-  window.location.reload();
+  getPlatform().reload();
 }
 
 /** 한국어 원문을 키로 쓰는 번역 함수. 사전에 없으면 원문을 돌려준다 */

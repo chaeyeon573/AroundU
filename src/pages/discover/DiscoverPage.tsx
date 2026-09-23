@@ -1,23 +1,23 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Chip, CardSkeleton, EmptyState, ErrorState, Button, Avatar } from '@/components/ui';
 import { OrgCard } from '@/components/cards/OrgCard';
 import { OpenSlotSheet } from '@/components/social/OpenSlotSheet';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { nowActivities, ACTIVITY_CHIPS, TEAM_PURPOSE_CHIPS, teamItems, isTeamActivity } from '@/lib/discover';
-import { freeBlocks, todayIdx, fmtBlock, nowMin, toHHMM } from '@/lib/timetable';
-import { whosFree } from '@/lib/social';
-import { isTogetherType, daysUntil } from '@/lib/recommend';
-import { todayISO, formatTime, formatDate } from '@/lib/format';
-import { CATEGORY_LABELS, PERSON_ROLE_LABELS, CREW_TYPE_LABELS, OPP_TYPE_LABELS } from '@/lib/labels';
-import { dday } from '@/lib/recommend';
-import { cn } from '@/lib/cn';
-import type { Activity, Opportunity } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { nowActivities, ACTIVITY_CHIPS, TEAM_PURPOSE_CHIPS, teamItems, isTeamActivity } from '@core/lib/discover';
+import { freeBlocks, todayIdx, fmtBlock, nowMin, toHHMM } from '@core/lib/timetable';
+import { whosFree } from '@core/lib/social';
+import { isTogetherType, daysUntil } from '@core/lib/recommend';
+import { todayISO, formatTime, formatDate } from '@core/lib/format';
+import { CATEGORY_LABELS, PERSON_ROLE_LABELS, CREW_TYPE_LABELS, OPP_TYPE_LABELS } from '@core/lib/labels';
+import { dday } from '@core/lib/recommend';
+import { cn } from '@core/lib/cn';
+import type { Activity, Opportunity } from '@core/types';
 
 type Tab = 'now' | 'activities' | 'teams';
 

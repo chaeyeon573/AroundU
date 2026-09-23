@@ -1,18 +1,18 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Users, Building2, Inbox, MessageCircle, Check, X, Search, Plus } from 'lucide-react';
 import { useMemo } from 'react';
-import { whosFree } from '@/lib/social';
-import { lang } from '@/i18n';
+import { whosFree } from '@core/lib/social';
+import { lang } from '@core/i18n';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, EmptyState, Button, Tag, CardSkeleton, ErrorState, Chip } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { relativeTime } from '@/lib/format';
-import { CATEGORY_EMOJI, CATEGORY_LABELS } from '@/lib/labels';
-import type { ChatRoom } from '@/types';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { relativeTime } from '@core/lib/format';
+import { CATEGORY_EMOJI, CATEGORY_LABELS } from '@core/lib/labels';
+import type { ChatRoom } from '@core/types';
+import { cn } from '@core/lib/cn';
 
 type Tab = 'direct' | 'activity' | 'org' | 'requests';
 

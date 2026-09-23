@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Bell, Check, GraduationCap, MapPin, Search, ShieldCheck } from 'lucide-react';
-import type { RegisterInput } from '@/api';
-import type { Availability, Gender, Interest, Purpose, School, UniversityRole, Visibility, ProfileField } from '@/types';
+import type { RegisterInput } from '@core/api';
+import type { Availability, Gender, Interest, Purpose, School, UniversityRole, Visibility, ProfileField } from '@core/types';
 import { Button, Chip, Field, Input, Textarea, Select, Segmented, Toggle, VisibilityPicker } from '@/components/ui';
 import { TopBar } from '@/components/layout/TopBar';
-import { ALL_AVAILABILITY, ALL_INTERESTS, ALL_PURPOSES, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS, GENDER_LABELS, ALL_GOALS, GOAL_EMOJI, GOAL_LABELS, ALL_MEET_PREFS, MEET_PREF_LABELS, MEET_PREF_EMOJI } from '@/lib/labels';
-import type { Goal, MeetPreference } from '@/types';
-import { api } from '@/api';
-import { useAppStore } from '@/store/useAppStore';
-import { cn } from '@/lib/cn';
+import { ALL_AVAILABILITY, ALL_INTERESTS, ALL_PURPOSES, AVAILABILITY_LABELS, INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS, GENDER_LABELS, ALL_GOALS, GOAL_EMOJI, GOAL_LABELS, ALL_MEET_PREFS, MEET_PREF_LABELS, MEET_PREF_EMOJI } from '@core/lib/labels';
+import type { Goal, MeetPreference } from '@core/types';
+import { api } from '@core/api';
+import { useAppStore } from '@core/store/useAppStore';
+import { cn } from '@core/lib/cn';
 import { PromptEditor, VoicePromptEditor, PollEditor } from '@/components/prompts/PromptComponents';
-import { REQUIRED_TEXT_PROMPTS } from '@/data/prompts';
+import { REQUIRED_TEXT_PROMPTS } from '@core/data/prompts';
 
 const STEPS = ['basic', 'school', 'interests', 'profile', 'prompts', 'permissions'] as const;
 type Step = typeof STEPS[number];

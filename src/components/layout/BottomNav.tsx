@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Plus, User, Users, Compass, CalendarPlus, Image, Lightbulb, Zap, BookOpen, Vote, Building2 } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { cn } from '@core/lib/cn';
 import { BottomSheet } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '@core/store/useAppStore';
 
 const items = [
   { to: '/', label: t('사람'), Icon: Users },

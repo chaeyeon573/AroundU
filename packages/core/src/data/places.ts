@@ -1,4 +1,4 @@
-import type { Place } from '@/types';
+import type { Place } from '@core/types';
 
 /** 학교별 자주 쓰는 장소 프리셋 (지도 탭으로 직접 선택도 가능) */
 export const PLACE_PRESETS: Record<string, Place[]> = {

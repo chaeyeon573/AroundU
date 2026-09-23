@@ -1,17 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Heart, UserPlus, Clock, MapPin, X, Sparkles } from 'lucide-react';
-import type { User } from '@/types';
+import type { User } from '@core/types';
 import { Portrait, VerifiedBadge, Tag, Button } from '@/components/ui';
-import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS } from '@/lib/labels';
+import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ROLE_LABELS } from '@core/lib/labels';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { commonInterests } from '@/lib/relations';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { commonInterests } from '@core/lib/relations';
+import { cn } from '@core/lib/cn';
 import { PromptAnswerCard } from '@/components/prompts/PromptComponents';
-import { availabilityText } from '@/lib/timetable';
-import { matchReasons } from '@/lib/recommend';
+import { availabilityText } from '@core/lib/timetable';
+import { matchReasons } from '@core/lib/recommend';
 import { CheckCircle2 } from 'lucide-react';
 
 interface Props {
