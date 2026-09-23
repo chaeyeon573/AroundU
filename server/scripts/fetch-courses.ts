@@ -37,7 +37,10 @@ async function stanford(): Promise<CatalogCourse[]> {
       const subject = g('subject'); if (subject !== subj) continue;
       const code = `${subject} ${g('code')}`;
       const meetings: Meeting[] = []; let location = ''; let instructor = '';
-      for (const s of b.matchAll(/<schedule>([\s\S]*?)<\/schedule>/g)) {
+      // 섹션이 여러 개(강의 + 토론·랩)면 강의(LEC) 섹션 하나만 시간표에 넣는다. 강의가 없으면 첫 섹션.
+      const sections = [...b.matchAll(/<section>([\s\S]*?)<\/section>/g)].map((m) => m[1]);
+      const lecture = sections.find((sec) => /<component>LEC<\/component>/.test(sec)) ?? sections[0] ?? b;
+      for (const s of lecture.matchAll(/<schedule>([\s\S]*?)<\/schedule>/g)) {
         const days = g('days', s[1]); const st = g('startTime', s[1]); const en = g('endTime', s[1]);
         if (!days || !st || !en) continue;
         location ||= g('location', s[1]);
