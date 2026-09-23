@@ -1,0 +1,155 @@
+import { useMemo, useRef, useState } from 'react';
+import { tw } from '@/tw';
+import { Dimensions, FlatList, Pressable, Text, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
+import { SlidersHorizontal, Clock, Zap, Bookmark, Heart, BadgeCheck, Hand } from 'lucide-react-native';
+import { t, lang } from '@core/i18n';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { getPlatform } from '@core/platform';
+import { INTEREST_LABELS } from '@core/lib/labels';
+import { commonInterests } from '@core/lib/relations';
+import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
+import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
+import type { User } from '@core/types';
+import { useViewer } from '@/viewer';
+import { AppHeader, C } from '@/ui';
+
+const W = Dimensions.get('window').width;
+const CARD_W = W - 32;
+const GAP = 12;
+const gradYear = (u: User) => (u.affiliation.type === 'university' ? `'${String(u.affiliation.year + 4).slice(2)}` : '');
+
+/** 사람 — 전체 화면 사진 카드, 옆으로 넘겨 보기 (Pastel Breeze) */
+export default function PeopleScreen() {
+  const run = useAppStore((s) => s.run);
+  const opps = useAppStore((s) => s.opportunities);
+  const intents = useAppStore((s) => s.opportunityIntents);
+  const v = useViewer();
+  const me = v.me;
+  const [idx, setIdx] = useState(0);
+  const [saved, setSaved] = useState<string[]>([]);
+  const list = useRef<FlatList<Card>>(null);
+
+  type Card = { u: User; reasons: Reason[]; score: number };
+  const cards: Card[] = useMemo(() => v.visibleUsers
+    .map((u) => ({ u, ...matchScore(me, u, { opportunities: opps, opportunityIntents: intents }, v.canSeeField(u, 'timetable')) }))
+    .map((x) => ({ ...x, score: x.score + commonInterests(me, x.u).length * 0.5 }))
+    .sort((a, b) => b.score - a.score).slice(0, 20), [v, me, opps, intents]);
+  const current = cards[Math.min(idx, Math.max(0, cards.length - 1))];
+  const onCampus = v.visibleUsers.filter((u) => u.timetable.length ? statusNow(u.timetable).kind !== 'none' : u.availability !== 'hidden').length * 3 + 6;
+
+  const connect = async (u: User) => {
+    if (v.isFriend(u.id) || v.pendingOut(u.id)) return;
+    try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
+  };
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => setIdx(Math.round(e.nativeEvent.contentOffset.x / (CARD_W + GAP)));
+  const connected = current ? !!(v.isFriend(current.u.id) || v.pendingOut(current.u.id)) : false;
+  const isSaved = current ? saved.includes(current.u.id) : false;
+
+  return (
+    <SafeAreaView edges={['top']} style={tw`flex-1 bg-white`}>
+      <AppHeader />
+      <View style={tw`px-4 pt-1 pb-3 flex-row items-center`}>
+        <View style={tw`h-9 px-3.5 rounded-full bg-surface-2 flex-row items-center`}>
+          <View style={tw`h-2 w-2 rounded-full bg-primary mr-2`} />
+          <Text style={tw`text-[13px] font-medium text-primary`}>{lang === 'en' ? `${onCampus} students on campus now` : `지금 캠퍼스에 ${onCampus}명`}</Text>
+        </View>
+        <View style={tw`flex-1`} />
+        <Pressable style={tw`h-10 w-10 rounded-full bg-surface-2 items-center justify-center`}><SlidersHorizontal size={18} color={C.ink2} /></Pressable>
+      </View>
+
+      {!current ? (
+        <View style={tw`flex-1 items-center justify-center`}><Text style={tw`text-[15px] text-ink-3`}>{t('이 조건에 맞는 사람이 아직 없어요')}</Text></View>
+      ) : (
+        <View style={tw`flex-1`}>
+          <FlatList
+            ref={list}
+            data={cards}
+            keyExtractor={(c) => c.u.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={CARD_W + GAP}
+            decelerationRate="fast"
+            contentContainerStyle={{ paddingHorizontal: 16, gap: GAP }}
+            onMomentumScrollEnd={onScroll}
+            renderItem={({ item }) => <PersonSlide user={item.u} reasons={item.reasons} />}
+          />
+          <View style={tw`pt-4 pb-2 items-center`}>
+            <View style={[tw`flex-row items-center`, { gap: 32 }]}>
+              <Pressable onPress={() => setSaved((s) => (isSaved ? s.filter((x) => x !== current.u.id) : [...s, current.u.id]))} style={tw`h-[68px] w-[68px] rounded-full items-center justify-center ${isSaved ? 'bg-primary' : 'bg-surface-2'}`}>
+                <Bookmark size={26} color={isSaved ? '#fff' : C.primary} fill={isSaved ? '#fff' : 'none'} />
+              </Pressable>
+              <Pressable onPress={() => connect(current.u)} style={[tw`h-[84px] w-[84px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
+                {connected ? <Hand size={32} color="#fff" /> : <Heart size={34} color={C.primary} />}
+              </Pressable>
+            </View>
+            <Text style={tw`mt-3 text-[12px] text-ink-3`}>{lang === 'en' ? 'Swipe to browse · Tap card for details' : '옆으로 넘겨 보기 · 카드를 누르면 프로필'}</Text>
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
+
+/** 카드: 사진 전체 + 아래 그라데이션 위에 이름·학과·찾는 것·칩 3개 */
+function PersonSlide({ user, reasons }: { user: User; reasons: Reason[] }) {
+  const v = useViewer();
+  const [pi, setPi] = useState(0);
+  const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
+  const common = commonInterests(v.me, user);
+  const want = v.canSeeField(user, 'prompts') && user.prompts[0]?.answer ? user.prompts[0].answer : user.nowWant;
+  const reason = shareableReasons(reasons)[0];
+  const dept = user.affiliation.type === 'university' && user.affiliation.showDepartment ? user.affiliation.department : '';
+  const school = user.affiliation.type === 'university' && user.affiliation.showSchool ? user.affiliation.schoolName.replace(/대학교|University|UC /g, '').trim() : '';
+  const canSeeTT = user.timetable.length > 0 && v.canSeeField(user, 'timetable');
+  const st = canSeeTT ? statusNow(user.timetable) : null;
+  const block = canSeeTT ? freeBlocks(user.timetable, todayIdx()).find((b) => b.end > nowMin()) : null;
+  const freeLabel = st?.kind === 'free' && block ? `${t('공강')} ${fmtBlock({ start: Math.max(block.start, nowMin()), end: block.end })}` : user.availability === 'now' ? t('지금 가능') : null;
+  const tap = (x: number) => {
+    if (photos.length > 1 && x < CARD_W * 0.3) setPi((p) => (p - 1 + photos.length) % photos.length);
+    else if (photos.length > 1 && x > CARD_W * 0.7) setPi((p) => (p + 1) % photos.length);
+  };
+  return (
+    <View style={[tw`flex-1 rounded-[32px] overflow-hidden bg-primary`, { width: CARD_W }]}>
+      <Pressable style={{ flex: 1 }} onPress={(e) => tap(e.nativeEvent.locationX)}>
+        {photos.length > 0
+          ? <Image source={getPlatform().asset(photos[pi]) as number} style={{ position: 'absolute', inset: 0 }} contentFit="cover" transition={150} />
+          : <View style={tw`absolute inset-0 items-center justify-center`}><Text style={{ fontSize: 96 }}>{user.avatar.emoji}</Text></View>}
+        <LinearGradient colors={['rgba(15,43,72,0)', 'rgba(15,43,72,0.25)', 'rgba(15,43,72,0.88)']} locations={[0.3, 0.55, 1]} style={{ position: 'absolute', inset: 0 }} />
+      </Pressable>
+      {photos.length > 1 && (
+        <View style={[tw`absolute top-3 left-4 right-4 flex-row`, { gap: 4 }]}>
+          {photos.map((_, i) => <View key={i} style={[tw`h-[3px] flex-1 rounded-full`, { backgroundColor: i === pi ? '#fff' : 'rgba(255,255,255,0.4)' }]} />)}
+        </View>
+      )}
+      {freeLabel && (
+        <View style={[tw`absolute top-6 left-4 h-8 pl-3 pr-3.5 rounded-full flex-row items-center`, { backgroundColor: 'rgba(255,255,255,0.88)' }]}>
+          <Clock size={14} color={C.verify} /><Text style={tw`ml-1.5 text-[12px] font-semibold text-primary`}>{freeLabel}</Text>
+        </View>
+      )}
+      {user.affiliation.type === 'university' && user.affiliation.emailVerified && (
+        <View style={[tw`absolute top-6 right-4 h-8 w-8 rounded-full items-center justify-center`, { backgroundColor: 'rgba(255,255,255,0.88)' }]}><BadgeCheck size={16} color={C.verify} /></View>
+      )}
+      <View pointerEvents="none" style={tw`absolute left-0 right-0 bottom-0 p-6`}>
+        <View style={[tw`flex-row items-baseline`, { gap: 8 }]}>
+          <Text style={tw`text-[30px] font-bold text-white`}>{user.nickname}</Text>
+          <Text style={tw`text-[22px] text-white opacity-90`}>{new Date().getFullYear() - user.birthYear + 1}</Text>
+        </View>
+        <Text style={tw`text-[15px] text-accent`}>{dept}{gradYear(user) ? ` • ${school} ${gradYear(user)}` : ''}</Text>
+        {(want || reason) && (
+          <View style={[tw`mt-2.5 self-start h-9 px-3.5 rounded-full flex-row items-center`, { backgroundColor: 'rgba(255,255,255,0.15)', maxWidth: '100%' }]}>
+            <Zap size={15} color={C.accent} /><Text numberOfLines={1} style={tw`ml-2 text-[13px] font-medium text-white shrink`}>{want ?? reason?.text}</Text>
+          </View>
+        )}
+        <View style={[tw`mt-3 flex-row flex-wrap`, { gap: 6 }]}>
+          {(common.length ? common : user.interests).slice(0, 3).map((i) => (
+            <View key={i} style={tw`h-8 px-3.5 rounded-full bg-primary-soft items-center justify-center`}><Text style={tw`text-[12px] font-semibold text-primary`}>{INTEREST_LABELS[i]}</Text></View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}

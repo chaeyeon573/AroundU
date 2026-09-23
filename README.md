@@ -20,6 +20,23 @@ npm run preview    # 빌드 결과 미리보기
 
 모든 데이터는 `localStorage`에 저장되는 mock API 위에서 동작합니다. 설정 → 데모 도구 → **데모 데이터 초기화**로 되돌릴 수 있습니다.
 
+## 모바일 앱 (Expo) — `apps/mobile`
+
+웹과 같은 도메인 코드(`packages/core`: 타입·API·mock DB·스토어·i18n·추천 로직)를 그대로 쓰는 React Native 앱입니다. 화면만 RN으로 다시 그립니다. 지금은 **사람 탭**이 이식돼 있고, 나머지 탭은 플레이스홀더입니다.
+
+```bash
+npm install                 # 루트에서 한 번 (npm workspaces: packages/core, apps/mobile)
+cd apps/mobile
+npx expo start              # QR 코드 → 폰의 Expo Go 앱으로 스캔 (같은 Wi-Fi)
+npx expo start --tunnel     # 다른 네트워크면 tunnel
+npx expo export --platform ios,android   # 번들만 만들어 보기 (CI 검증용)
+```
+
+- 폰에 **Expo Go**(App Store / Play 스토어)를 설치한 뒤 QR을 찍으면 바로 실행됩니다.
+- 앱스토어 제출은 `npx eas build --platform ios|android` (EAS 계정 필요), 스토어 등록 전에 `app.json`의 번들 ID·아이콘을 바꿉니다.
+- 스타일은 `twrnc`(런타임 Tailwind)로 웹과 같은 클래스 이름·토큰(`apps/mobile/tailwind.config.js`)을 씁니다. 사진은 `apps/mobile/assets/photos` + `src/photos.ts`의 `require` 맵으로 들어갑니다.
+- 저장소는 AsyncStorage를 앱 시작 시 메모리로 올려(`src/platform.ts`의 `hydrate`) core의 동기 저장소 인터페이스에 맞춥니다.
+
 ## 기술 스택
 
 | 영역 | 선택 |
