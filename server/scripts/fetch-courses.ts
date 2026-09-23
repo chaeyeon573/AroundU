@@ -32,7 +32,8 @@ async function stanford(): Promise<CatalogCourse[]> {
     const xml = await (await fetch(url, { headers: { 'user-agent': 'AroundU-importer' } })).text();
     for (const c of xml.matchAll(/<course>([\s\S]*?)<\/course>/g)) {
       const b = c[1];
-      const g = (tag: string, src = b) => src.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`))?.[1]?.trim() ?? '';
+      const unesc = (x: string) => x.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
+      const g = (tag: string, src = b) => unesc(src.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`))?.[1]?.trim() ?? '');
       const subject = g('subject'); if (subject !== subj) continue;
       const code = `${subject} ${g('code')}`;
       const meetings: Meeting[] = []; let location = ''; let instructor = '';
