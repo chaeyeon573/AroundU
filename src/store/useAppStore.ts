@@ -86,7 +86,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       chatRooms: upsert(s.chatRooms, patch.chatRooms, patch.removed?.chatRooms),
       notifications: upsert(s.notifications, patch.notifications),
       reports: upsert(s.reports, patch.reports),
-      opportunities: upsert(s.opportunities, patch.opportunities),
+      opportunities: upsert(s.opportunities, patch.opportunities, patch.removed?.opportunities),
       opportunityIntents: upsert(s.opportunityIntents, patch.opportunityIntents, patch.removed?.opportunityIntents),
       timePolls: upsert(s.timePolls, patch.timePolls, patch.removed?.timePolls),
       relationships: patch.relationships ? structuredClone(patch.relationships) : s.relationships,

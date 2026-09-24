@@ -8,6 +8,7 @@
  *   - type: event | club | lab | internship | scholarship | hackathon | startup | activity
  *   - deadline / date: YYYY-MM-DD. 모르면 비워 둔다 — 지어내지 말고 description 에 "보통 3월" 처럼 적는다
  *   - id 는 school_id + title 로 만들어지므로 같은 제목을 다시 넣으면 갱신된다 (저장·Q&A·후기는 유지)
+ *   - PRUNE_DEMO=1 이면 CSV 에 있는 학교의 데모 시드 공고(링크가 example.com 이거나 없는 것)와 그에 딸린 저장 기록을 지운다
  */
 import { readFileSync } from 'node:fs';
 import type { Opportunity, OpportunityType, Goal } from '@/types';
@@ -51,6 +52,13 @@ for (const r of rows) {
   });
 }
 console.log(`${out.length} opportunities (${out.filter((o) => existing.has(o.id)).length} updated, ${out.filter((o) => !o.deadline && !o.date).length} without a confirmed date)`);
-await store.applyPatch({ opportunities: out });
+const schools = new Set(out.map((o) => o.schoolId));
+const demo = process.env.PRUNE_DEMO === '1'
+  ? snap.opportunities.filter((o) => o.schoolId && schools.has(o.schoolId) && !out.some((n) => n.id === o.id) && (!o.sourceUrl || /(^|\.)example\.com\//.test(o.sourceUrl) || /instagram\.com\/example/.test(o.sourceUrl)))
+  : [];
+const demoIds = new Set(demo.map((o) => o.id));
+const intents = snap.opportunityIntents.filter((i) => demoIds.has(i.opportunityId)).map((i) => i.id);
+if (demo.length) console.log(`prune demo: ${demo.length} opportunities (${demo.map((o) => o.title).join(' · ')}), ${intents.length} intents`);
+await store.applyPatch({ opportunities: out, removed: { opportunities: [...demoIds], opportunityIntents: intents } });
 console.log('DB 반영 완료');
 process.exit(0);
