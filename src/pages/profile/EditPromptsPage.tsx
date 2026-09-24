@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, Field, VisibilityPicker } from '@/components/ui';
 import { PromptEditor, VoicePromptEditor, PollEditor, CompletionMeter } from '@/components/prompts/PromptComponents';
-import { profileCompletion, REQUIRED_TEXT_PROMPTS } from '@core/data/prompts';
+import { profileCompletion, REQUIRED_TEXT_PROMPTS, promptsSatisfyRules } from '@core/data/prompts';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@core/store/useAppStore';
 import { api } from '@core/api';
@@ -22,7 +22,7 @@ export function EditPromptsPage() {
   const [visibility, setVisibility] = useState<Visibility>(me.fieldVisibility.prompts);
   const [busy, setBusy] = useState(false);
   const answered = prompts.filter((p) => p.answer.trim()).length;
-  const ok = answered >= REQUIRED_TEXT_PROMPTS && prompts.every((p) => p.answer.trim());
+  const ok = promptsSatisfyRules(prompts);
   const preview = profileCompletion({ ...me, prompts, voicePrompt: voice, poll });
 
   const save = async () => {

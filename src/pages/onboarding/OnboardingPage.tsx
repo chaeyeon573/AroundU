@@ -12,7 +12,7 @@ import { api } from '@core/api';
 import { useAppStore } from '@core/store/useAppStore';
 import { cn } from '@core/lib/cn';
 import { PromptEditor, VoicePromptEditor, PollEditor } from '@/components/prompts/PromptComponents';
-import { REQUIRED_TEXT_PROMPTS } from '@core/data/prompts';
+import { REQUIRED_TEXT_PROMPTS, promptsSatisfyRules, FIRST_PROMPT_ID } from '@core/data/prompts';
 
 const STEPS = ['basic', 'school', 'interests', 'profile', 'prompts', 'permissions'] as const;
 type Step = typeof STEPS[number];
@@ -25,7 +25,7 @@ const initial: Draft = {
   nickname: '', birthYear: 2002, gender: 'private', avatar: { emoji: '🙂', hue: 210, photoType: 'face' }, avatarType: 'face',
   schoolId: '', role: 'undergraduate', department: '', year: 2022, emailVerified: false, showSchool: true, showDepartment: true, email: '', codeSent: false,
   interests: [], purposes: [], bio: '', likes: '', freeTime: '', height: undefined, availability: 'after18', preferredPartner: '',
-  fieldVisibility: DEFAULT_FV, prompts: [], voicePrompt: undefined, poll: undefined, goals: [], lookingFor: [], canOffer: [], living: undefined, meetPreference: [], locationPermission: 'undecided', notifications: true,
+  fieldVisibility: DEFAULT_FV, prompts: [{ questionId: FIRST_PROMPT_ID, answer: '' }], voicePrompt: undefined, poll: undefined, goals: [], lookingFor: [], canOffer: [], living: undefined, meetPreference: [], locationPermission: 'undecided', notifications: true,
 };
 
 const KEY = 'aroundu.onboarding.draft';
@@ -210,7 +210,7 @@ function ProfileStep({ form, patch, next }: StepProps) {
 
 function PromptsStep({ form, patch, next }: StepProps) {
   const answered = form.prompts.filter((p) => p.answer.trim()).length;
-  const ok = answered >= REQUIRED_TEXT_PROMPTS && form.prompts.every((p) => p.answer.trim());
+  const ok = promptsSatisfyRules(form.prompts);
   return (
     <>
       <div><h2 className="text-[22px] font-extrabold">{t('질문에 답해주세요')}</h2><p className="text-[13px] text-ink-3 mt-1">{lang === 'en' ? `${REQUIRED_TEXT_PROMPTS} written prompts are required. Answers appear on your card.` : `텍스트 질문 ${REQUIRED_TEXT_PROMPTS}개는 필수예요. 답은 프로필 카드에 그대로 보여요.`}</p></div>

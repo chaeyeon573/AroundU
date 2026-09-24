@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { t } from '@core/i18n';
-import { profileCompletion, REQUIRED_TEXT_PROMPTS } from '@core/data/prompts';
+import { profileCompletion, REQUIRED_TEXT_PROMPTS, promptsSatisfyRules } from '@core/data/prompts';
 import { useAppStore } from '@core/store/useAppStore';
 import { api } from '@core/api';
 import type { PollPrompt, ProfilePrompt, VoicePrompt, Visibility } from '@core/types';
@@ -23,7 +23,7 @@ export default function EditPromptsScreen() {
   const [visibility, setVisibility] = useState<Visibility>(me.fieldVisibility.prompts);
   const [busy, setBusy] = useState(false);
   const answered = prompts.filter((p) => p.answer.trim()).length;
-  const ok = answered >= REQUIRED_TEXT_PROMPTS && prompts.every((p) => p.answer.trim());
+  const ok = promptsSatisfyRules(prompts);
   const preview = profileCompletion({ ...me, prompts, voicePrompt: voice, poll });
 
   const save = async () => {
