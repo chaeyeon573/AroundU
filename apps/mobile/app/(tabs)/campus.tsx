@@ -13,6 +13,9 @@ import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { TabScreen, AppHeader, IconBtn, UnderlineTabs, Chip, ChipRow, ListRow, Avatar, Cover, Tag, Button, Empty, C } from '@/ui';
 import { PostCard } from '@/components/PostCard';
+import { SponsoredRow } from '@/components/SponsoredRow';
+import { injectSponsored } from '@core/lib/monetization';
+import { Linking } from 'react-native';
 
 type Tab = 'feed' | 'opportunities' | 'clubs';
 
@@ -40,10 +43,14 @@ function FeedTab() {
   const v = useViewer();
   const [type, setType] = useState<PostType | 'all' | 'anon'>('all');
   const [open, setOpen] = useState<string | null>(null);
-  const posts = v.visiblePosts.filter((p) => p.showOnFeed !== false)
+  const organic = v.visiblePosts.filter((p) => p.showOnFeed !== false && !p.sponsored)
     .filter((p) => type === 'all' ? true : type === 'anon' ? p.anonymous : p.postType === type && !p.anonymous)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const ads = useAppStore((s) => s.posts).filter((p) => p.sponsored);
+  // 전체 탭에서만 4개마다 스폰서 글 하나 (Plus 사용자는 광고 없음)
+  const posts = type === 'all' ? injectSponsored(organic, ads, v.me) : organic;
   const row = (p: Post, i: number) => {
+    if (p.sponsored) return <SponsoredRow key={p.id} post={p} expanded={open === p.id} onPress={() => setOpen(open === p.id ? null : p.id)} last={i === posts.length - 1} />;
     const author = v.userById(p.authorId); const org = p.orgId ? v.orgById(p.orgId) : undefined;
     const av = p.anonymous ? { emoji: '', hue: 210 } : org ? org.logo : author?.avatar ?? { emoji: '', hue: 200 };
     const name = p.anonymous ? t('익명') : org?.name ?? author?.nickname ?? '';
@@ -68,6 +75,7 @@ function FeedTab() {
     <View>
       <View style={tw`mb-2`}><ChipRow><Chip active={type === 'all'} onPress={() => setType('all')}>{t('전체')}</Chip>{ALL_POST_TYPES.filter((x) => x !== 'news').map((pt) => <Chip key={pt} active={type === pt} onPress={() => setType(pt)}>{POST_TYPE_LABELS[pt]}</Chip>)}<Chip active={type === 'anon'} onPress={() => setType('anon')}>{t('익명')}</Chip></ChipRow></View>
       {posts.length === 0 ? <Empty title={t('아직 올라온 것이 없어요')} action={<Button onPress={() => nav('/create/post')}>{t('게시물 작성')}</Button>} /> : posts.map(row)}
+      {v.me.plan !== 'plus' && <Pressable onPress={() => Linking.openURL('mailto:ads@aroundu.app')} style={tw`items-center py-4`}><Text style={tw`text-[11px] text-ink-3`}>{t('여기에 광고하기')} · ads@aroundu.app</Text></Pressable>}
     </View>
   );
 }

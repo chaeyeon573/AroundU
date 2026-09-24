@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import * as Updates from 'expo-updates';
 import { ChevronRight, Lock, ShieldAlert, Bell, MapPin, LogOut, RotateCcw, Bug, User, Users } from 'lucide-react-native';
+import { PaywallSheet } from '@/components/PaywallSheet';
+import { Sparkles } from 'lucide-react-native';
 import { t, lang, setLang, type Lang } from '@core/i18n';
 import { useAppStore } from '@core/store/useAppStore';
 import { api } from '@core/api';
@@ -32,6 +34,7 @@ export default function SettingsScreen() {
   ];
 
   /** 웹은 /welcome 으로 보내지만 모바일은 데모 계정으로 바로 다시 로그인한다 (루트 레이아웃 부팅 로직과 동일) */
+  const [paywall, setPaywall] = useState(false);
   const relogin = async () => {
     await logout();
     const u = await api.auth.loginDemo();
@@ -87,7 +90,23 @@ export default function SettingsScreen() {
         </View>
 
         <View style={[card, tw`mt-3`]}>
+          <Pressable onPress={() => (me.plan === 'plus' ? run(() => api.users.setPlan(me.id, 'free'), t('AroundU+ 해지했어요.')) : setPaywall(true))} style={tw`flex-row items-center px-4 py-3.5`}>
+            <Sparkles size={18} color={C.primary} />
+            <View style={tw`flex-1 ml-3`}><Text style={tw`text-[14px] font-semibold text-ink`}>{me.plan === 'plus' ? t('구독 관리') : 'AroundU+'}</Text><Text style={tw`text-[12px] text-ink-3`}>{me.plan === 'plus' ? t('AroundU+ 해지') : t('무제한 친구 요청') + ' · ' + t('광고 없는 피드')}</Text></View>
+            <ChevronRight size={18} color={C.ink3} />
+          </Pressable>
+        </View>
+
+        <View style={[card, tw`mt-3`]}>
           <Text style={tw`px-4 pt-3 pb-1 text-[11px] font-bold text-ink-3`}>{t('데모 도구')}</Text>
+          <Pressable onPress={() => run(() => api.users.update(me.id, { swipes: { date: '1970-01-01', count: 0 } }), t('스와이프 카운트를 초기화했어요.'))} style={tw`flex-row items-center px-4 py-3.5 border-t border-line`}>
+            <RotateCcw size={18} color={C.ink2} />
+            <View style={tw`flex-1 ml-3`}><Text style={tw`text-[14px] font-semibold text-ink`}>{t('오늘 스와이프 카운트 초기화')}</Text></View>
+          </Pressable>
+          <Pressable onPress={() => run(() => api.users.setPlan(me.id, 'free'), t('플랜을 초기화했어요.'))} style={tw`flex-row items-center px-4 py-3.5 border-t border-line`}>
+            <RotateCcw size={18} color={C.ink2} />
+            <View style={tw`flex-1 ml-3`}><Text style={tw`text-[14px] font-semibold text-ink`}>{t('플랜 초기화')}</Text></View>
+          </Pressable>
           <Pressable onPress={() => setSwitchOpen(true)} style={tw`flex-row items-center px-4 py-3.5 border-t border-line`}>
             <Users size={18} color={C.ink2} />
             <View style={tw`flex-1 ml-3`}><Text style={tw`text-[14px] font-semibold text-ink`}>{lang === 'en' ? 'Switch demo user' : '데모 사용자 전환'}</Text><Text style={tw`text-[12px] text-ink-3`}>{lang === 'en' ? `Now: ${me.nickname} · browse the app as someone else` : `현재 ${me.nickname} · 다른 사용자 시점으로 둘러봐요`}</Text></View>
@@ -105,6 +124,7 @@ export default function SettingsScreen() {
         <Text style={tw`text-center text-[11px] text-ink-3 mt-3`}>AroundU MVP · mock API (AsyncStorage)</Text>
       </View>
 
+      <PaywallSheet open={paywall} onClose={() => setPaywall(false)} />
       <BottomSheet open={switchOpen} onClose={() => setSwitchOpen(false)} title={lang === 'en' ? 'Switch demo user' : '데모 사용자 전환'} tall>
         {users.map((u) => (
           <Pressable key={u.id} onPress={() => switchUser(u)} style={tw`flex-row items-center rounded-xl px-3 py-2.5 mb-1 ${u.id === me.id ? 'bg-primary-soft' : ''}`}>

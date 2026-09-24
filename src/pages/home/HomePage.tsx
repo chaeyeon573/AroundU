@@ -15,6 +15,8 @@ import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/tim
 import { assetUrl } from '@/lib/assets';
 import { cn } from '@core/lib/cn';
 import type { User, Interest, Goal } from '@core/types';
+import { PaywallSheet } from '@/components/social/PaywallSheet';
+import { swipesLeft, isPlus, FREE_SWIPES_PER_DAY } from '@core/lib/monetization';
 
 interface Filters { years: number[]; sameDept: boolean; sameClass: boolean; freeNow: boolean; interests: Interest[]; goals: Goal[] }
 const EMPTY: Filters = { years: [], sameDept: false, sameClass: false, freeNow: false, interests: [], goals: [] };
@@ -34,6 +36,8 @@ export function HomePage() {
   const me = v.me;
   const [f, setF] = useState<Filters>(EMPTY);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [paywall, setPaywall] = useState<'limit' | 'open' | null>(null);
+  const left = swipesLeft(me);
   const [idx, setIdx] = useState(0);
   const [saved, setSaved] = useState<string[]>([]);
   const scroller = useRef<HTMLDivElement>(null);
@@ -56,9 +60,12 @@ export function HomePage() {
   try { if (current) localStorage.setItem(LAST_SEEN_KEY, current.u.id); } catch { /* */ }
   const onCampus = v.visibleUsers.filter((u) => u.timetable.length ? statusNow(u.timetable).kind !== 'none' : u.availability !== 'hidden').length * 3 + 6;
 
+  /** 하트 = 친구 요청. 무료 플랜은 하루 한도를 먼저 차감하고, 다 썼으면 페이월 */
   const connect = async (u: User) => {
-    if (v.isFriend(u.id) || v.pendingOut(u.id)) { nav(`/users/${u.id}`); return; }
-    try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
+    try { useAppStore.getState().applyPatch(await api.users.recordSwipe(me.id)); } catch { setPaywall('limit'); return; }
+    if (!(v.isFriend(u.id) || v.pendingOut(u.id))) { try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ } }
+    // 다음 카드로
+    const el = scroller.current; if (el) el.scrollBy({ left: el.clientWidth - 32 + 12, behavior: 'smooth' });
   };
   const reset = () => { setIdx(0); scroller.current?.scrollTo({ left: 0 }); };
   const chips: { key: string; label: string; clear: () => void }[] = [
@@ -76,6 +83,7 @@ export function HomePage() {
       <AppHeader />
       <div className="shrink-0 px-4 pt-1 pb-3 flex items-center gap-2">
         <span className="h-9 px-3.5 rounded-full bg-surface-2 text-[13px] font-medium text-primary flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary" />{lang === 'en' ? `${onCampus} students on campus now` : `지금 캠퍼스에 ${onCampus}명`}</span>
+        <button onClick={() => setPaywall('open')} aria-label="AroundU+" className={cn('h-9 px-3 rounded-full text-[12px] font-bold flex items-center gap-1 shrink-0', isPlus(me) ? 'bg-primary text-white' : left <= 2 ? 'bg-gold-soft text-primary' : 'bg-accent-soft text-primary')}><Heart size={12} fill="currentColor" />{isPlus(me) ? '∞' : `${left}/${FREE_SWIPES_PER_DAY}`}</button>
         <span className="flex-1" />
         <button onClick={() => setFilterOpen(true)} aria-label={t('조건')} className={cn('h-10 w-10 rounded-full grid place-items-center press', chips.length ? 'bg-primary text-white' : 'bg-surface-2 text-ink-2')}><SlidersHorizontal size={18} /></button>
       </div>
@@ -99,6 +107,7 @@ export function HomePage() {
         </div>
       ))}
 
+      <PaywallSheet open={!!paywall} onClose={() => setPaywall(null)} reason={paywall === 'limit' ? 'limit' : undefined} />
       <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('조건')} tall>
         <div className="space-y-4">
           <div><div className="text-[12px] font-bold text-ink-3 mb-1.5">{t('학년')}</div><div className="flex gap-1.5">{[1, 2, 3, 4].map((y) => <Chip key={y} size="sm" active={f.years.includes(y)} onClick={() => setF({ ...f, years: tog(f.years, y) })}>{y}{t('학년')}</Chip>)}</div></div>

@@ -5,6 +5,8 @@ import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Chip, Button, CardSkeleton, EmptyState, ErrorState, Avatar, Cover } from '@/components/ui';
 import { PostCard } from '@/components/cards/PostCard';
+import { SponsoredRow } from '@/components/cards/SponsoredRow';
+import { injectSponsored } from '@core/lib/monetization';
 import { useViewer } from '@/hooks/useViewer';
 import { useAppStore } from '@core/store/useAppStore';
 import { opportunityScore, daysUntil, isTogetherType, dday } from '@core/lib/recommend';
@@ -47,10 +49,14 @@ function FeedTab() {
   const v = useViewer();
   const [type, setType] = useState<PostType | 'all' | 'anon'>('all');
   const [open, setOpen] = useState<string | null>(null);
-  const posts = v.visiblePosts.filter((p) => p.showOnFeed !== false)
+  const organic = v.visiblePosts.filter((p) => p.showOnFeed !== false && !p.sponsored)
     .filter((p) => type === 'all' ? true : type === 'anon' ? p.anonymous : p.postType === type && !p.anonymous)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const ads = useAppStore((s) => s.posts).filter((p) => p.sponsored);
+  // 전체 탭에서만 4개마다 스폰서 글 하나 (Plus 사용자는 광고 없음)
+  const posts = type === 'all' ? injectSponsored(organic, ads, v.me) : organic;
   const row = (p: Post) => {
+    if (p.sponsored) return <SponsoredRow key={p.id} post={p} expanded={open === p.id} onClick={() => setOpen(open === p.id ? null : p.id)} />;
     const author = v.userById(p.authorId); const org = p.orgId ? v.orgById(p.orgId) : undefined;
     const av = p.anonymous ? { emoji: '', hue: 210 } : org ? org.logo : author?.avatar ?? { emoji: '', hue: 200 };
     const name = p.anonymous ? t('익명') : org?.name ?? author?.nickname ?? '';
@@ -71,6 +77,7 @@ function FeedTab() {
     <div>
       <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 mb-2"><Chip active={type === 'all'} onClick={() => setType('all')}>{t('전체')}</Chip>{ALL_POST_TYPES.filter((x) => x !== 'news').map((pt) => <Chip key={pt} active={type === pt} onClick={() => setType(pt)}>{POST_TYPE_LABELS[pt]}</Chip>)}<Chip active={type === 'anon'} onClick={() => setType('anon')}>{t('익명')}</Chip></div>
       {posts.length === 0 ? <EmptyState emoji="" title={t('아직 올라온 것이 없어요')} action={<Button onClick={() => nav('/create/post')}>{t('게시물 작성')}</Button>} /> : <div className="divide-y divide-line">{posts.map(row)}</div>}
+      {v.me.plan !== 'plus' && <a href="mailto:ads@aroundu.app" className="block text-center py-4 text-[11px] text-ink-3">{t('여기에 광고하기')} · ads@aroundu.app</a>}
     </div>
   );
 }

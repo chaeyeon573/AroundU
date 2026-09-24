@@ -13,6 +13,7 @@ import type { Activity, Opportunity } from '@core/types';
 import { tw } from '@/tw';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
+import { Tag as UiTag } from '@/ui';
 import { TabScreen, Chip, ChipRow, PillRow, Avatar, Button, Empty, H1, Muted, C } from '@/ui';
 import { JoinButton } from '@/components/JoinButton';
 import { OpenSlotSheet } from '@/components/OpenSlotSheet';
@@ -48,6 +49,8 @@ function NowTab() {
   const orgs = useAppStore((s) => s.organizations);
   const [chip, setChip] = useState<string>('all');
   const list = useMemo(() => nowActivities(v.visibleActivities, v.me.id), [v]);
+  // 제휴 딜(store_deal)은 오늘 것 하나를 맨 위 카드로
+  const partner = v.visibleActivities.find((a) => a.category === 'store_deal' && a.partner && a.date === todayISO());
   const cats = NOW_CHIPS.find((c) => c.key === chip)!.cats as readonly string[] | null;
   const shown = list.filter((x) => !cats || cats.includes(x.a.category));
   const snap = useMemo(() => ({ ...v.snap, organizations: orgs }), [v.snap, orgs]);
@@ -69,6 +72,13 @@ function NowTab() {
       )}
       <H1 style={tw`mb-3`}>{lang === 'en' ? 'Spontaneous Hangouts' : '지금 열린 활동'}</H1>
       <View style={tw`mb-4`}><ChipRow>{NOW_CHIPS.map((c) => <Chip key={c.key} active={chip === c.key} onPress={() => setChip(c.key)}>{c.label}{c.key === 'all' ? ` (${list.length})` : ''}</Chip>)}</ChipRow></View>
+      {partner && (
+        <Pressable onPress={() => nav(`/activities/${partner.id}`)} style={tw`rounded-full border border-line bg-gold-soft pl-2.5 pr-2.5 py-2 flex-row items-center mb-3`}>
+          <View style={tw`h-11 w-11 rounded-full bg-white items-center justify-center`}><Text style={tw`text-[20px]`}>🏷️</Text></View>
+          <View style={tw`flex-1 min-w-0 mx-3`}><View style={tw`flex-row items-center`}><Text numberOfLines={1} style={tw`text-[15px] font-semibold text-primary shrink`}>{partner.partner!.name}</Text><View style={tw`ml-2`}><UiTag tone="gold">{t('제휴')}</UiTag></View></View><Text numberOfLines={1} style={tw`text-[13px] text-ink-2`}>{partner.partner!.deal}</Text></View>
+          <Button size="sm" onPress={() => nav(`/activities/${partner.id}`)}>{t('쿠폰 보기')}</Button>
+        </Pressable>
+      )}
       {shown.length === 0 ? <Empty title={t('이 시간에 열린 활동이 없어요')} action={<Button size="sm" onPress={() => nav('/create/activity?kind=personal&now=1')}>{t('즉석 만남')}</Button>} />
         : shown.map(({ a }) => { const host = v.userById(a.hostId); return (
           <PillRow key={a.id} onPress={() => nav(`/activities/${a.id}`)} avatar={<Avatar emoji={host?.avatar.emoji ?? '👤'} hue={host?.avatar.hue ?? 200} url={host?.avatar.url} size={44} />} title={a.title} sub={`${formatTime(a.startTime)} · ${a.place.name}`} action={<JoinButton activity={a} label={t('참여')} />} />

@@ -17,6 +17,8 @@ import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/tim
 import type { User, Interest, Goal, ActivityCategory } from '@core/types';
 import { ProposeSheet } from '@/components/a_ProposeSheet';
 import { Deck, justDragged } from '@/components/Deck';
+import { PaywallSheet } from '@/components/PaywallSheet';
+import { swipesLeft, isPlus, FREE_SWIPES_PER_DAY } from '@core/lib/monetization';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { AppHeader, C, BottomSheet, Chip, Button } from '@/ui';
@@ -40,6 +42,8 @@ export default function PeopleScreen() {
   const [f, setF] = useState<Filters>(EMPTY);
   const [filterOpen, setFilterOpen] = useState(false);
   const [propose, setPropose] = useState<{ u: User; cat: ActivityCategory } | null>(null);
+  const [paywall, setPaywall] = useState<'limit' | 'open' | null>(null);
+  const left = swipesLeft(me);
   const swipe = useRef<((dir: 'right' | 'left') => void) | null>(null);
   const myDept = me.affiliation.type === 'university' ? me.affiliation.department : '';
 
@@ -76,14 +80,16 @@ export default function PeopleScreen() {
     if (!v.canMessage(u.id).ok) { nav(`/users/${u.id}`); return; }
     try { const res = await run(() => api.chats.openDirect(me.id, u.id)); nav(`/chats/${res.room.id}`); } catch { /* toast */ }
   };
-  const connect = async (u: User) => {
-    if (v.isFriend(u.id) || v.pendingOut(u.id)) { nav(`/users/${u.id}`); return; }
-    try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
-  };
-  const onSwipe = (c: Card, dir: 'right' | 'left') => {
-    if (dir === 'right' && !(v.isFriend(c.u.id) || v.pendingOut(c.u.id))) run(() => api.relationships.sendFriendRequest(me.id, c.u.id), `${c.u.nickname}${t('님에게 친구 요청을 보냈어요.')}`).catch(() => {});
+  /** 오른쪽 스와이프 = 친구 요청. 무료 플랜은 하루 한도를 먼저 차감하고, 다 썼으면 페이월 */
+  const onSwipe = async (c: Card, dir: 'right' | 'left') => {
+    if (dir === 'right') {
+      try { await api.users.recordSwipe(me.id).then((patch) => useAppStore.getState().applyPatch(patch)); }
+      catch { setPaywall('limit'); return; }
+      if (!(v.isFriend(c.u.id) || v.pendingOut(c.u.id))) run(() => api.relationships.sendFriendRequest(me.id, c.u.id), `${c.u.nickname}${t('님에게 친구 요청을 보냈어요.')}`).catch(() => {});
+    }
     setIdx((i) => i + 1);
   };
+  const tryConnect = () => { if (!current) return; if (left <= 0) { setPaywall('limit'); return; } swipe.current?.('right'); };
   const connected = current ? !!(v.isFriend(current.u.id) || v.pendingOut(current.u.id)) : false;
   const isSaved = current ? saved.includes(current.u.id) : false;
 
@@ -95,6 +101,7 @@ export default function PeopleScreen() {
           <View style={tw`h-2 w-2 rounded-full bg-primary mr-2`} />
           <Text style={tw`text-[13px] font-medium text-primary`}>{lang === 'en' ? `${onCampus} students on campus now` : `지금 캠퍼스에 ${onCampus}명`}</Text>
         </View>
+        <Pressable onPress={() => setPaywall('open')} style={tw`ml-2 h-9 px-3 rounded-full flex-row items-center ${isPlus(me) ? 'bg-primary' : left <= 2 ? 'bg-gold-soft' : 'bg-accent-soft'}`}><Heart size={12} color={isPlus(me) ? '#fff' : C.primary} fill={isPlus(me) ? '#fff' : C.primary} /><Text style={tw`ml-1 text-[12px] font-bold ${isPlus(me) ? 'text-white' : 'text-primary'}`}>{isPlus(me) ? '∞' : `${left}/${FREE_SWIPES_PER_DAY}`}</Text></Pressable>
         <View style={tw`flex-1`} />
         <Pressable onPress={() => setFilterOpen(true)} style={tw`h-10 w-10 rounded-full ${chips.length ? 'bg-primary' : 'bg-surface-2'} items-center justify-center`}><SlidersHorizontal size={18} color={C.ink2} /></Pressable>
       </View>
@@ -113,7 +120,7 @@ export default function PeopleScreen() {
               <Pressable onPress={() => setSaved((s) => (isSaved ? s.filter((x) => x !== current.u.id) : [...s, current.u.id]))} style={tw`h-[60px] w-[60px] rounded-full items-center justify-center ${isSaved ? 'bg-primary' : 'bg-surface-2'}`}>
                 <Bookmark size={26} color={isSaved ? '#fff' : C.primary} fill={isSaved ? '#fff' : 'none'} />
               </Pressable>
-              <Pressable onPress={() => (connected ? connect(current.u) : swipe.current?.('right'))} style={[tw`h-[72px] w-[72px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
+              <Pressable onPress={tryConnect} style={[tw`h-[72px] w-[72px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
                 {connected ? <Hand size={32} color="#fff" /> : <Heart size={34} color={C.primary} />}
               </Pressable>
             </View>
@@ -127,6 +134,7 @@ export default function PeopleScreen() {
           </View>
         </View>
       )}
+      <PaywallSheet open={!!paywall} onClose={() => setPaywall(null)} reason={paywall === 'limit' ? 'limit' : undefined} />
       {propose && <ProposeSheet open onClose={() => setPropose(null)} user={propose.u} category={propose.cat} onCategory={(c) => setPropose({ ...propose, cat: c })} />}
       <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('조건')} tall>
         <FilterGroup label={t('학년')}>{[1, 2, 3, 4].map((y) => <Chip key={y} size="sm" active={f.years.includes(y)} onPress={() => setF({ ...f, years: tog(f.years, y) })}>{y}{t('학년')}</Chip>)}</FilterGroup>

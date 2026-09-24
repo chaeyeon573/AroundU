@@ -127,8 +127,14 @@ export interface User {
     notifications: boolean;
     locationPermission: 'granted' | 'denied' | 'undecided';
   };
+  /** 요금제 — free(기본) / plus(AroundU+, 무제한 친구 요청·광고 없음) */
+  plan?: Plan;
+  /** 오늘 보낸 친구 요청(오른쪽 스와이프) 수 — 무료 플랜 일일 한도 계산용 */
+  swipes?: { date: string; count: number };
   createdAt: string;
 }
+
+export type Plan = 'free' | 'plus';
 
 export interface School {
   id: ID;
@@ -273,6 +279,8 @@ export interface Activity {
   opportunityId?: ID;
   /** 시간표 공강에서 열린 활동 */
   openSlot?: boolean;
+  /** 제휴 딜(store_deal) — 발견 탭 '지금 열린 활동' 맨 위 제휴 카드 */
+  partner?: { name: string; deal: string };
   rolesNeeded?: Role[];
   /** Study Crew — 수업 이름으로 묶인다. visibilityTargets: ['course:<이름>']로 같은 수업 학생에게만 보인다 */
   courseName?: string;
@@ -331,6 +339,8 @@ export interface Post {
   showOnProfile?: boolean;
   /** Community Feed에도 공개 (기본 true) */
   showOnFeed?: boolean;
+  /** 스폰서 글(광고) — 피드에 '광고' 표시와 CTA로 나간다. 좋아요·댓글 없음 */
+  sponsored?: { advertiser: string; cta: string; url?: string; deal?: string };
   createdAt: string;
 }
 

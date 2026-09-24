@@ -14,7 +14,7 @@ export const justDragged = () => dragState.moved || Date.now() - dragState.ended
 export function Deck<T>({ items, index, width, renderCard, onSwipe, labels, tapEnabled = true, controlRef }: {
   items: T[]; index: number; width: number;
   renderCard: (item: T, isTop: boolean) => ReactNode;
-  onSwipe: (item: T, dir: 'right' | 'left') => void;
+  onSwipe: (item: T, dir: 'right' | 'left') => void | Promise<void>;
   labels: { right: string; left: string };
   tapEnabled?: boolean;
   /** 버튼에서 프로그램적으로 스와이프 */

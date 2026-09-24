@@ -52,7 +52,7 @@ export default function MeScreen() {
         <View style={tw`flex-row items-center`}>
           <Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={72} />
           <View style={tw`flex-1 min-w-0 ml-4`}>
-            <H1>{me.nickname}</H1>
+            <View style={tw`flex-row items-center`}><H1>{me.nickname}</H1>{me.plan === 'plus' ? <View style={tw`ml-2 h-5 px-2 rounded-full bg-primary justify-center`}><Text style={tw`text-[10px] font-extrabold text-white`}>PLUS</Text></View> : null}</View>
             <Text numberOfLines={1} style={tw`text-[13px] text-ink-2`}>{dept}</Text>
             {me.affiliation.type === 'university' && me.affiliation.emailVerified ? <View style={tw`mt-1.5 self-start flex-row items-center h-6 px-2.5 rounded-full bg-accent-soft border border-accent`}><BadgeCheck size={12} color={C.primary} /><Text style={tw`ml-1 text-[11px] font-bold text-primary`}>{lang === 'en' ? 'Campus verified' : '학교 인증'}</Text></View> : null}
           </View>

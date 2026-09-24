@@ -52,7 +52,7 @@ export function ProfilePage() {
           <div className="flex items-center gap-4">
             <Avatar emoji={me.avatar.emoji} hue={me.avatar.hue} url={me.avatar.url} size={72} />
             <div className="flex-1 min-w-0">
-              <h1 className="font-display text-[24px] font-bold text-primary leading-tight truncate">{me.nickname}</h1>
+              <h1 className="font-display text-[24px] font-bold text-primary leading-tight truncate flex items-center gap-2">{me.nickname}{me.plan === 'plus' && <span className="h-5 px-2 rounded-full bg-primary text-white text-[10px] font-extrabold grid place-items-center">PLUS</span>}</h1>
               <div className="text-[13px] text-ink-2 truncate">{dept}</div>
               {me.affiliation.type === 'university' && me.affiliation.emailVerified && <span className="mt-1.5 inline-flex items-center gap-1 h-6 px-2.5 rounded-full bg-accent-soft border border-accent text-primary text-[11px] font-bold"><BadgeCheck size={12} />{lang === 'en' ? 'Campus verified' : '학교 인증'}</span>}
             </div>

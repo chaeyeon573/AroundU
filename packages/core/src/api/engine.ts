@@ -4,10 +4,11 @@
  * 스냅샷 모양의 in-memory DB(`ctx.db`)를 직접 변경하고, 바뀐 엔티티만 담은 Patch를 돌려준다.
  * 저장(localStorage / DB 영속화), 지연, 세션, 인증은 호출하는 쪽의 책임이다.
  */
+import { FREE_SWIPES_PER_DAY } from '@core/lib/monetization';
+import { todayISO as todayISO_ } from '@core/lib/format';
 import type { Patch, Snapshot, RegisterInput, ActivityInput, PostInput, OpportunityInput, TimePollInput } from './types';
 import type {
-  Activity, ActivityProposal, Availability, ChatRoom, ID, Notification, OpportunityIntent, Participation, Post, User, Opportunity, TimePoll, TimeOption, ReportTargetType,
-} from '@core/types';
+  Activity, ActivityProposal, Availability, ChatRoom, ID, Notification, OpportunityIntent, Participation, Post, User, Opportunity, TimePoll, TimeOption, ReportTargetType, Plan } from '@core/types';
 import { freeBlocks, jsDayToIdx, toMin } from '@core/lib/timetable';
 import { uid, pairKey } from '@core/lib/format';
 import { CATEGORY_LABELS } from '@core/lib/labels';
@@ -157,6 +158,21 @@ export function createEngine(ctx: EngineContext) {
         const u = find(db().users, ownerId);
         if (!u.poll) throw new Error(t('투표형 질문이 없어요.'));
         u.poll.votes[voterId] = optionIndex;
+        return { users: [u] };
+      },
+      /** 오른쪽 스와이프(친구 요청) 1회 기록 — 무료 플랜은 하루 한도를 넘기면 거부 */
+      recordSwipe(id: ID): Patch {
+        const u = find(db().users, id);
+        const today = todayISO_();
+        const count = u.swipes?.date === today ? u.swipes.count : 0;
+        if (u.plan !== 'plus' && count >= FREE_SWIPES_PER_DAY) throw new Error(t('오늘 친구 요청 한도를 다 썼어요. AroundU+에서 무제한으로.'));
+        u.swipes = { date: today, count: count + 1 };
+        return { users: [u] };
+      },
+      /** 요금제 변경 (모의 결제 — 실제 과금 없음) */
+      setPlan(id: ID, plan: Plan): Patch {
+        const u = find(db().users, id);
+        u.plan = plan;
         return { users: [u] };
       },
     },

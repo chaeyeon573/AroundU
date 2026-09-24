@@ -435,6 +435,12 @@ export const activities: Activity[] = [
     place: { name: '제1공학관 라운지', lat: 37.5617, lng: 126.9367 },
     capacity: 4, visibility: 'school', joinPolicy: 'approval', fee: 0, comments: [], createdAt: isoHoursAgo(5),
   },
+  {
+    id: 'a_deal', kind: 'org_event', category: 'store_deal', title: '학생증 보여주면 라떼 1+1', description: '오늘만, 신촌 카페 온더코너. 이 화면을 보여주세요.',
+    cover: { emoji: '🏷️', hue: 50, url: photo('c_mug') }, hostId: 'u_taeho', hostType: 'user', date: T, startTime: '10:00', endTime: '21:00',
+    place: { name: '카페 온더코너 신촌점', address: '서대문구 연세로', lat: 37.5585, lng: 126.9370 }, capacity: 999, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(12),
+    partner: { name: '카페 온더코너', deal: '라떼 1+1 · 오늘 21시까지' },
+  },
 ];
 
 export const participations: Participation[] = [
@@ -551,6 +557,22 @@ export const posts: Post[] = [
     text: '사이드 프로젝트 팀원 모집 중! 리액트로 캠퍼스 앱 만들어요.',
     tags: ['사이드프로젝트', '리액트'], visibility: 'school', likeIds: ['u_sua', 'u_hana'], savedIds: [],
     comments: [], relatedActivityId: 'a_mine', createdAt: isoHoursAgo(26),
+  },
+  // ─── 스폰서 글 (광고) — 피드에 4개마다 하나씩 끼워 넣는다 ───
+  {
+    id: 'ad_cafe', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '☕', hue: 30, url: photo('c_espresso') }],
+    text: '신촌 카페 라떼 1+1 — 학생증만 보여주면 끝. 이번 주 평일 오후 2–5시.', tags: ['신촌', '카페'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: '카페 온더코너 신촌점', cta: '쿠폰 받기', deal: '라떼 1+1 · 평일 14–17시 · 학생증 제시' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(3),
+  },
+  {
+    id: 'ad_toeic', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '📚', hue: 220, url: photo('c_library') }],
+    text: '토익 무료 레벨테스트 + 첫 달 30% — 연세대생 전용 코드 YONSEI30.', tags: ['토익', '어학'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: '해커스어학원 신촌', cta: '레벨테스트 신청', deal: '무료 레벨테스트 · 첫 달 30% 할인' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(9),
+  },
+  {
+    id: 'ad_delivery', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '🍕', hue: 10, url: photo('c_pizza') }],
+    text: '시험 기간 야식 5,000원 할인 — 대학생 인증하면 매주 쿠폰.', tags: ['배달', '야식'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: '배달의민족 대학생 클럽', cta: '쿠폰 받기', deal: '매주 5,000원 쿠폰 · 대학생 인증' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(20),
   },
 ];
 

@@ -285,6 +285,7 @@ export const activities: Activity[] = [
     id: 'a_deal', kind: 'org_event', category: 'store_deal', title: 'Buy-one-get-one lattes with student ID', description: 'Today only at the café on Telegraph. Show this screen.',
     cover: { emoji: '🏷️', hue: 50 , url: photo('c_mug') }, hostId: 'u_taeho', hostType: 'user', date: T, startTime: '10:00', endTime: '21:00',
     place: { name: 'Café Milano', lat: 37.8681, lng: -122.2590 }, capacity: 999, visibility: 'public', joinPolicy: 'open', fee: 0, comments: [], createdAt: isoHoursAgo(12),
+    partner: { name: 'Café Milano', deal: 'BOGO lattes · until 9pm today' },
   },
   {
     id: 'a_friends_dinner', kind: 'group', category: 'meal', title: 'Friends dinner (tacos)', description: 'Friends only. Post-midterm tacos!',
@@ -373,6 +374,22 @@ export const posts: Post[] = [
   { id: 'po7', authorId: 'u_hana', authorType: 'user', postType: 'review', media: [{ emoji: '🎨', hue: 335 , url: photo('c_art') }, { emoji: '📷', hue: 320 , url: photo('c_chair') }], text: 'Last week at SFMOMA. Going again this weekend — I opened an activity if you want to come!', tags: ['exhibit', 'sf', 'review'], visibility: 'public', likeIds: ['u_jimin', 'u_seoyeon'], savedIds: [], comments: [{ id: 'pc3', authorId: 'u_seoyeon', text: 'Gorgeous photos', createdAt: isoHoursAgo(20) }], relatedActivityId: 'a_exhibit', createdAt: isoHoursAgo(22) },
   { id: 'po8', authorId: 'u_taeho', authorType: 'user', postType: 'info', media: [{ emoji: '🏷️', hue: 50 , url: photo('c_mug') }], text: 'Café Milano: BOGO lattes with a student ID today. Sharing the local intel!', tags: ['nearcampus', 'deal'], visibility: 'public', likeIds: ['u_sua', 'u_jimin', 'u_minjun', 'u_yuna'], savedIds: [], comments: [], relatedActivityId: 'a_deal', createdAt: isoHoursAgo(11) },
   { id: 'po9', authorId: DEMO_USER_ID, authorType: 'user', media: [{ emoji: '💻', hue: 235 , url: photo('c_laptop') }], text: 'Recruiting for a side project! Building a campus app in React.', tags: ['sideproject', 'react'], visibility: 'school', likeIds: ['u_sua', 'u_hana'], savedIds: [], comments: [], relatedActivityId: 'a_mine', createdAt: isoHoursAgo(26) },
+  // ─── Sponsored posts (ads) — injected into the feed every 4 rows ───
+  {
+    id: 'ad_boba', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '🧋', hue: 30, url: photo('c_espresso') }],
+    text: 'Buy-one-get-one boba on Southside — just show your student ID. Weekdays 2–5pm this week.', tags: ['Southside', 'boba'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: 'Boba Guys Berkeley', cta: 'Get coupon', deal: 'BOGO boba · weekdays 2–5pm · student ID' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(3),
+  },
+  {
+    id: 'ad_quizlet', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '📚', hue: 220, url: photo('c_library') }],
+    text: 'Quizlet Plus free for finals week — Berkeley students get 3 months with code CAL3.', tags: ['finals', 'study'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: 'Quizlet', cta: 'Claim 3 months', deal: '3 months free · code CAL3' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(9),
+  },
+  {
+    id: 'ad_textbooks', authorId: 'o_startup', authorType: 'org', orgId: 'o_startup', postType: 'info', media: [{ emoji: '📖', hue: 10, url: photo('c_bookshop') }],
+    text: 'Rent textbooks for 60% less than the campus store. Free pickup at Moffitt.', tags: ['textbooks'], visibility: 'public', likeIds: [], savedIds: [], comments: [],
+    sponsored: { advertiser: 'Chegg Rentals', cta: 'See prices', deal: 'Up to 60% off · free Moffitt pickup' }, showOnProfile: false, showOnFeed: true, createdAt: isoHoursAgo(20),
+  },
 ];
 
 export const relationships: Relationships = {

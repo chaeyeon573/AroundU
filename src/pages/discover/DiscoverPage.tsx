@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { t, lang } from '@core/i18n';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { Chip, CardSkeleton, EmptyState, ErrorState, Button, Avatar } from '@/components/ui';
+import { Chip, CardSkeleton, EmptyState, ErrorState, Button, Avatar, Tag } from '@/components/ui';
 import { OrgCard } from '@/components/cards/OrgCard';
 import { OpenSlotSheet } from '@/components/social/OpenSlotSheet';
 import { JoinButton } from '@/components/cards/JoinButton';
@@ -81,6 +81,8 @@ function NowTab() {
   const orgs = useAppStore((s) => s.organizations);
   const [chip, setChip] = useState<string>('all');
   const list = useMemo(() => nowActivities(v.visibleActivities, v.me.id), [v]);
+  // 제휴 딜(store_deal)은 오늘 것 하나를 맨 위 카드로
+  const partner = v.visibleActivities.find((a) => a.category === 'store_deal' && a.partner && a.date === todayISO());
   const cats = NOW_CHIPS.find((c) => c.key === chip)!.cats as readonly string[] | null;
   const shown = list.filter((x) => !cats || cats.includes(x.a.category));
   const snap = useMemo(() => ({ ...v.snap, organizations: orgs }), [v.snap, orgs]);
@@ -102,6 +104,13 @@ function NowTab() {
       )}
       <h2 className="font-display text-[24px] font-bold text-primary mb-3">{lang === 'en' ? 'Spontaneous Hangouts' : '지금 열린 활동'}</h2>
       <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 mb-4">{NOW_CHIPS.map((c) => <Chip key={c.key} active={chip === c.key} onClick={() => setChip(c.key)}>{c.label}{c.key === 'all' ? ` (${list.length})` : ''}</Chip>)}</div>
+      {partner && (
+        <button onClick={() => nav(`/activities/${partner.id}`)} className="w-full card rounded-full bg-gold-soft pl-2.5 pr-2.5 py-2 flex items-center gap-3 text-left mb-3 press">
+          <span className="h-11 w-11 rounded-full bg-white grid place-items-center text-[20px] shrink-0">🏷️</span>
+          <span className="flex-1 min-w-0"><span className="flex items-center gap-2"><span className="text-[15px] font-semibold text-primary truncate">{partner.partner!.name}</span><Tag tone="gold">{t('제휴')}</Tag></span><span className="block text-[13px] text-ink-2 truncate">{partner.partner!.deal}</span></span>
+          <span className="h-9 px-4 rounded-full bg-primary text-white text-[13px] font-semibold grid place-items-center shrink-0">{t('쿠폰 보기')}</span>
+        </button>
+      )}
       {shown.length === 0 ? (
         <EmptyState emoji="" title={t('이 시간에 열린 활동이 없어요')} action={<Button size="sm" onClick={() => nav('/create/activity?kind=personal&now=1')}>{t('즉석 만남')}</Button>} />
       ) : <div className="space-y-3">{shown.map(({ a }) => { const host = v.userById(a.hostId); return (
