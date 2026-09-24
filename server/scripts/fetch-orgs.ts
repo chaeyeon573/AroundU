@@ -82,7 +82,7 @@ async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
 const CAMPUSGROUPS_SKIP = /^(Campus Departments|Residential Life)$/i;
 function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Organization {
   const catText = `${o.groupType} ${o.tags.join(' ')} ${o.name}`;
-  const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && /fratern|soror|greek/i.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
+  const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && /fratern|soror|greek|panhel|living group|fsilg/i.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
   return {
     id: `${type === 'greek' ? 'og' : 'oc'}_${schoolId.replace('s_', '')}_cg${o.id}`,
     name: o.name,
