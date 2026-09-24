@@ -78,7 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       users: upsert(s.users, patch.users),
       schools: upsert(s.schools, patch.schools),
-      organizations: upsert(s.organizations, patch.organizations),
+      organizations: upsert(s.organizations, patch.organizations, patch.removed?.organizations),
       activities: upsert(s.activities, patch.activities, patch.removed?.activities),
       participations: upsert(s.participations, patch.participations, patch.removed?.participations),
       posts: upsert(s.posts, patch.posts, patch.removed?.posts),
@@ -86,7 +86,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       chatRooms: upsert(s.chatRooms, patch.chatRooms, patch.removed?.chatRooms),
       notifications: upsert(s.notifications, patch.notifications),
       reports: upsert(s.reports, patch.reports),
-      opportunities: upsert(s.opportunities, patch.opportunities),
+      opportunities: upsert(s.opportunities, patch.opportunities, patch.removed?.opportunities),
       opportunityIntents: upsert(s.opportunityIntents, patch.opportunityIntents, patch.removed?.opportunityIntents),
       timePolls: upsert(s.timePolls, patch.timePolls, patch.removed?.timePolls),
       relationships: patch.relationships ? structuredClone(patch.relationships) : s.relationships,

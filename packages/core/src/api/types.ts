@@ -24,10 +24,12 @@ export interface Snapshot {
 /** 변경된 엔티티만 담아 돌려주는 부분 응답. 스토어가 id 기준으로 병합한다. */
 export type Patch = Partial<Omit<Snapshot, 'relationships'>> & {
   relationships?: Relationships;
-  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals' | 'opportunityIntents' | 'timePolls', ID[]>>;
+  removed?: Partial<Record<'activities' | 'posts' | 'chatRooms' | 'participations' | 'proposals' | 'opportunityIntents' | 'timePolls' | 'organizations' | 'opportunities', ID[]>>;
 };
 
 export interface RegisterInput {
+  /** 학교 이메일 — 실제 서버에서는 로그인 식별자로 쓴다 (프로필에는 노출되지 않음) */
+  email?: string;
   nickname: string;
   birthYear: number;
   gender: User['gender'];
@@ -118,6 +120,22 @@ export interface OpportunityInput {
   orgId?: ID;
 }
 
+/** 학교 수업 목록 항목 (registrar 데이터). 시간표에 추가하면 요일별 Course로 펼쳐진다 */
+export interface CatalogCourse {
+  id: ID;
+  schoolId: ID;
+  /** 예: "CS 61A" */
+  code: string;
+  title: string;
+  department: string;
+  instructor?: string;
+  location?: string;
+  /** 요일 0=월 … 6=일 */
+  meetings: { day: number; start: string; end: string }[];
+  term: string;
+  units?: number;
+}
+
 /** Plan Together 생성 입력 */
 export interface TimePollInput {
   title: string;
@@ -131,6 +149,8 @@ export interface TimePollInput {
 export interface AroundUApi {
   auth: {
     loginDemo(): Promise<User>;
+    /** 가입한 학교 이메일로 받은 코드로 로그인 (mock: 123456) */
+    loginWithCode(email: string, code: string): Promise<User>;
     register(input: RegisterInput): Promise<User>;
     logout(): Promise<void>;
     session(): Promise<ID | null>;
@@ -141,6 +161,11 @@ export interface AroundUApi {
     search(query: string): Promise<School[]>;
     sendVerificationCode(email: string, schoolId: ID): Promise<{ ok: boolean; hint: string }>;
     verifyCode(email: string, code: string): Promise<{ ok: boolean }>;
+  };
+
+  catalog: {
+    /** 학교 수업 검색 (과목 코드·이름·교수) */
+    courses(schoolId: ID, query: string): Promise<CatalogCourse[]>;
   };
 
   users: {

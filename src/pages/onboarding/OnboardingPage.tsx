@@ -232,8 +232,8 @@ function PermissionsStep({ form, patch }: StepProps) {
   const finish = async () => {
     setBusy(true);
     try {
-      const { avatarType: _a, email: _e, codeSent: _c, ...input } = form;
-      const user = await api.auth.register({ ...input, preferredPartner: input.preferredPartner || undefined });
+      const { avatarType: _a, codeSent: _c, ...input } = form;
+      const user = await api.auth.register({ ...input, email: input.email.trim() || undefined, preferredPartner: input.preferredPartner || undefined });
       sessionStorage.removeItem(KEY);
       await setCurrentUser(user);
       nav('/', { replace: true });

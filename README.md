@@ -18,7 +18,7 @@ npm run preview    # 빌드 결과 미리보기
 시작 화면에서 **로그인 (데모 계정)** 을 누르면 예시 데이터가 채워진 계정(하늘 · 연세대 컴퓨터과학과)으로 들어갑니다.
 **회원가입**을 누르면 6단계 온보딩을 거쳐 새 계정을 만듭니다. 학교 이메일 인증 코드는 `123456` 입니다.
 
-모든 데이터는 `localStorage`에 저장되는 mock API 위에서 동작합니다. 설정 → 데모 도구 → **데모 데이터 초기화**로 되돌릴 수 있습니다.
+기본값은 `localStorage`에 저장되는 mock API 입니다. `VITE_API_MODE=remote` 로 빌드하면 `server/` 의 실제 서버(Railway + Postgres)를 사용합니다. 아래 **백엔드 연동** 참고.
 
 ## 모바일 앱 (Expo) — `apps/mobile`
 
@@ -65,9 +65,13 @@ src/
   types/            사용자·조직·활동·게시물·관계·참가·제안·채팅·알림·신고 모델
   api/
     types.ts        AroundUApi 인터페이스 + Snapshot/Patch 타입
-    index.ts        api 진입점 (mockApi → 실제 구현체로 교체하는 곳)
-    mock/           in-memory DB(localStorage 영속) + mock 구현
+    engine.ts       도메인 로직 (브라우저 mock 과 서버가 공유)
+    index.ts        api 진입점 (VITE_API_MODE 로 mock ↔ remote 전환)
+    mock/           localStorage 위에서 엔진을 돌리는 mock
+    remote/         서버 호출 구현 (fetch + SSE)
   data/             seed.ts (예시 데이터), places.ts (장소 프리셋)
+    catalog/        courses.ts (미국 대학 수업 목록), orgs.ts (동아리·그리스 조직)
+server/             Express API (Railway) — index.ts 라우팅·권한, store.ts Postgres/파일, scripts/ CSV 가져오기
   store/            zustand 앱 스토어 (스냅샷 + Patch 병합 + 토스트)
   hooks/useViewer   현재 사용자 관점의 가시성·관계 헬퍼
   lib/              labels(라벨·색상), relations(공개 범위·연결 규칙), format
@@ -95,10 +99,114 @@ src/
     settings/       설정, 공개 범위, 계정 및 안전
 ```
 
-## API 교체 방법
+## 백엔드 연동 (Railway)
 
-`src/api/types.ts`의 `AroundUApi` 인터페이스를 구현하는 객체를 만들고 `src/api/index.ts`에서 `mockApi` 대신 내보내면 됩니다.
-모든 변경 API는 변경된 엔티티만 담은 `Patch`를 돌려주고, 스토어가 id 기준으로 병합합니다. `subscribe()`는 서버 푸시(WebSocket/SSE)에 대응합니다.
+`src/api/engine.ts` 에 있는 도메인 로직을 브라우저(mock)와 서버가 공유한다. 서버는 `server/` 에 있고, 빌드된 프론트엔드(`dist/`)와 API 를 **한 서비스**로 서빙한다.
+
+```
+브라우저 ──POST /api/rpc/<group>/<method>──▶ server/index.ts ──▶ engine ──▶ Postgres(docs jsonb)
+        ◀──SSE /api/events (Patch 푸시)────┘
+```
+
+### Railway 에 올리기
+
+1. Railway 프로젝트에 **GitHub 리포 서비스**를 추가한다 (기존 프로젝트에 서비스만 추가하면 된다).
+2. 같은 프로젝트에 **Postgres** 플러그인을 추가하고, 리포 서비스의 Variables 에서 `DATABASE_URL` 을 `${{Postgres.DATABASE_URL}}` 로 참조한다.
+3. Variables 에 아래를 넣는다 (`.env.example` 참고).
+
+   | 변수 | 값 |
+   | --- | --- |
+   | `VITE_API_MODE` | `remote` (빌드 시 프론트가 서버를 쓰도록) |
+   | `AROUNDU_LANG` | `en` (미국 캠퍼스 데모·수업 목록) 또는 `ko` |
+   | `DEMO_AUTOREPLY` | `0` (실사용) / `1` (데모 자동 응답) |
+   | `RESEND_API_KEY`, `MAIL_FROM` | 학교 이메일 인증 코드 발송. 없으면 코드가 화면 힌트에 그대로 표시된다 |
+   | `ALLOW_RESET` | 비워두기 (1이면 설정 화면에서 DB 를 시드로 되돌릴 수 있다) |
+
+4. 빌드·시작 명령은 `railway.json` 에 있다 (`npm ci && npm run build` → `npm start`). 헬스체크는 `/api/health`.
+5. 첫 부팅 때 DB 가 비어 있으면 `src/data/seed(.en).ts` + 수업 목록 + 동아리·그리스 조직 목록을 자동으로 넣는다.
+
+로컬에서 서버까지 같이 돌려보려면:
+
+```bash
+cp .env.example .env            # VITE_API_MODE=remote
+npm run build                   # dist/ 생성
+DATABASE_URL=postgres://... npm run server   # 없으면 server/.data/db.json 에 저장
+# http://localhost:8787
+```
+
+프론트만 개발 서버로 띄우면서 API 는 로컬 서버를 쓰려면 `VITE_API_MODE=remote VITE_API_URL=http://localhost:8787 npm run dev`.
+
+### 인증
+
+- 가입: 6단계 온보딩. 학교 이메일로 6자리 코드가 발송되고(10분 유효), 서버가 검증한 이메일만 `emailVerified` 가 된다. 같은 이메일로 두 번 가입할 수 없다.
+- 로그인: 시작 화면 → **이메일로 로그인** → 코드 입력. 토큰은 `localStorage` 에 저장되고 `Authorization: Bearer` 로 전송된다.
+- 데모 계정 로그인은 `ALLOW_DEMO_LOGIN=0` 으로 끌 수 있다.
+- 모든 RPC 는 서버에서 호출자 검사를 한다 (`server/index.ts` 의 `RULES`): 자기 id 로만 쓰기, 주최자만 승인/거절, 요청 받은 사람만 응답 등.
+- 다른 사용자의 시간표 강의실(`room`)과 남의 알림·신고는 절대 내려보내지 않는다 (`server/view.ts`).
+
+### 실제 데이터 채우기
+
+**수업 목록** — `src/data/catalog/courses.ts` 에 UC Berkeley · Stanford · UCLA · MIT · SF State 의 주요 과목 210개가 들어 있다 (과목 코드·이름·학과는 공개 카탈로그 기준, 요일·시간·강의실은 *전형적인 패턴의 예시값*). 시간표에서 **수업 추가 → 학교 수업 목록에서 찾기** 로 검색해 요일별 수업으로 한 번에 추가한다.
+학기별 실제 registrar 데이터는 CSV 로 덮어쓴다:
+
+```bash
+# school_id,code,title,department,instructor,location,days,start,end,term,units
+DATABASE_URL=... npm run import:courses -- fall2026-berkeley.csv
+```
+
+공개 소스에서 바로 가져오는 스크립트도 있다 (인터넷이 열린 환경에서 실행):
+
+```bash
+npm run fetch:courses -- stanford      # ExploreCourses XML, 키 불필요
+npm run fetch:courses -- mit           # FireRoad API, 키 불필요
+npm run fetch:courses -- berkeley     # 키 없으면 공개 Class Schedule(classes.berkeley.edu) 을 읽는다 — 33개 학과, 강의(LEC)만
+BERKELEY_TERM="Spring 2027" BERKELEY_PUBLIC_SUBJECTS="Computer Science|Mathematics" npm run fetch:courses -- berkeley   # 학기·학과 지정 (| 구분)
+BERKELEY_APP_ID=… BERKELEY_APP_KEY=… BERKELEY_TERM_ID=2268 npm run fetch:courses -- berkeley   # SIS Class API 키가 있으면 그쪽을 쓴다 (api-central.berkeley.edu)
+```
+
+UCLA 와 SF State 는 공개 API 가 없어서 학교 스케줄 페이지에서 받은 표를 위 CSV 헤더로 맞춰 `import:courses` 로 넣는다.
+
+**동아리·소로리티·프래터니티** — `src/data/catalog/orgs.ts` 에 5개 캠퍼스 338개 조직이 있다. 그리스 조직은 IFC / Panhellenic / NPHC(Divine Nine) / MGC / Professional / Service 계열별로 전국 조직 사전(`NATIONAL_GREEK`)에서 골라 넣었고, 동아리는 CalLink 등 각 학교 학생단체 디렉터리 기준이다. 이 목록은 외부에서 가져온 것이 아니라 직접 정리한 **시작용 목록**이라 캠퍼스별 챕터 존재 여부가 검증되지 않았고, **모두 `verified: false`** 로 시작한다.
+
+실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink 1,550개 · SF State 289개 — CampusLabs Engage 공개 API, 실제 확인됨):
+
+```bash
+npm run fetch:orgs                      # Berkeley + SF State → DB 반영 + server/.data/orgs-<school>.csv
+npm run fetch:orgs -- s_berkeley        # 한 학교만
+FETCH_DRY=1 npm run fetch:orgs          # CSV 만 만들고 DB 는 건드리지 않음
+```
+
+**Berkeley Greek 공식 명단** — 학교 LEAD Center 의 Find A Chapter 페이지(IFC · MCGC · NPHC · PHC 4개 카운슬, 62개 챕터)를 읽어
+CalLink 로 들어온 같은 조직에 카운슬·하우스 주소·주류/하우징 정책·SVSH 교육 이수 여부를 합치고 `verified: true` 로 표시한다.
+공식 명단에 없고 링크·멤버도 없는 손으로 넣은 추정 챕터는 지운다.
+
+```bash
+npm run fetch:greeks                    # lead.berkeley.edu → DB 반영 + server/.data/greeks-berkeley.csv
+FETCH_DRY=1 npm run fetch:greeks        # CSV 만
+```
+
+카테고리 이름에 fraternity/sorority/Panhellenic/IFC/NPHC 가 있으면 `greek` 으로, 학생회는 `council` 로 분류된다. UCLA(SOLE) · MIT(CampusGroups) · Stanford 는 Engage 가 아니라서 이 API 가 없다. 학교 디렉터리에서 받은 표를 CSV 로 넣고, Engage 를 쓰는 학교를 더 붙일 땐 `ENGAGE_HOSTS=s_xxx=https://xxx.campuslabs.com/engage` 로 지정한다. 손으로 고칠 때는 CSV 로:
+
+```bash
+# school_id,name,type,category,description,emoji,hue,website,instagram,dues,join_process
+DATABASE_URL=... npm run import:orgs -- berkeley-orgs.csv
+```
+
+**지원 마감 달력(기회)** — 인턴·연구·장학금·교환·행사는 본문을 옮기지 않고 **무엇을 · 언제까지 · 어디서(원문 링크)** 만 넣는다.
+학교별 CSV(`server/data/opportunities-<school>.csv`)를 손보고 넣으면 Community › Opportunities 에 마감 순으로 보이고, 저장·마감 알림·"지원하러 가기" 링크가 붙는다.
+마감일을 모르면 비워 두고 설명에 "보통 3월" 처럼 적는다 — 지어내지 않는다. Berkeley 초안은 학교 공개 페이지에서 확인한 날짜만 넣었다 (2026-09-24 기준).
+
+```bash
+npm run import:opportunities -- server/data/opportunities-berkeley.csv
+```
+
+**사용자** — 실제 사용자는 온보딩으로 들어온다. 초기에 비어 보이지 않도록 시드 사용자가 함께 들어가 있으며, 운영 전에 `src/data/seed.en.ts` 의 `users`/`posts` 를 비우거나 줄이면 된다.
+
+### 남은 일 (운영 전)
+
+- `bootstrap()` 이 전체 스냅샷을 내려보낸다. 사용자가 수천 명이 되면 학교·친구 단위로 나눠 내려보내야 한다.
+- 인증 코드 요청에 rate limit 이 없다 (Railway 앞단 또는 `express-rate-limit` 추가).
+- 세션 토큰 만료·기기 목록, 이미지 업로드(현재 `public/photos` 정적 파일).
 
 ## 앱 구조 — People | Discover | + | Campus | Me
 

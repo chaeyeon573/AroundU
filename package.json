@@ -9,7 +9,17 @@
     "preview": "vite preview",
     "build:static": "VITE_ROUTER=hash VITE_MAP_TILES=off vite build --base ./ --outDir dist-static",
     "typecheck": "tsc -b",
-    "mobile": "npm --prefix apps/mobile run tunnel"
+    "mobile": "npm --prefix apps/mobile run tunnel",
+    "server": "tsx --tsconfig server/tsconfig.json server/index.ts",
+    "server:dev": "tsx watch --tsconfig server/tsconfig.json server/index.ts",
+    "start": "npm run server",
+    "typecheck:server": "tsc -p server/tsconfig.json",
+    "import:courses": "tsx --tsconfig server/tsconfig.json server/scripts/import-courses.ts",
+    "import:orgs": "tsx --tsconfig server/tsconfig.json server/scripts/import-orgs.ts",
+    "fetch:orgs": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-orgs.ts",
+    "fetch:courses": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-courses.ts",
+    "fetch:greeks": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-greeks.ts",
+    "import:opportunities": "tsx --tsconfig server/tsconfig.json server/scripts/import-opportunities.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -18,7 +28,11 @@
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.1.0",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pg": "^8.23.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
@@ -29,10 +43,16 @@
     "@vitejs/plugin-react": "^4.3.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/pg": "^8.23.1"
   },
   "workspaces": [
     "packages/*",
     "apps/*"
-  ]
+  ],
+  "engines": {
+    "node": ">=20"
+  }
 }
