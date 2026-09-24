@@ -29,6 +29,8 @@ export interface Store {
 
   loadCatalog(): Promise<CatalogCourse[]>;
   upsertCatalog(courses: CatalogCourse[]): Promise<void>;
+  /** 한 학교의 수업 목록을 통째로 바꾼다 — 실제 학기 데이터를 넣을 때 내장 예시·지난 학기 행을 남기지 않는다 */
+  replaceCatalog(schoolId: ID, courses: CatalogCourse[]): Promise<void>;
 
   findAccount(email: string): Promise<Account | null>;
   createAccount(a: Account): Promise<void>;
@@ -113,6 +115,17 @@ export class PgStore implements Store {
     const { rows } = await this.pool.query<{ data: CatalogCourse }>('SELECT data FROM catalog_courses ORDER BY id');
     return rows.map((r) => r.data);
   }
+  async replaceCatalog(schoolId: ID, courses: CatalogCourse[]) {
+    await this.serial(async () => {
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM catalog_courses WHERE school_id = $1 AND NOT (id = ANY($2))', [schoolId, courses.map((c) => c.id)]);
+        for (const c of courses) await client.query('INSERT INTO catalog_courses (id, school_id, data) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, school_id = EXCLUDED.school_id, updated_at = now()', [c.id, c.schoolId, JSON.stringify(c)]);
+        await client.query('COMMIT');
+      } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
+    });
+  }
   async upsertCatalog(courses: CatalogCourse[]) {
     await this.serial(async () => {
       const client = await this.pool.connect();
@@ -180,6 +193,11 @@ export class FileStore implements Store {
     await this.flush();
   }
   async loadCatalog() { return this.data.catalog; }
+  async replaceCatalog(schoolId: ID, courses: CatalogCourse[]) {
+    const keep = new Set(courses.map((c) => c.id));
+    this.data.catalog = [...this.data.catalog.filter((c) => c.schoolId !== schoolId || keep.has(c.id)), ...courses.filter((c) => !this.data.catalog.some((x) => x.id === c.id))].map((c) => courses.find((n) => n.id === c.id) ?? c);
+    await this.flush();
+  }
   async upsertCatalog(courses: CatalogCourse[]) {
     const byId = new Map(this.data.catalog.map((c) => [c.id, c]));
     courses.forEach((c) => byId.set(c.id, c));

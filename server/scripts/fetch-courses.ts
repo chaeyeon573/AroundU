@@ -119,6 +119,7 @@ async function berkeleyPublic(): Promise<CatalogCourse[]> {
   const subjects = (process.env.BERKELEY_PUBLIC_SUBJECTS?.split('|').map((x) => x.trim()) ?? BERKELEY_DEFAULT_SUBJECTS).filter(Boolean);
   const out: CatalogCourse[] = [];
   const byId = new Map<string, CatalogCourse>();
+  const sectionOf = new Map<string, string>();
   const field = (row: string, cls: string) => text(row.match(new RegExp(`class="${cls}"[^>]*>([\\s\\S]*?)</div>`))?.[1] ?? '');
   for (const subject of subjects) {
     const sid = subjectIds.get(subject);
@@ -150,15 +151,23 @@ async function berkeleyPublic(): Promise<CatalogCourse[]> {
           for (const day of parseDays(days)) meetings.push({ day, start: parseTime(tm[1]), end: parseTime(tm[2]) });
         }
         if (!meetings.length) continue;
-        const id = courseId('s_berkeley', code);
-        const prev = byId.get(id);
-        if (prev) { prev.meetings = uniq([...prev.meetings, ...meetings]); continue; }
+        // 강의 섹션이 여러 개인 과목(KOREAN 1A 001~007 등)은 섹션마다 한 줄 — 학생이 자기 섹션을 고른다. 첫 섹션은 기본 id 로 내장 예시를 덮어쓴다.
+        const sectionNo = text(row.match(/class="st--section-count"[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? '') || '001';
+        const baseId = courseId('s_berkeley', code);
+        const first = !byId.has(baseId);
+        const id = first ? baseId : `${baseId}_${sectionNo}`;
+        if (byId.has(id)) { const prev = byId.get(id)!; prev.meetings = uniq([...prev.meetings, ...meetings]); continue; }
         const course: CatalogCourse = { id, schoolId: 's_berkeley', code, title, department, instructor, location, meetings: uniq(meetings), term: termLabel, units };
+        sectionOf.set(id, sectionNo);
         byId.set(id, course); out.push(course); added++;
       }
     }
     console.log(`  ${subject}: ${added}`);
   }
+  // 같은 과목에 강의 섹션이 둘 이상이면 제목에 섹션 번호를 붙여 구분한다
+  const siblings = new Map<string, number>();
+  for (const c of out) { const base = c.id.replace(/_\d{3}$/, ''); siblings.set(base, (siblings.get(base) ?? 0) + 1); }
+  for (const c of out) { const base = c.id.replace(/_\d{3}$/, ''); if ((siblings.get(base) ?? 0) > 1) c.title = `${c.title} (Lec ${sectionOf.get(c.id) ?? '001'})`; }
   return out;
 }
 
@@ -210,5 +219,5 @@ mkdirSync(dataDir, { recursive: true });
 const rows = courses.flatMap((c) => c.meetings.map((m) => [c.schoolId, c.code, c.title, c.department, c.instructor ?? '', c.location ?? '', ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'][m.day], m.start, m.end, c.term, c.units ?? ''].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')));
 writeFileSync(path.join(dataDir, `courses-${which}.csv`), ['school_id,code,title,department,instructor,location,days,start,end,term,units', ...rows].join('\n'));
 console.log(`${courses.length}개 과목 (${rows.length} meeting rows) → ${dataDir}/courses-${which}.csv`);
-if (process.env.FETCH_DRY !== '1') { const store = createStore(); await store.init(); await store.upsertCatalog(courses); console.log('DB 반영 완료'); }
+if (process.env.FETCH_DRY !== '1') { const store = createStore(); await store.init(); await store.replaceCatalog(courses[0]?.schoolId ?? `s_${which}`, courses); console.log('DB 반영 완료 (학교 목록 교체)'); }
 process.exit(0);
