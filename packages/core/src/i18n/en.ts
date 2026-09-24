@@ -1299,4 +1299,5 @@ export const en: Record<string, string> = {
   '공개 범위 안의 사람에게는 수업 시간표가 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.': 'People within your visibility setting can see your class schedule. Rooms are never shown.',
   '수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요.': 'Add classes to get friends and hangouts that fit your free periods.',
   '오늘 공강 · 초록은 나와 겹치는 시간 · 강의실은 비공개': 'Free today · green overlaps with you · rooms are private',
+  '이미지 저장은 개발 빌드나 스토어 앱에서 할 수 있어요.': 'Saving as an image needs a development build or the store app.',
 };

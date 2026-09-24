@@ -2,21 +2,23 @@
  * 실제 서버(`server/`)를 호출하는 AroundUApi 구현.
  *
  * - 모든 메서드는 `POST {base}/api/rpc/<group>/<method>` 에 `{ args: [...] }` 로 전달된다.
- * - 세션 토큰은 localStorage 에 두고 Authorization 헤더로 보낸다.
+ * - 세션 토큰은 플랫폼 저장소(`@core/platform`)에 두고 Authorization 헤더로 보낸다.
  * - `subscribe()` 는 SSE(`/api/events`)로 서버 푸시(Patch)를 받는다.
  */
 import type { AroundUApi, Patch, Snapshot } from '../types';
 import type { ID, User } from '@core/types';
 import { t, lang } from '@core/i18n';
+import { getPlatform } from '@core/platform';
 
 const TOKEN_KEY = 'aroundu.remote.token.v1';
 const USER_KEY = 'aroundu.remote.user.v1';
 
-const readToken = () => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } };
+const readToken = () => { try { return getPlatform().getItem(TOKEN_KEY); } catch { return null; } };
 const writeToken = (token: string | null, userId: ID | null) => {
   try {
-    if (token) { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, userId ?? ''); }
-    else { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
+    const st = getPlatform();
+    if (token) { st.setItem(TOKEN_KEY, token); st.setItem(USER_KEY, userId ?? ''); }
+    else { st.removeItem(TOKEN_KEY); st.removeItem(USER_KEY); }
   } catch { /* ignore */ }
 };
 

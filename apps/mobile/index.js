@@ -8,7 +8,7 @@ import { hydrate } from './src/platform';
 
 function Gate() {
   const [ready, setReady] = useState(false);
-  useEffect(() => { hydrate().then(() => setReady(true)); }, []);
+  useEffect(() => { hydrate().catch((e) => console.warn('[boot] hydrate error', e)).finally(() => setReady(true)); }, []);
   return ready ? <App /> : null;
 }
 

@@ -13,6 +13,8 @@ export interface Platform {
   locale(): string;
   /** 정적 자산 경로 → 웹은 URL 문자열, RN은 require() 결과(number) */
   asset(path: string): string | number;
+  /** 빌드 환경 변수 (예: API_MODE, API_URL). 웹은 VITE_*, 모바일은 EXPO_PUBLIC_* 에서 읽는다 */
+  env(key: 'API_MODE' | 'API_URL'): string | undefined;
 }
 
 const memory = new Map<string, string>();
@@ -23,6 +25,7 @@ let platform: Platform = {
   reload: () => {},
   locale: () => 'ko-KR',
   asset: (p) => p,
+  env: () => undefined,
 };
 
 export function setPlatform(p: Platform) { platform = p; }

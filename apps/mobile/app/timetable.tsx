@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles, ImageDown, Eye } from 'lucide-react-native';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
 import * as seedKo from '@core/data/seed';
 import * as seedEn from '@core/data/seed.en';
 import { VISIBILITY_LABELS } from '@core/lib/labels';
@@ -97,16 +95,23 @@ export default function TimetableScreen() {
     try { await run(() => api.users.update(me.id, { timetable: sample }), t('예시 시간표를 불러왔어요.')); } catch { /* */ } finally { setBusy(false); }
   };
   /** 시간표 그리드를 이미지로 저장 (사진 앱) — 권한이 없으면 공유 시트로 */
+  /**
+   * 시간표 그리드를 이미지로 저장 (사진 앱) — 권한이 없으면 공유 시트로.
+   * react-native-view-shot 은 Expo Go 에 없는 네이티브 모듈이라 누를 때만 불러온다 (import 시점에 네이티브 모듈을 찾다 앱이 죽는 것을 막는다).
+   */
   const saveImage = async () => {
+    if (Platform.OS === 'web') { showToast(t('이미지 저장은 폰 앱에서 할 수 있어요.'), 'error'); return; }
+    let ViewShot: typeof import('react-native-view-shot');
+    try { ViewShot = require('react-native-view-shot'); } catch { showToast(t('이미지 저장은 개발 빌드나 스토어 앱에서 할 수 있어요.'), 'error'); return; }
     try {
-      const uri = await captureRef(gridRef, { format: 'png', quality: 1, result: 'tmpfile' });
-      // expo-media-library 는 웹 모듈이 없어서 네이티브에서만 불러온다
-      const MediaLibrary: typeof import('expo-media-library') | null = Platform.OS === 'web' ? null : require('expo-media-library');
-      const perm = MediaLibrary ? await MediaLibrary.requestPermissionsAsync(false, ['photo']).catch(() => ({ granted: false })) : { granted: false };
-      if (MediaLibrary && perm.granted) { await MediaLibrary.saveToLibraryAsync(uri); showToast(t('사진에 저장했어요.'), 'success'); }
+      const uri = await ViewShot.captureRef(gridRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const MediaLibrary: typeof import('expo-media-library') = require('expo-media-library');
+      const Sharing: typeof import('expo-sharing') = require('expo-sharing');
+      const perm = await MediaLibrary.requestPermissionsAsync(false, ['photo']).catch(() => ({ granted: false }));
+      if (perm.granted) { await MediaLibrary.saveToLibraryAsync(uri); showToast(t('사진에 저장했어요.'), 'success'); }
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png' });
       else showToast(t('이 기기에서는 저장할 수 없어요.'), 'error');
-    } catch { showToast(t('이미지 저장은 폰 앱에서 할 수 있어요.'), 'error'); }
+    } catch (e) { console.warn('[timetable] save image failed', e); showToast(t('이미지 저장은 개발 빌드나 스토어 앱에서 할 수 있어요.'), 'error'); }
   };
 
   /** 요일 칸 탭: 공강이면 활동 열기, 빈 칸이면 수업 추가 */

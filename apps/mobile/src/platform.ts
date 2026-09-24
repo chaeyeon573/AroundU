@@ -26,13 +26,16 @@ setPlatform({
   reload: () => { if (RNPlatform.OS === 'web' && typeof window !== 'undefined') window.location.href = document.baseURI; else reloadHandler(); },
   locale: () => getLocales()[0]?.languageTag ?? 'en-US',
   asset: (path) => PHOTOS[path] ?? path,
+  env: (key) => (key === 'API_MODE' ? process.env.EXPO_PUBLIC_API_MODE : process.env.EXPO_PUBLIC_API_URL),
 });
 
-/** 앱 시작 전에 저장된 키를 전부 메모리로 올린다 */
+/** 앱 시작 전에 저장된 키를 전부 메모리로 올린다. 저장소가 멈춰도 앱은 떠야 하므로 3초 안에 끝낸다 */
 export async function hydrate() {
-  try {
+  const load = (async () => {
     const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(PREFIX));
     const pairs = await AsyncStorage.multiGet(keys);
     pairs.forEach(([k, v]) => { if (v != null) memory.set(k, v); });
-  } catch { /* 첫 실행 */ }
+  })();
+  try { await Promise.race([load, new Promise((r) => setTimeout(r, 3000))]); } catch (e) { console.warn('[boot] hydrate failed', e); }
+  console.log('[boot] hydrate done, keys:', memory.size);
 }

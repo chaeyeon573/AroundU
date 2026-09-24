@@ -1,5 +1,5 @@
 /**
- * 브라우저 전용 mock API — 공용 엔진(`../engine`)을 localStorage 위에서 돌린다.
+ * mock API — 공용 엔진(`../engine`)을 플랫폼 저장소(웹 localStorage / 모바일 AsyncStorage) 위에서 돌린다.
  * 지연·실패 시뮬레이션·세션만 여기서 처리하고 도메인 로직은 엔진에 있다.
  */
 import type { AroundUApi, Patch, Snapshot } from '../types';
@@ -8,14 +8,15 @@ import { createEngine } from '../engine';
 import { loadDB, resetDB, saveDB, getSession, setSession, type MockDB } from './db';
 import { DEMO_USER_ID } from '@core/data/seed';
 import { catalogCourses, searchCatalog } from '@core/data/catalog/courses';
+import { getPlatform } from '@core/platform';
 
 let db: MockDB = loadDB();
 let failNextRequest = false;
 const listeners = new Set<(patch: Patch) => void>();
 /** 가입 시 입력한 이메일 → 사용자 id (데모 로그인용) */
 const EMAIL_KEY = 'aroundu.mock.emails.v1';
-const readEmails = (): Record<string, string> => { try { return JSON.parse(localStorage.getItem(EMAIL_KEY) ?? '{}'); } catch { return {}; } };
-const writeEmails = (m: Record<string, string>) => { try { localStorage.setItem(EMAIL_KEY, JSON.stringify(m)); } catch { /* */ } };
+const readEmails = (): Record<string, string> => { try { return JSON.parse(getPlatform().getItem(EMAIL_KEY) ?? '{}'); } catch { return {}; } };
+const writeEmails = (m: Record<string, string>) => { try { getPlatform().setItem(EMAIL_KEY, JSON.stringify(m)); } catch { /* */ } };
 
 const engine = createEngine({
   get db() { return db; },

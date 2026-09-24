@@ -8,4 +8,5 @@ setPlatform({
   reload: () => window.location.reload(),
   locale: () => navigator.language,
   asset: (path) => `${import.meta.env.BASE_URL}${path}`,
+  env: (key) => (key === 'API_MODE' ? import.meta.env.VITE_API_MODE : import.meta.env.VITE_API_URL) as string | undefined,
 });
