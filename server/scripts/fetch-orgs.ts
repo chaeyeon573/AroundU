@@ -136,8 +136,8 @@ for (const [schoolId, host] of Object.entries(ENGAGE_HOSTS)) {
   let raw: EngageOrg[];
   try { raw = await fetchAll(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
   const orgs = raw.filter((o) => !o.Status || /active/i.test(o.Status)).map((o) => mapOrg(schoolId, host, o))
-    // 이미 있는 조직은 멤버·팔로워·인증 상태를 유지하고 설명·링크만 갱신
-    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
+    // 이미 있는 조직은 멤버·팔로워·인증 상태를 유지하고 설명·링크·분류만 갱신 (공식 명단으로 인증된 greek 은 분류를 내리지 않는다)
+    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, type: prev.verified && prev.type === 'greek' ? prev.type : o.type, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
   const stale = staleSeed(schoolId, orgs);
@@ -150,7 +150,7 @@ for (const [schoolId, host] of Object.entries(CAMPUSGROUPS_HOSTS)) {
   let raw: CampusGroupsOrg[];
   try { raw = await fetchCampusGroups(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
   const orgs = raw.filter((o) => !CAMPUSGROUPS_SKIP.test(o.groupType)).map((o) => mapCampusGroupsOrg(schoolId, host, o))
-    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
+    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, type: prev.verified && prev.type === 'greek' ? prev.type : o.type, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
   const freshIds = new Set(orgs.map((o) => o.id));
