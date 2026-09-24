@@ -62,9 +62,11 @@ async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
   return out;
 }
 
+/** 학교 부서·행정 조직은 학생 단체가 아니라 뺀다 */
+const CAMPUSGROUPS_SKIP = /^Campus Departments$/i;
 function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Organization {
   const catText = `${o.groupType} ${o.tags.join(' ')} ${o.name}`;
-  const type: Organization['type'] = GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
+  const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && GREEK_RE.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
   return {
     id: `${type === 'greek' ? 'og' : 'oc'}_${schoolId.replace('s_', '')}_cg${o.id}`,
     name: o.name,
@@ -147,12 +149,14 @@ for (const [schoolId, host] of Object.entries(CAMPUSGROUPS_HOSTS)) {
   process.stdout.write(`${schoolId} ← ${host} (CampusGroups) … `);
   let raw: CampusGroupsOrg[];
   try { raw = await fetchCampusGroups(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
-  const orgs = raw.map((o) => mapCampusGroupsOrg(schoolId, host, o))
+  const orgs = raw.filter((o) => !CAMPUSGROUPS_SKIP.test(o.groupType)).map((o) => mapCampusGroupsOrg(schoolId, host, o))
     .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
-  const stale = staleSeed(schoolId, orgs);
-  console.log(`${orgs.length}개 (greek ${orgs.filter((o) => o.type === 'greek').length})${stale.length ? `, 추정 항목 ${stale.length}개 삭제` : ''}`);
+  const freshIds = new Set(orgs.map((o) => o.id));
+  const gone = snap.organizations.filter((o) => o.schoolId === schoolId && !freshIds.has(o.id) && o.links?.some((l) => l.url.startsWith(host)) && o.memberIds.length === 0 && o.adminIds.length === 0).map((o) => o.id);
+  const stale = [...staleSeed(schoolId, orgs), ...gone];
+  console.log(`${orgs.length}개 (greek ${orgs.filter((o) => o.type === 'greek').length})${stale.length ? `, 추정·제외 항목 ${stale.length}개 삭제` : ''}`);
   if (process.env.FETCH_DRY !== '1') await store.applyPatch({ organizations: orgs, removed: { organizations: stale } });
 }
 console.log(process.env.FETCH_DRY === '1' ? `CSV 만 생성: ${dataDir}` : 'DB 반영 완료');

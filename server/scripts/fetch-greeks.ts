@@ -146,7 +146,8 @@ const store = createStore();
 await store.init();
 const snap = (await store.loadSnapshot()) ?? emptySnapshot();
 const berkeley = snap.organizations.filter((o) => o.schoolId === SCHOOL_ID);
-const normName = (n: string) => n.toLowerCase().replace(/\b(fraternity|sorority|inc\.?|incorporated)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+/** "FSL Sigma Nu Fraternity, Beta Chi Chapter" ≈ "Sigma Nu": 디렉터리 접두어·법인 표기·챕터 명칭을 떼고 비교한다 */
+const normName = (n: string) => n.toLowerCase().replace(/^fsl\s+/, '').replace(/,?\s+[a-z]+(\s+[a-z]+)?\s+chapter\b/g, '').replace(/\b(fraternity|sorority|inc\.?|incorporated|chapter)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const keyOf = (o: Organization) => o.links?.map((l) => /callink\.berkeley\.edu\/organization\/([^/?#]+)/i.exec(l.url)?.[1]?.toLowerCase()).find(Boolean);
 const byKey = new Map(berkeley.map((o) => [keyOf(o) ?? '', o] as const).filter(([k]) => k));
 const byName = new Map(berkeley.map((o) => [normName(o.name), o] as const));
