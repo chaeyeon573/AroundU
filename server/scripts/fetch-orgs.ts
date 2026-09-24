@@ -5,7 +5,9 @@
  *   Berkeley  callink.berkeley.edu            → 1,550개
  *   SF State  sfsu.campuslabs.com/engage      → 289개
  * Stanford 는 CampusGroups(Cardinal Engage) — 공개 목록 페이지(club_signup)가 서버 렌더링이고 range=N 으로 30개씩 넘어간다 (814개, 실제 확인됨).
- *   Stanford  cardinalengage.stanford.edu     → CAMPUSGROUPS_HOSTS 로 같은 방식의 학교를 더 붙일 수 있다 (MIT 도 CampusGroups)
+ *   Stanford  cardinalengage.stanford.edu     → 814개 표시, 공개 id 있는 767개
+ *   MIT       engage.mit.edu                  → 514개 (FSILG 유형 = greek, Residential Life = 기숙사라 제외)
+ *   CAMPUSGROUPS_HOSTS="s_xxx=https://xxx.campusgroups.com" 으로 같은 방식의 학교를 더 붙인다
  * UCLA(SOLE) 는 둘 다 아니라 CSV 로 넣는다(import-orgs.ts).
  * Engage 를 쓰는 다른 학교를 추가하려면 ENGAGE_HOSTS="s_xxx=https://xxx.campuslabs.com/engage" 로 지정한다.
  *
@@ -31,20 +33,34 @@ const ENGAGE_HOSTS: Record<string, string> = {
 
 const CAMPUSGROUPS_HOSTS: Record<string, string> = {
   s_stanford: 'https://cardinalengage.stanford.edu',
+  s_mit: 'https://engage.mit.edu',
   ...(process.env.CAMPUSGROUPS_HOSTS ? Object.fromEntries(process.env.CAMPUSGROUPS_HOSTS.split(',').map((p) => p.split('=') as [string, string])) : {}),
 };
 
 interface CampusGroupsOrg { id: string; name: string; groupType: string; tags: string[]; mission: string }
 
 /** CampusGroups club_signup 목록: <li class="list-group-item"> 마다 club_id · 이름 · "그룹유형 - 태그, 태그" · Mission 본문 */
+/** 5xx·네트워크 오류는 2s·4s·8s 로 세 번 더 시도한다 (MIT Engage 가 가끔 503 을 준다) */
+async function getWithRetry(url: string): Promise<string> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } });
+      if (res.ok) return await res.text();
+      if (res.status < 500 || attempt >= 3) throw new Error(`${url} → ${res.status}`);
+    } catch (e) { if (attempt >= 3) throw e; }
+    await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+  }
+}
+
 async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
   const out: CampusGroupsOrg[] = [];
   const seen = new Set<string>();
-  for (let range = 0; range < 5000; range += 30) {
-    const res = await fetch(`${host}/club_signup?ax=1&range=${range}`, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } });
-    if (!res.ok) throw new Error(`${host}/club_signup?range=${range} → ${res.status}`);
-    const items = (await res.text()).split('<li class="list-group-item"').slice(1);
-    if (!items.length) break;
+  // 중간에 빈 페이지가 섞여 나온다(MIT: range=270 이 비고 300 은 찬다) — 첫 페이지의 총 개수까지 끝까지 걷고, 빈 페이지로 멈추지 않는다
+  let total = Infinity;
+  for (let range = 0; range < Math.min(total + 60, 20000); range += 30) {
+    const html = await getWithRetry(`${host}/club_signup?ax=1&range=${range}`);
+    if (range === 0) total = Number(/clubsCount'\)\.innerHTML = '\((\d+)\)'/.exec(html)?.[1] ?? '') || 3000;
+    const items = html.split('<li class="list-group-item"').slice(1);
     let added = 0;
     for (const it of items) {
       const id = /club_id=(\d+)/.exec(it)?.[1];
@@ -56,14 +72,14 @@ async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
       const mission = strip(new RegExp(`id="club_${id}"[^>]*>\\s*<strong>Mission</strong><br>([\\s\\S]*?)</p>`).exec(it)?.[1] ?? '');
       out.push({ id, name, groupType: groupType.trim(), tags: tagText.split(',').map((t) => t.trim()).filter(Boolean), mission });
     }
-    if (!added) break;
+    void added;
     await new Promise((r) => setTimeout(r, 200));
   }
   return out;
 }
 
-/** 학교 부서·행정 조직은 학생 단체가 아니라 뺀다 */
-const CAMPUSGROUPS_SKIP = /^Campus Departments$/i;
+/** 학교 부서·행정 조직·기숙사 단위는 학생 단체가 아니라 뺀다 */
+const CAMPUSGROUPS_SKIP = /^(Campus Departments|Residential Life)$/i;
 function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Organization {
   const catText = `${o.groupType} ${o.tags.join(' ')} ${o.name}`;
   const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && /fratern|soror|greek/i.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
@@ -74,7 +90,7 @@ function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Org
     type, schoolId, parent: o.tags[0] || o.groupType || undefined, verified: false,
     description: o.mission.slice(0, 600),
     gallery: [], regularActivities: [], notices: [], followerIds: [], memberIds: [], adminIds: [], applicantIds: [],
-    links: [{ label: 'Cardinal Engage', url: `${host}/student_community?club_id=${o.id}` }],
+    links: [{ label: schoolId === 's_mit' ? 'MIT Engage' : 'Cardinal Engage', url: `${host}/student_community?club_id=${o.id}` }],
   };
 }
 
@@ -93,7 +109,7 @@ async function fetchAll(host: string): Promise<EngageOrg[]> {
   return out;
 }
 
-const GREEK_RE = /fraternit|sororit|greek|panhellenic|interfraternity|nphc|multicultural greek/i;
+const GREEK_RE = /fraternit|sororit|greek|panhellenic|interfraternity|nphc|multicultural greek|fsilg/i;
 const COUNCIL_RE = /student government|senate|associated students|council/i;
 const strip = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&amp;|&quot;|&#39;/g, (m) => ({ '&nbsp;': ' ', '&amp;': '&', '&quot;': '"', '&#39;': "'" }[m] ?? ' ')).replace(/\s+/g, ' ').trim();
 
@@ -135,7 +151,7 @@ function mergeExisting(o: Organization): Organization {
 /** 디렉터리에서 받은 뒤, 같은 학교의 손으로 넣어 둔 추정 항목(디렉터리 링크 없음 · 멤버/관리자 없음 · 이번에 안 맞음)은 지운다. greek 은 fetch-greeks 가 담당 */
 function staleSeed(schoolId: ID, fresh: Organization[]): ID[] {
   const freshIds = new Set(fresh.map((o) => o.id));
-  const hasDirLink = (o: Organization) => !!o.links?.some((l) => /callink\.berkeley\.edu|campuslabs\.com|cardinalengage\.stanford\.edu/.test(l.url));
+  const hasDirLink = (o: Organization) => !!o.links?.some((l) => /callink\.berkeley\.edu|campuslabs\.com|cardinalengage\.stanford\.edu|engage\.mit\.edu/.test(l.url));
   return snap.organizations.filter((o) => o.schoolId === schoolId && o.type !== 'greek' && !freshIds.has(o.id) && !hasDirLink(o) && o.memberIds.length === 0 && o.adminIds.length === 0).map((o) => o.id);
 }
 
