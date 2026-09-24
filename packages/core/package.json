@@ -1,0 +1,6 @@
+{
+  "name": "@aroundu/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AroundU shared domain: types, API contract, mock API, recommendation/timetable logic, store, i18n, seed data"
+}

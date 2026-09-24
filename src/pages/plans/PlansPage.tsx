@@ -3,15 +3,15 @@ import { Users, CalendarCheck, Send, ChevronRight, Clock, Mail, Heart, BookOpen,
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, Tag, CardSkeleton, ErrorState } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { t, lang } from '@/i18n';
-import type { planFeed } from '@/lib/social';
-import { RSVP_LABELS, RSVP_EMOJI, GOAL_LABELS, GOAL_EMOJI, CATEGORY_EMOJI, OPP_TYPE_EMOJI } from '@/lib/labels';
-import { formatDateTime, todayISO, relativeTime, formatDate } from '@/lib/format';
-import { isTeamActivity } from '@/lib/discover';
-import { dday } from '@/lib/recommend';
-import type { OpportunityIntent, Goal, Activity } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { t, lang } from '@core/i18n';
+import type { planFeed } from '@core/lib/social';
+import { RSVP_LABELS, RSVP_EMOJI, GOAL_LABELS, GOAL_EMOJI, CATEGORY_EMOJI, OPP_TYPE_EMOJI } from '@core/lib/labels';
+import { formatDateTime, todayISO, relativeTime, formatDate } from '@core/lib/format';
+import { isTeamActivity } from '@core/lib/discover';
+import { dday } from '@core/lib/recommend';
+import type { OpportunityIntent, Goal, Activity } from '@core/types';
 
 /** Me › My Plans — 받은 초대 / 대기 / 확정 / 관심 행사 / 팀 신청 / Study Crew */
 export function PlansPage() {

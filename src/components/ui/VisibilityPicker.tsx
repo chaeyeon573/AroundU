@@ -1,9 +1,9 @@
 import { Globe, School, Users, UserCheck, Lock, Building2, ChevronRight, Heart } from 'lucide-react';
-import { t } from '@/i18n';
-import type { Visibility } from '@/types';
-import { VISIBILITY_LABELS, VISIBILITY_ORDER } from '@/lib/labels';
-import { visibilityDescription } from '@/lib/relations';
-import { cn } from '@/lib/cn';
+import { t } from '@core/i18n';
+import type { Visibility } from '@core/types';
+import { VISIBILITY_LABELS, VISIBILITY_ORDER } from '@core/lib/labels';
+import { visibilityDescription } from '@core/lib/relations';
+import { cn } from '@core/lib/cn';
 import { useState } from 'react';
 import { BottomSheet } from './Sheet';
 

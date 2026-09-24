@@ -9,8 +9,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import type { Patch, Snapshot, CatalogCourse } from '@/api/types';
-import type { ID } from '@/types';
+import type { Patch, Snapshot, CatalogCourse } from '@core/api/types';
+import type { ID } from '@core/types';
 
 export type Collection = Exclude<keyof Snapshot, 'relationships'>;
 export const COLLECTIONS: Collection[] = ['users', 'schools', 'organizations', 'activities', 'participations', 'posts', 'proposals', 'chatRooms', 'notifications', 'reports', 'opportunities', 'opportunityIntents', 'timePolls'];

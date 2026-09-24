@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import type { Activity, ID, Post, User } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import type { Activity, ID, Post, User } from '@core/types';
 import {
   canMessage, canViewActivity, canViewField, canViewPost, connectionState, iLike, isFollowing, isFriend, isMutualLike, pendingRequestFrom, hasBlocked, isBlocked,
-} from '@/lib/relations';
+} from '@core/lib/relations';
 
 /** 현재 사용자 관점의 데이터 접근 헬퍼 */
 export function useViewer() {

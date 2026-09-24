@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Users, Lock } from 'lucide-react';
-import { t, lang } from '@/i18n';
-import type { Activity } from '@/types';
+import { t, lang } from '@core/i18n';
+import type { Activity } from '@core/types';
 import { Avatar, Tag } from '@/components/ui';
 import { JoinButton } from '@/components/cards/JoinButton';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { CATEGORY_COLORS, CATEGORY_EMOJI } from '@/lib/labels';
-import { placeLabel } from '@/lib/relations';
-import { formatTime } from '@/lib/format';
+import { useAppStore } from '@core/store/useAppStore';
+import { CATEGORY_COLORS, CATEGORY_EMOJI } from '@core/lib/labels';
+import { placeLabel } from '@core/lib/relations';
+import { formatTime } from '@core/lib/format';
 
 /** Now 피드 한 줄 카드 — 사람 사진은 작게, 무엇·언제·어디가 먼저 */
 export function NowActivityRow({ activity: a, inMin }: { activity: Activity; inMin: number }) {

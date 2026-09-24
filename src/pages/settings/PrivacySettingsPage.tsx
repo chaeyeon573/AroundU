@@ -1,10 +1,10 @@
 import { TopBar } from '@/components/layout/TopBar';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { VisibilityPicker, Toggle } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import type { ProfileField, Visibility } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import type { ProfileField, Visibility } from '@core/types';
 
 const FIELDS: { key: ProfileField; label: string; desc?: string }[] = [
   { key: 'bio', label: t('자기소개') },

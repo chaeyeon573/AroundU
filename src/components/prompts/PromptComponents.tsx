@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { Plus, X, Mic, Square, Play, Pause, Trash2, Check, BarChart3, Pencil } from 'lucide-react';
-import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@/types';
+import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@core/types';
 import { BottomSheet, Chip, Textarea, Tag } from '@/components/ui';
-import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, type PromptCategory } from '@/data/prompts';
-import { cn } from '@/lib/cn';
+import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, REQUIRED_SLOTS, FIRST_PROMPT_ID, slotCategories, normalizePrompts, type PromptCategory } from '@core/data/prompts';
+import { cn } from '@core/lib/cn';
 
 // ─── 텍스트 질문 편집 ──────────────────────────────────────────────────────
 export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onChange: (v: ProfilePrompt[]) => void }) {
@@ -13,7 +13,15 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
   const [cat, setCat] = useState<PromptCategory | 'all'>('all');
   const used = new Set(value.map((p) => p.questionId));
   const answered = value.filter((p) => p.answer.trim()).length;
+  // 1번 슬롯은 첫 질문으로 고정. 저장된 값이 규칙에 안 맞으면 정규화한다.
+  useEffect(() => {
+    if (value[0]?.questionId !== FIRST_PROMPT_ID) onChange(normalizePrompts(value));
+  }, [value, onChange]);
+  const targetIndex = editing ?? value.length;
+  const allowed = slotCategories(targetIndex);
+  const slot = REQUIRED_SLOTS[targetIndex];
 
+  const openPicker = (index: number | null) => { setEditing(index); setCat('all'); setPickerOpen(true); };
   const pick = (questionId: string) => {
     if (editing !== null) onChange(value.map((p, i) => (i === editing ? { questionId, answer: '' } : p)));
     else onChange([...value, { questionId, answer: '' }]);
@@ -24,11 +32,16 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
     <div className="space-y-2.5">
       {value.map((p, i) => {
         const q = questionById(p.questionId);
+        const fixed = i === 0;
+        const hint = REQUIRED_SLOTS[i]?.hint;
         return (
           <div key={p.questionId} className="card p-3.5">
+            {hint && <div className="text-[11px] font-semibold text-ink-3 mb-1">{i + 1}. {hint}{fixed ? ` · ${t('첫 질문은 고정이에요')}` : ''}</div>}
             <div className="flex items-start justify-between gap-2">
-              <button type="button" onClick={() => { setEditing(i); setPickerOpen(true); }} className="text-left text-[13px] font-bold text-primary flex items-center gap-1">{q?.text}<Pencil size={11} className="text-ink-3" /></button>
-              <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))} className="text-ink-3 h-6 w-6 grid place-items-center" aria-label={t('삭제')}><X size={15} /></button>
+              {fixed
+                ? <div className="text-left text-[13px] font-bold text-primary">{q?.text}</div>
+                : <button type="button" onClick={() => openPicker(i)} className="text-left text-[13px] font-bold text-primary flex items-center gap-1">{q?.text}<Pencil size={11} className="text-ink-3" /></button>}
+              {!fixed && <button type="button" onClick={() => onChange(normalizePrompts(value.filter((_, j) => j !== i)))} className="text-ink-3 h-6 w-6 grid place-items-center" aria-label={t('삭제')}><X size={15} /></button>}
             </div>
             <Textarea className="mt-2 min-h-[64px]" placeholder={q?.placeholder ?? t('2줄 이내로 짧게')} maxLength={80} value={p.answer} onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
             <div className="text-right text-[11px] text-ink-3 mt-1">{p.answer.length}/80</div>
@@ -36,15 +49,16 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
         );
       })}
       {value.length < MAX_TEXT_PROMPTS && (
-        <button type="button" onClick={() => { setEditing(null); setPickerOpen(true); }} className="w-full h-12 rounded-2xl border-2 border-dashed border-line text-[13px] font-semibold text-ink-2 flex items-center justify-center gap-1.5 press"><Plus size={16} />{value.length < REQUIRED_TEXT_PROMPTS ? (lang === 'en' ? `Add a prompt (${answered}/${REQUIRED_TEXT_PROMPTS} required)` : `질문 추가 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)`) : t('질문 하나 더 답하기')}</button>
+        <button type="button" onClick={() => openPicker(null)} className="w-full h-12 rounded-2xl border-2 border-dashed border-line text-[13px] font-semibold text-ink-2 flex items-center justify-center gap-1.5 press"><Plus size={16} />{value.length < REQUIRED_TEXT_PROMPTS ? (lang === 'en' ? `Add a prompt (${answered}/${REQUIRED_TEXT_PROMPTS} required)` : `질문 추가 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)`) : t('질문 하나 더 답하기')}</button>
       )}
-      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title={t('질문 고르기')} tall>
+      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title={slot ? `${targetIndex + 1}. ${slot.hint}` : t('질문 고르기')} tall>
+        {slot && <p className="text-[12px] text-ink-3 mb-2">{t('이 자리에는 다른 종류의 질문이 들어가요')}: {slot.categories.map((c) => PROMPT_CATEGORY_LABELS[c]).join(' · ')}</p>}
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-2 -mx-1 px-1">
           <Chip size="sm" active={cat === 'all'} onClick={() => setCat('all')}>{t('전체')}</Chip>
-          {(Object.keys(PROMPT_CATEGORY_LABELS) as PromptCategory[]).map((c) => <Chip key={c} size="sm" active={cat === c} onClick={() => setCat(c)}>{PROMPT_CATEGORY_LABELS[c]}</Chip>)}
+          {(Object.keys(PROMPT_CATEGORY_LABELS) as PromptCategory[]).filter((c) => !allowed || allowed.includes(c)).map((c) => <Chip key={c} size="sm" active={cat === c} onClick={() => setCat(c)}>{PROMPT_CATEGORY_LABELS[c]}</Chip>)}
         </div>
         <div className="space-y-1.5 mt-1">
-          {TEXT_PROMPTS.filter((q) => cat === 'all' || q.category === cat).map((q) => {
+          {TEXT_PROMPTS.filter((q) => q.id !== FIRST_PROMPT_ID && (!allowed || allowed.includes(q.category)) && (cat === 'all' || q.category === cat)).map((q) => {
             const taken = used.has(q.id) && value[editing ?? -1]?.questionId !== q.id;
             return <button key={q.id} type="button" disabled={taken} onClick={() => pick(q.id)} className={cn('w-full text-left rounded-xl px-3.5 py-3 border border-line text-[14px] font-medium press', taken ? 'opacity-40' : 'hover:bg-surface-2')}>{q.text}<span className="block text-[11px] text-ink-3 mt-0.5">{PROMPT_CATEGORY_LABELS[q.category]}{taken ? t(' · 이미 답했어요') : ''}</span></button>;
           })}

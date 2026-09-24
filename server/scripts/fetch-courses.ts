@@ -14,7 +14,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { CatalogCourse } from '@/api/types';
+import type { CatalogCourse } from '@core/api/types';
 import { createStore } from '../store';
 import { parseDays, parseTime } from './csv';
 

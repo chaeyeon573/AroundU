@@ -3,8 +3,8 @@
  * - 알림·신고는 본인 것만
  * - 다른 사람의 시간표 강의실(room)은 절대 내려보내지 않는다
  */
-import type { Patch, Snapshot } from '@/api/types';
-import type { ID, User } from '@/types';
+import type { Patch, Snapshot } from '@core/api/types';
+import type { ID, User } from '@core/types';
 
 function sanitizeUser(u: User, viewerId: ID): User {
   if (u.id === viewerId) return u;

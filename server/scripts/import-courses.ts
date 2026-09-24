@@ -12,7 +12,7 @@
  * registrar API 에서 받은 데이터를 이 헤더로만 맞추면 된다.
  */
 import { readFileSync } from 'node:fs';
-import type { CatalogCourse } from '@/api/types';
+import type { CatalogCourse } from '@core/api/types';
 import { createStore } from '../store';
 import { parseCSV, parseDays, parseTime } from './csv';
 

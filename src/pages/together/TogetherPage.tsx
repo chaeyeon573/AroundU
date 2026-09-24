@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, Clock, MapPin, Users, Plus, CalendarCheck, Ban, Vote, Lock } from 'lucide-react';
-import { t, lang } from '@/i18n';
+import { Check, Plus, Users, ArrowRight, MapPin } from 'lucide-react';
+import { t, lang } from '@core/i18n';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, Button, Tag, EmptyState, BottomSheet, Input, Field } from '@/components/ui';
+import { Avatar, Button, EmptyState, BottomSheet, Input, Field } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { CATEGORY_COLORS, CATEGORY_EMOJI, CATEGORY_LABELS } from '@/lib/labels';
-import { tally, myStatusFor, optionLabel, closesIn } from '@/lib/together';
-import { addDaysISO, relativeTime } from '@/lib/format';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { CATEGORY_LABELS } from '@core/lib/labels';
+import { tally, optionLabel, closesIn } from '@core/lib/together';
+import { addDaysISO } from '@core/lib/format';
+import { cn } from '@core/lib/cn';
 
-/** Plan Together 투표·확정 화면 */
+/** Plan Together — 겹치는 시간에 표 던지기 (pure minimal) */
 export function TogetherPage() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -26,84 +26,56 @@ export function TogetherPage() {
   const [custom, setCustom] = useState({ date: addDaysISO(1), startTime: '18:00', endTime: '19:30' });
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (poll) setSel(poll.votes[me.id] ?? []); }, [poll?.id, poll?.votes[me.id]?.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!poll) return <div className="min-h-full"><TopBar back title="Plan Together" /><EmptyState emoji="🗳️" title={t('투표를 찾을 수 없어요')} /></div>;
+  if (!poll) return <div className="min-h-full"><TopBar back title="Plan Together" /><EmptyState emoji="" title={t('투표를 찾을 수 없어요')} /></div>;
   const isHost = poll.hostId === me.id;
-  const invited = isHost || poll.inviteeIds.includes(me.id);
-  if (!invited) return <div className="min-h-full"><TopBar back title="Plan Together" /><EmptyState emoji="🔒" title={t('초대받은 사람만 볼 수 있어요')} /></div>;
-  const host = v.userById(poll.hostId);
+  if (!isHost && !poll.inviteeIds.includes(me.id)) return <div className="min-h-full"><TopBar back title="Plan Together" /><EmptyState emoji="" title={t('초대받은 사람만 볼 수 있어요')} /></div>;
   const { rows, best, voted, total } = tally(poll);
+  const people = [poll.hostId, ...poll.inviteeIds].map((u) => v.userById(u)).filter(Boolean);
   const myVote = poll.votes[me.id];
   const dirty = JSON.stringify([...sel].sort()) !== JSON.stringify([...(myVote ?? [])].sort());
   const decided = poll.status === 'decided';
-  const pending = [poll.hostId, ...poll.inviteeIds].filter((u) => !poll.votes[u]).map((u) => v.userById(u)).filter(Boolean);
-
+  const open = poll.status === 'open';
+  const sorted = [...rows].sort((a, b) => b.count - a.count);
   const save = async () => { setBusy(true); try { await run(() => api.together.vote(poll.id, me.id, sel), t('되는 시간을 저장했어요.')); } catch { /* */ } finally { setBusy(false); } };
   const decide = async (optionId: string) => { setBusy(true); try { const res = await run(() => api.together.decide(poll.id, optionId), t('시간을 확정했어요. 활동과 그룹 채팅방이 만들어졌어요.')); nav(`/activities/${res.activity.id}`); } catch { setBusy(false); } };
 
   return (
-    <div className="min-h-full pb-28">
-      <TopBar back title="Plan Together" messages />
-      <div className="px-4 pt-2 space-y-3">
-        <div className="card p-4">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="rounded-lg px-2 h-6 inline-flex items-center text-[11px] font-bold text-white" style={{ background: CATEGORY_COLORS[poll.category] }}>{CATEGORY_EMOJI[poll.category]} {CATEGORY_LABELS[poll.category]}</span>
-            {decided ? <Tag tone="mint"><CalendarCheck size={11} /> {t('확정됨')}</Tag> : poll.status === 'cancelled' ? <Tag>{t('취소됨')}</Tag> : <Tag tone="accent"><Vote size={11} /> {closesIn(poll.closesAt)}</Tag>}
-          </div>
-          <h1 className="text-[20px] font-extrabold leading-snug mt-2">{poll.title}</h1>
-          <div className="mt-2 flex items-center gap-2 text-[12px] text-ink-2">
-            {host && <button onClick={() => nav(`/users/${host.id}`)} className="flex items-center gap-1.5"><Avatar emoji={host.avatar.emoji} hue={host.avatar.hue} url={host.avatar.url} size={22} />{host.nickname}</button>}
-            <span>· {relativeTime(poll.createdAt)}</span>
-            {poll.place && <span className="flex items-center gap-0.5"><MapPin size={11} className="text-ink-3" />{poll.place.name}</span>}
-          </div>
-          <div className="mt-3 flex items-center gap-2 text-[12px]">
-            <span className="flex -space-x-1.5">{[poll.hostId, ...poll.inviteeIds].map((uid) => v.userById(uid)).filter(Boolean).map((u) => <Avatar key={u!.id} emoji={u!.avatar.emoji} hue={u!.avatar.hue} url={u!.avatar.url} size={24} className={cn('ring-2 ring-white', !poll.votes[u!.id] && 'opacity-40')} />)}</span>
-            <span className="text-ink-2"><Users size={11} className="inline mr-0.5" />{lang === 'en' ? `${voted}/${total} voted` : `${voted}/${total}명 투표`}</span>
-            {pending.length > 0 && !decided && <span className="text-ink-3 truncate">· {t('대기')}: {pending.map((u) => u!.nickname).join(', ')}</span>}
-          </div>
+    <div className="min-h-full pb-32">
+      <TopBar back title={lang === 'en' ? 'Plan Together' : '시간 정하기'} />
+      <div className="px-4 pt-3 space-y-5">
+        <div>
+          <h1 className="font-display text-[30px] font-bold text-primary leading-tight">{poll.title}</h1>
+          <div className="mt-1.5 text-[14px] text-ink-2 flex items-center gap-1.5"><MapPin size={15} className="text-verify" />{poll.place?.name ?? CATEGORY_LABELS[poll.category]} · {lang === 'en' ? `${total} friends` : `${total}명`}{open && <span className="text-ink-3"> · {closesIn(poll.closesAt)}</span>}</div>
         </div>
-
-        {decided && poll.activityId && (
-          <button onClick={() => nav(`/activities/${poll.activityId}`)} className="card w-full p-3.5 flex items-center gap-3 text-left press bg-[linear-gradient(120deg,#E1F7F0,#FFFFFF)]">
-            <span className="h-10 w-10 rounded-xl bg-mint text-white grid place-items-center"><CalendarCheck size={18} /></span>
-            <span className="flex-1 text-[13px]"><b>{poll.options.find((o) => o.id === poll.decidedOptionId) ? optionLabel(poll.options.find((o) => o.id === poll.decidedOptionId)!) : ''}</b><br /><span className="text-ink-2">{t('활동과 그룹 채팅방이 만들어졌어요. 열어보기')}</span></span>
-          </button>
-        )}
-
-        <section>
-          <div className="flex items-end justify-between mb-2"><h2 className="text-[15px] font-bold">{isHost && !decided ? t('후보 시간 · 표가 많은 순') : t('되는 시간을 모두 골라주세요')}</h2>{!decided && poll.status === 'open' && <button onClick={() => setAddOpen(true)} className="text-[12px] font-semibold text-primary flex items-center gap-0.5"><Plus size={13} />{t('시간 제안')}</button>}</div>
-          <div className="space-y-2">
-            {(isHost ? [...rows].sort((a, b) => b.count - a.count) : rows).map(({ option: o, voterIds, count, everyone }) => {
-              const on = sel.includes(o.id);
-              const st = myStatusFor(me, o);
-              const isDecided = poll.decidedOptionId === o.id;
+        <div className="rounded-2xl bg-surface-2 px-4 py-3.5 flex items-center gap-3">
+          <span className="flex-1 min-w-0"><span className="block text-[15px] font-semibold text-primary">{lang === 'en' ? 'Squad' : '멤버'}</span><span className="block text-[13px] text-ink-2">{lang === 'en' ? `${voted} of ${total} voted` : `${total}명 중 ${voted}명 투표`}</span></span>
+          <span className="flex -space-x-2">{people.slice(0, 4).map((u) => <Avatar key={u!.id} emoji={u!.avatar.emoji} hue={u!.avatar.hue} url={u!.avatar.url} size={36} className={cn('ring-2 ring-white', !poll.votes[u!.id] && 'opacity-40')} />)}{people.length > 4 && <span className="h-9 w-9 rounded-full bg-accent text-primary text-[12px] font-bold grid place-items-center ring-2 ring-white">+{people.length - 4}</span>}</span>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-2"><span className="text-[14px] font-semibold text-primary">{lang === 'en' ? 'Overlapping Free Times' : '겹치는 시간'}</span>{open && <button onClick={() => setAddOpen(true)} className="text-[13px] font-semibold text-verify flex items-center gap-1"><Plus size={13} />{t('시간 제안')}</button>}</div>
+          <div className="space-y-3">
+            {sorted.map(({ option: o, count }) => {
+              const on = sel.includes(o.id); const isDecided = poll.decidedOptionId === o.id; const top = best?.option.id === o.id;
               return (
-                <div key={o.id} className={cn('card p-3.5', isDecided && 'ring-2 ring-mint', best?.option.id === o.id && !decided && 'bg-[linear-gradient(120deg,#EEF1FF,#FFFFFF)]')}>
-                  <div className="flex items-center gap-3">
-                    {!decided && poll.status === 'open' && (
-                      <button onClick={() => setSel((s) => on ? s.filter((x) => x !== o.id) : [...s, o.id])} aria-label={optionLabel(o)} className={cn('h-7 w-7 rounded-lg border-2 grid place-items-center shrink-0 press', on ? 'border-primary bg-primary text-white' : 'border-line text-transparent')}><Check size={16} /></button>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-bold flex items-center gap-1.5 flex-wrap"><Clock size={13} className="text-ink-3" />{optionLabel(o)}{o.suggested && <Tag tone="mint" className="h-5">{t('공강 겹침')}</Tag>}{isDecided && <Tag tone="mint" className="h-5">{t('확정')}</Tag>}</div>
-                      <div className="mt-1 flex items-center gap-2 text-[12px] text-ink-2">
-                        <span className="flex -space-x-1.5">{voterIds.map((uid) => v.userById(uid)).filter(Boolean).slice(0, 6).map((u) => <Avatar key={u!.id} emoji={u!.avatar.emoji} hue={u!.avatar.hue} url={u!.avatar.url} size={20} className="ring-2 ring-white" />)}</span>
-                        <span className={cn('font-semibold', everyone && 'text-mint')}>{count}/{total}{everyone ? ` · ${t('모두 가능')}` : ''}</span>
-                        {st !== 'unknown' && <span className={cn('text-[11px]', st === 'free' ? 'text-mint' : 'text-ink-3')}>{st === 'free' ? t('내 시간표: 공강') : t('내 시간표: 수업')}</span>}
-                      </div>
-                    </div>
-                    {isHost && !decided && poll.status === 'open' && <Button size="sm" variant={best?.option.id === o.id ? 'primary' : 'outline'} loading={busy} onClick={() => decide(o.id)}>{t('확정')}</Button>}
-                  </div>
-                </div>
+                <button key={o.id} disabled={!open} onClick={() => setSel((s) => on ? s.filter((x) => x !== o.id) : [...s, o.id])} className={cn('w-full rounded-full pl-2 pr-2 py-2 flex items-center gap-3 text-left transition', on || isDecided ? 'bg-surface card' : 'bg-surface-2')}>
+                  <span className={cn('h-11 w-11 rounded-full grid place-items-center shrink-0', on || isDecided ? 'bg-primary text-white' : 'bg-surface text-ink-3')}>{on || isDecided ? <Check size={20} /> : <Plus size={18} />}</span>
+                  <span className="flex-1 min-w-0"><span className="block text-[16px] font-semibold text-primary truncate">{optionLabel(o)}</span><span className={cn('block text-[13px]', top ? 'text-verify' : 'text-ink-3')}>{lang === 'en' ? `${count} friends free` : `${count}명 가능`}{o.suggested ? ` · ${t('공강 겹침')}` : ''}</span></span>
+                  <span className={cn('h-8 px-3 rounded-full text-[12px] font-bold flex items-center gap-1 shrink-0', top ? 'bg-accent text-primary' : 'bg-surface text-ink-2')}><Users size={13} />{count}</span>
+                </button>
               );
             })}
           </div>
-        </section>
-        <p className="text-[11px] text-ink-3 flex items-start gap-1.5 px-1"><Lock size={12} className="shrink-0 mt-0.5" />{t('전체 시간표는 공유되지 않고, 각자 고른 시간만 보여요. 확정되면 그 시간에 가능하다고 한 사람만 참가자로 초대돼요.')}</p>
-        {isHost && !decided && poll.status === 'open' && <button onClick={() => run(() => api.together.cancel(poll.id), t('투표를 취소했어요.'))} className="w-full h-10 text-[12px] font-semibold text-ink-3 flex items-center justify-center gap-1"><Ban size={12} />{t('투표 취소')}</button>}
+        </div>
+        {decided && poll.activityId && <Button full size="lg" icon={<ArrowRight size={18} />} onClick={() => nav(`/activities/${poll.activityId}`)}>{lang === 'en' ? 'Open the hangout' : '약속 열기'}</Button>}
       </div>
-
-      {!decided && poll.status === 'open' && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur border-t border-line p-3 safe-bottom z-20">
-          <Button full size="lg" disabled={!dirty} loading={busy} onClick={save}>{myVote ? (dirty ? t('선택 저장') : t('투표 완료')) : lang === 'en' ? `I can do these ${sel.length}` : `이 ${sel.length}개 시간 돼요`}</Button>
+      {open && (
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-surface/95 backdrop-blur p-4 safe-bottom z-20">
+          {isHost && best ? (
+            <Button full size="lg" variant="secondary" loading={busy} onClick={() => decide(best.option.id)}>{lang === 'en' ? `Confirm Meetup (${optionLabel(best.option)})` : `${optionLabel(best.option)} 확정`}</Button>
+          ) : (
+            <Button full size="lg" disabled={!dirty} loading={busy} onClick={save}>{myVote ? (dirty ? t('선택 저장') : t('투표 완료')) : lang === 'en' ? `I can do these ${sel.length}` : `이 ${sel.length}개 시간 돼요`}</Button>
+          )}
+          <p className="mt-2 text-center text-[12px] text-ink-3">{isHost ? (lang === 'en' ? 'Everyone free at that time gets invited' : '그 시간에 가능한 사람만 초대돼요') : (lang === 'en' ? 'Only the times you pick are shared' : '고른 시간만 공유돼요')}</p>
         </div>
       )}
       <BottomSheet open={addOpen} onClose={() => setAddOpen(false)} title={t('시간 제안')}>

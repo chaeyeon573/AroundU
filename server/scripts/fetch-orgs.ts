@@ -18,7 +18,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Organization } from '@/types';
+import type { Organization } from '@core/types';
 import { createStore, emptySnapshot } from '../store';
 
 const ENGAGE_HOSTS: Record<string, string> = {

@@ -21,6 +21,9 @@
     "noUnusedParameters": true,
     "baseUrl": "..",
     "paths": {
+      "@core/*": [
+        "packages/core/src/*"
+      ],
       "@/*": [
         "src/*"
       ]

@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Gift } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, Chip, Field, Input, Segmented, VisibilityPicker } from '@/components/ui';
 import { CompletionMeter } from '@/components/prompts/PromptComponents';
-import { profileCompletion } from '@/data/prompts';
+import { profileCompletion } from '@core/data/prompts';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { ALL_GOALS, GOAL_EMOJI, GOAL_LABELS, LOOKING_FOR_ROLES, OFFER_ROLES, PERSON_ROLE_LABELS, RESIDENCE_LABELS, ALL_MEET_PREFS, MEET_PREF_LABELS, MEET_PREF_EMOJI } from '@/lib/labels';
-import type { Goal, Role, Residence, MeetPreference } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { ALL_GOALS, GOAL_EMOJI, GOAL_LABELS, LOOKING_FOR_ROLES, OFFER_ROLES, PERSON_ROLE_LABELS, RESIDENCE_LABELS, ALL_MEET_PREFS, MEET_PREF_LABELS, MEET_PREF_EMOJI } from '@core/lib/labels';
+import type { Goal, Role, Residence, MeetPreference } from '@core/types';
 
 /** 이번 학기 목표·찾는 사람·제공할 수 있는 것·생활권·관심 조직 — 추천의 핵심 입력 */
 export function ProfileContextPage() {

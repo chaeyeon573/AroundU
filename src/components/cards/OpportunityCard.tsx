@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Bookmark, Clock, MapPin, Users, ExternalLink, BadgeCheck, AlarmClock } from 'lucide-react';
-import type { Opportunity } from '@/types';
+import type { Opportunity } from '@core/types';
 import { Cover, Tag, Button } from '@/components/ui';
-import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@/lib/labels';
-import { formatDateTime } from '@/lib/format';
-import { dday, daysUntil, isTogetherType } from '@/lib/recommend';
+import { OPP_TYPE_COLORS, OPP_TYPE_EMOJI, OPP_TYPE_LABELS, PERSON_ROLE_LABELS, RSVP_LABELS, RSVP_EMOJI } from '@core/lib/labels';
+import { formatDateTime } from '@core/lib/format';
+import { dday, daysUntil, isTogetherType } from '@core/lib/recommend';
 import { Heart } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '@core/store/useAppStore';
 import { useViewer } from '@/hooks/useViewer';
-import { api } from '@/api';
-import { cn } from '@/lib/cn';
+import { api } from '@core/api';
+import { cn } from '@core/lib/cn';
 
 export function useOppState(o: Opportunity) {
   const intents = useAppStore((s) => s.opportunityIntents);
@@ -32,7 +32,7 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
   if (variant === 'row') {
     return (
       <button onClick={() => nav(`/opportunities/${o.id}`)} className={cn('card w-full flex gap-3 p-3 text-left press', className)}>
-        <Cover emoji={o.cover.emoji} hue={o.cover.hue} url={o.cover.url} className="h-[68px] w-[68px] rounded-xl shrink-0" size={28} />
+        <span className="h-[52px] w-[52px] rounded-xl grid place-items-center text-[24px] shrink-0" style={{ background: `${color}1A` }}>{OPP_TYPE_EMOJI[o.type]}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5"><span className="text-[11px] font-bold" style={{ color }}>{OPP_TYPE_EMOJI[o.type]} {OPP_TYPE_LABELS[o.type]}</span>{o.deadline && <Tag tone={urgent ? 'danger' : 'neutral'} className="h-5">{dday(o.deadline)}</Tag>}</div>
           <div className="text-[14px] font-bold truncate mt-0.5">{o.title}</div>
@@ -43,7 +43,7 @@ export function OpportunityCard({ o, reasons, variant = 'feed', className }: { o
     );
   }
 
-  const textMode = variant === 'text';
+  const textMode = true as boolean; // 기회 카드에는 사진을 쓰지 않는다
   return (
     <article className={cn('card overflow-hidden', className)}>
       {textMode ? (

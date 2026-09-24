@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { t, lang, setLang } from '@/i18n';
+import { t, lang, setLang } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, MapPin, Users, Sparkles, Mail } from 'lucide-react';
 import { Button, BottomSheet, Field, Input } from '@/components/ui';
-import { useAppStore } from '@/store/useAppStore';
-import { api, apiMode } from '@/api';
+import { useAppStore } from '@core/store/useAppStore';
+import { api, apiMode } from '@core/api';
+import { GraduationCap, MapPin, Users, Sparkles, Mail } from 'lucide-react';
 
 export function WelcomePage() {
   const nav = useNavigate();

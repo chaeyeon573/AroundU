@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal, CalendarCheck, Flag, Trash2, BadgeCheck, Users, Sparkles, Puzzle, Check } from 'lucide-react';
-import type { Post } from '@/types';
-import { Avatar, Cover, Button, BottomSheet, Input, VisibilityTag } from '@/components/ui';
+import type { Post } from '@core/types';
+import { Avatar, Cover, Button, BottomSheet, Input } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { relativeTime } from '@/lib/format';
-import { POST_TYPE_LABELS, POST_TYPE_EMOJI, topicLabel, CATEGORY_EMOJI } from '@/lib/labels';
-import { isTeamActivity } from '@/lib/discover';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { relativeTime } from '@core/lib/format';
+import { POST_TYPE_LABELS, topicLabel, CATEGORY_EMOJI } from '@core/lib/labels';
+import { isTeamActivity } from '@core/lib/discover';
+import { cn } from '@core/lib/cn';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 
 export function PostCard({ post: p, className }: { post: Post; className?: string }) {
@@ -41,7 +41,7 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
   const anon = !!p.anonymous;
   const displayName = anon ? t('익명') : org?.name ?? author?.nickname ?? t('알 수 없음');
   const TextBlock = () => (<>
-    <p className={cn('leading-relaxed mt-1', p.media.length ? 'text-[14px]' : 'text-[15px]')}>{!anon && <b className="mr-1.5">{displayName}</b>}{p.text}</p>
+    <p className={cn('leading-relaxed mt-1', p.media.length ? 'text-[15px]' : 'text-[17px]')}>{p.text}</p>
     {tagged.filter((x) => x.ok || x.id === v.me.id || isMine).length > 0 && <div className="mt-1 text-[12px] text-ink-2 flex items-center gap-1 flex-wrap"><Users size={11} className="text-ink-3" />{t('함께:')} {tagged.filter((x) => x.ok || x.id === v.me.id || isMine).map((x) => <button key={x.id} onClick={() => nav(`/users/${x.id}`)} className="font-semibold">{x.u!.nickname}{!x.ok && <span className="text-ink-3 font-normal"> ({t('승인 대기')})</span>}</button>)}</div>}
     {(p.tags.length > 0 || p.topics?.length || p.courseTag) && <div className="mt-1 text-[12px] text-primary">{[...(p.topics ?? []).map((k) => `#${topicLabel(k)}`), ...(p.courseTag ? [`📚${p.courseTag}`] : []), ...p.tags.map((tg) => `#${tg}`)].join(' ')}</div>}
   </>);
@@ -54,8 +54,8 @@ export function PostCard({ post: p, className }: { post: Post; className?: strin
       <div className="flex items-center gap-2.5 px-3.5 py-3">
         <button onClick={goAuthor}><Avatar emoji={avatar.emoji} hue={avatar.hue} url={avatar.url} size={36} /></button>
         <div className="flex-1 min-w-0">
-          <button onClick={goAuthor} className="text-[14px] font-bold truncate flex items-center gap-1">{displayName}{org?.verified && <BadgeCheck size={13} className="text-gold" />}</button>
-          <div className="text-[11px] text-ink-3 flex items-center gap-1.5">{anonSchool && <>{anonSchool} · </>}{relativeTime(p.createdAt)} · <VisibilityTag value={p.visibility} />{p.postType && <span className="rounded bg-surface-2 px-1 font-semibold">{POST_TYPE_EMOJI[p.postType]} {POST_TYPE_LABELS[p.postType]}</span>}</div>
+          <button onClick={goAuthor} className="text-[15px] font-bold truncate flex items-center gap-1">{displayName}{org?.verified && <BadgeCheck size={13} className="text-gold" />}</button>
+          <div className="text-[12px] text-ink-3">{anonSchool && <>{anonSchool} · </>}{relativeTime(p.createdAt)}{p.postType && p.postType !== 'story' && <> · {POST_TYPE_LABELS[p.postType]}</>}</div>
         </div>
         {!isMine && !anon && (
           <button onClick={() => run(() => api.relationships.toggleFollow(v.me.id, org ? org.id : p.authorId, org ? 'org' : 'user'))}

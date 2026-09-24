@@ -5,13 +5,13 @@
  *
  * CSV 헤더:
  *   school_id,type,title,host,deadline,date,eligibility,benefit,description,url,source_label,tags,goals,official
- *   - type: event | club | lab | internship | scholarship | hackathon | startup | activity
+ *   - type: event | club | lab | internship | scholarship | hackathon | startup | activity | exchange
  *   - deadline / date: YYYY-MM-DD. 모르면 비워 둔다 — 지어내지 말고 description 에 "보통 3월" 처럼 적는다
  *   - id 는 school_id + title 로 만들어지므로 같은 제목을 다시 넣으면 갱신된다 (저장·Q&A·후기는 유지)
  *   - PRUNE_DEMO=1 이면 CSV 에 있는 학교의 데모 시드 공고(링크가 example.com 이거나 없는 것)와 그에 딸린 저장 기록을 지운다
  */
 import { readFileSync } from 'node:fs';
-import type { Opportunity, OpportunityType, Goal } from '@/types';
+import type { Opportunity, OpportunityType, Goal } from '@core/types';
 import { createStore, emptySnapshot } from '../store';
 import { parseCSV } from './csv';
 
@@ -20,7 +20,7 @@ if (!file) { console.error('usage: npm run import:opportunities -- <opportunitie
 
 const COVER: Record<OpportunityType, { emoji: string; hue: number }> = {
   event: { emoji: '📅', hue: 200 }, club: { emoji: '🎯', hue: 150 }, lab: { emoji: '🔬', hue: 175 }, internship: { emoji: '💼', hue: 215 },
-  scholarship: { emoji: '🎓', hue: 45 }, hackathon: { emoji: '💡', hue: 230 }, startup: { emoji: '🚀', hue: 265 }, activity: { emoji: '🏃', hue: 120 },
+  scholarship: { emoji: '🎓', hue: 45 }, hackathon: { emoji: '💡', hue: 230 }, startup: { emoji: '🚀', hue: 265 }, activity: { emoji: '🏃', hue: 120 }, exchange: { emoji: '✈️', hue: 190 },
 };
 const TYPES = Object.keys(COVER) as OpportunityType[];
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 60);

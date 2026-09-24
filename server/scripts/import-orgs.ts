@@ -10,7 +10,7 @@
  * 이미 있는 조직(같은 학교 + 같은 이름)은 설명·링크만 갱신하고 멤버·팔로워는 유지한다.
  */
 import { readFileSync } from 'node:fs';
-import type { Organization } from '@/types';
+import type { Organization } from '@core/types';
 import { createStore, emptySnapshot } from '../store';
 import { parseCSV } from './csv';
 

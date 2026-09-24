@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { Check, X, MessageCircle, Pencil } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Avatar, Button, EmptyState, Tag } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { relativeTime } from '@/lib/format';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { relativeTime } from '@core/lib/format';
 import { affiliationText } from '@/components/cards/PersonCard';
 
 /** 주최자용 참가 승인·거절 화면 */

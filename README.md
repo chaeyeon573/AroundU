@@ -20,6 +20,33 @@ npm run preview    # 빌드 결과 미리보기
 
 기본값은 `localStorage`에 저장되는 mock API 입니다. `VITE_API_MODE=remote` 로 빌드하면 `server/` 의 실제 서버(Railway + Postgres)를 사용합니다. 아래 **백엔드 연동** 참고.
 
+## 모바일 앱 (Expo) — `apps/mobile`
+
+웹과 같은 도메인 코드(`packages/core`: 타입·API·mock DB·스토어·i18n·추천 로직)를 그대로 쓰는 React Native 앱입니다. 화면은 RN으로 다시 그렸고, 웹의 모든 화면(사람·발견·캠퍼스·나 탭, `+` 시트, 사람/활동/조직/공고 상세, 채팅, 알림, 설정, 시간표, 수업 공간, Plan Together, 활동·게시물 만들기, 프로필 편집)이 `apps/mobile/app/**` 에 같은 경로 이름으로 있습니다. 온보딩·지도는 아직 없고 데모 계정으로 바로 들어갑니다.
+
+**폰에서 보기 (Windows PowerShell)** — 다른 작업 세션이 브랜치를 바꿔도 안 깨지도록 `~/AroundU-mobile` 에 따로 클론해서 실행합니다.
+
+```powershell
+.\start-mobile.ps1      # 클론/갱신 → npm install → apps/mobile 에서 expo start --tunnel
+```
+
+QR이 뜨면 폰의 **Expo Go**(App Store / Play 스토어)로 스캔합니다. tunnel 모드라 같은 Wi-Fi가 아니어도 됩니다.
+
+**브라우저에서 보기** — 같은 RN 코드가 react-native-web으로 돌아갑니다.
+
+```bash
+cd apps/mobile
+npx expo start --web                   # http://localhost:8081
+npx expo export --platform web         # 정적 파일 → apps/mobile/dist
+npx expo export --platform ios,android # 네이티브 번들 (CI 검증용)
+```
+
+- Expo SDK 57 (Expo Go 최신 버전과 호환). 헤더의 학교 알약을 누르면 **한국어 · 한국 대학 / English · US campus** 버전을 바꿀 수 있어요.
+- 앱스토어 제출은 `npx eas build --platform ios|android` (EAS 계정 필요), 스토어 등록 전에 `app.json`의 번들 ID·아이콘을 바꿉니다.
+- 스타일은 `twrnc`(런타임 Tailwind)로 웹과 같은 클래스 이름·토큰(`apps/mobile/tailwind.config.js`)을 씁니다. 사진은 `apps/mobile/assets/photos` + `src/photos.ts`의 `require` 맵으로 들어갑니다.
+- 저장소는 AsyncStorage를 앱 시작 시 메모리로 올려(`src/platform.ts`의 `hydrate`) core의 동기 저장소 인터페이스에 맞춥니다.
+- 루트(웹)와 모바일의 React 버전이 달라서 `metro.config.js`가 react/react-dom을 항상 `apps/mobile/node_modules` 것으로 고정합니다.
+
 ## 기술 스택
 
 | 영역 | 선택 |
@@ -181,14 +208,14 @@ npm run import:opportunities -- server/data/opportunities-berkeley.csv
 - 인증 코드 요청에 rate limit 이 없다 (Railway 앞단 또는 `express-rate-limit` 추가).
 - 세션 토큰 만료·기기 목록, 이미지 업로드(현재 `public/photos` 정적 파일).
 
-## 앱 구조 — People | Discover | + | Community | Me
+## 앱 구조 — People | Discover | + | Campus | Me
 
 | 탭 | 질문 | 내용 |
 | --- | --- | --- |
 | **People** (`src/pages/home/HomePage.tsx`) | 누구를 만날 것인가 | 한 번에 한 명 카드 스와이프. 큰 사진, 소속, 공통 관심사, 추천 이유, 가능한 시간, "지금 같이 하고 싶은 것". 왼쪽=넘기기, 오른쪽=관심(상대에게 비공개, 상호일 때만 매칭 시트). 버튼: 넘기기 / 친구로 연결 / 커피 제안 / 함께할 일. 이전 카드, 나중에 보기, 오늘 본 사람(localStorage). 필터: 전체·친구·밥·카페·공부·운동·취미·창업·프로젝트 |
 | **Discover** (`src/pages/discover/DiscoverPage.tsx`, `src/lib/discover.ts`) | 무엇을 함께할 것인가 | 상단 시간표 카드(오늘 공강·시간 맞는 사람·가능한 활동 → Open Slot). **Now**: 오늘 안에 시작하는 가벼운 활동을 한 줄 카드로(작은 프로필, 무엇·언제·어디, 같이 가기), 시간 칩(지금/30분/1시간/오늘)·종류 칩, 승인제는 승인 전 대략 위치만(`place.area`), Who's free·오늘의 질문·친구들의 계획·Campus Pulse. **Activities**: 이후 활동 + 같이 가는 행사·동아리·창업 기회. **Teams**: 팀원 모집 활동, Study Crew, 해커톤·창업 기회, 동아리 모집 — 목적·역할·대면/온라인 필터, 내가 제공할 수 있는 역할 표시 |
-| **+** (`src/components/layout/BottomNav.tsx`) | 상황에 맞는 생성 | 지금 만날 사람 찾기(30분 뒤 시작, People에서 마지막으로 본 사람 자동 초대) / 활동·약속 만들기 / Study Crew 만들기(수업 선택) / 팀원 모집(공고 상세에서 열면 역할 프리필) / 동아리 부원 모집·행사(관리자) / 기회 공유(링크·제목만) / 글 작성(조직 페이지에서 열면 조직 소식) |
-| **Community** (`src/pages/community/CommunityPage.tsx`) | 학교에 어떤 이야기·기회·조직이 있는가 | **Feed**: 게시물만. 종류(그냥 이야기·질문·정보·후기·같이할 사람·소식·익명)와 주제 태그. **Opportunities**: 나에게 맞는·공고·저장·유형별. **Clubs**: 조직 목록(내 조직·동아리·학회·연구실·Greek) → 조직 페이지 탭 소개·게시물·행사·모집·멤버 (`src/pages/org/OrgPage.tsx`). 조직 글은 부원 모집→Teams, 행사→Activities, 소식→Feed에 자동 노출 |
+| **+** (`src/components/layout/BottomNav.tsx`) | 새로운 활동 만들기 | 즉석 만남(30분 뒤 시작, People에서 마지막으로 본 사람 자동 초대) / 활동·약속 / 같이 시간 정하기(Plan Together) / Study Crew(수업 선택) / 팀원 모집 / 게시물 작성. 단체 글·기회 공유는 단체 페이지와 캠퍼스 › 공고에서 |
+| **Campus** (`src/pages/community/CommunityPage.tsx`) | 학교의 이야기·공고·단체 | **피드**: 사진·일상·질문·익명 글. **공고**: 장학금·인턴·연구실/RA·공모전·교환학생 (같이 가는 행사·동아리 모집·팀 기회는 발견에만). **단체**: 동아리·학회·학생회·연구실·Greek → 단체 페이지 탭 소개·게시물·행사·모집·멤버 (`src/pages/org/OrgPage.tsx`) |
 | **Me** (`src/pages/profile/ProfilePage.tsx`) | 나와 내 일정 | 프로필 카드·질문 답변·목표. 목록: My Plans(받은 초대·참가 대기·확정·관심 행사·팀 신청·Study Crew, `src/pages/plans/PlansPage.tsx`) / 내 시간표 / 친구 / 채팅 / 저장한 공고 / 관심 행사 / 가입한 동아리 / 활동 기록. 게시물·만든 활동·참여·저장 탭 |
 
 시간표는 탭이 아니라 Discover 상단 카드와 Me에서 진입합니다. **수업을 탭하면 수업 공간**(`src/pages/classes/ClassPage.tsx`)이 열려 같은 수업 학생(시간표 공개 범위·같은 학교 기준)과 운영 중인 Study Crew를 보고, `Study Crew 만들기`로 제목·장소·시간(수업 직후)·공개 범위(같은 수업만, `visibilityTargets: ['course:<수업명>']`)가 미리 채워진 생성 화면으로 갑니다. 유형(시험·과제·복습·팀플)과 대면/온라인만 고르면 됩니다.

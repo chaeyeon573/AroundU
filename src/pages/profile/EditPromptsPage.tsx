@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
+import { t } from '@core/i18n';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button, Field, VisibilityPicker } from '@/components/ui';
 import { PromptEditor, VoicePromptEditor, PollEditor, CompletionMeter } from '@/components/prompts/PromptComponents';
-import { profileCompletion, REQUIRED_TEXT_PROMPTS } from '@/data/prompts';
+import { profileCompletion, REQUIRED_TEXT_PROMPTS, promptsSatisfyRules } from '@core/data/prompts';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import type { PollPrompt, ProfilePrompt, VoicePrompt, Visibility } from '@/types';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import type { PollPrompt, ProfilePrompt, VoicePrompt, Visibility } from '@core/types';
 
 /** 프로필 질문(텍스트 3개 필수 + 음성·투표 선택) 편집 */
 export function EditPromptsPage() {
@@ -22,7 +22,7 @@ export function EditPromptsPage() {
   const [visibility, setVisibility] = useState<Visibility>(me.fieldVisibility.prompts);
   const [busy, setBusy] = useState(false);
   const answered = prompts.filter((p) => p.answer.trim()).length;
-  const ok = answered >= REQUIRED_TEXT_PROMPTS && prompts.every((p) => p.answer.trim());
+  const ok = promptsSatisfyRules(prompts);
   const preview = profileCompletion({ ...me, prompts, voicePrompt: voice, poll });
 
   const save = async () => {

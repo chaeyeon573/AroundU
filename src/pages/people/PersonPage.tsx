@@ -1,26 +1,28 @@
 import { useEffect, useState } from 'react';
-import { t, lang } from '@/i18n';
+import { t, lang } from '@core/i18n';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Heart, UserPlus, MessageCircle, MoreHorizontal, Clock, MapPin, Flag, Ban, Sparkles, Users, CalendarPlus, Check, Lock, Mic } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
-import { Avatar, Portrait, VerifiedBadge, Tag, Button, BottomSheet, Dialog, Textarea, Input, Chip, Cover, EmptyState, VisibilityTag } from '@/components/ui';
+import { Avatar, VerifiedBadge, Tag, Button, BottomSheet, Dialog, Textarea, Input, Chip, Cover, EmptyState, VisibilityTag } from '@/components/ui';
 import { SheetItem } from '@/components/cards/PostCard';
 import { ReportSheet } from '@/components/cards/ReportSheet';
 import { ActivityCard } from '@/components/cards/ActivityCard';
 import { affiliationText } from '@/components/cards/PersonCard';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ALL_CATEGORIES, CATEGORY_EMOJI, CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/labels';
-import { commonInterests, mutualFriends } from '@/lib/relations';
-import { todayISO } from '@/lib/format';
-import type { ActivityCategory } from '@/types';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { INTEREST_EMOJI, INTEREST_LABELS, PURPOSE_LABELS, ALL_CATEGORIES, CATEGORY_EMOJI, CATEGORY_LABELS, CATEGORY_COLORS } from '@core/lib/labels';
+import { commonInterests, mutualFriends } from '@core/lib/relations';
+import { todayISO } from '@core/lib/format';
+import type { ActivityCategory } from '@core/types';
+import { cn } from '@core/lib/cn';
+import { assetUrl } from '@/lib/assets';
+import type { User } from '@core/types';
 import { PromptAnswerCard, VoicePlayer, PollCard } from '@/components/prompts/PromptComponents';
-import { questionById } from '@/data/prompts';
-import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@/lib/timetable';
-import { matchReasons } from '@/lib/recommend';
-import { GOAL_EMOJI, GOAL_LABELS, PERSON_ROLE_LABELS, RESIDENCE_LABELS } from '@/lib/labels';
+import { questionById } from '@core/data/prompts';
+import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@core/lib/timetable';
+import { matchReasons, shareableReasons } from '@core/lib/recommend';
+import { GOAL_EMOJI, GOAL_LABELS, PERSON_ROLE_LABELS, RESIDENCE_LABELS } from '@core/lib/labels';
 
 export function PersonPage() {
   const { id } = useParams();
@@ -68,11 +70,11 @@ export function PersonPage() {
   const sharedOpps = v.snap.opportunityIntents.filter((i) => i.userId === user.id).map((i) => oppsAll.find((o) => o.id === i.opportunityId)).filter((o): o is NonNullable<typeof o> => !!o && o.date !== undefined && o.date >= todayISO());
   const adminOrgs = orgs.filter((o) => o.adminIds.includes(user.id));
   const pendingProposal = proposals.find((p) => p.fromId === v.me.id && p.toId === user.id && p.status === 'pending');
-  const reasons = matchReasons(v.me, user, v.snap, see('timetable'));
+  const reasons = shareableReasons(matchReasons(v.me, user, v.snap, see('timetable')));
 
   const like = async () => {
     const res = await run(() => api.relationships.toggleLike(v.me.id, user.id));
-    if (res.mutual) showToast(t('서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?'), 'success');
+    if (res.mutual) showToast(t('서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.'), 'success');
   };
   const openChat = async () => {
     try { const res = await run(() => api.chats.openDirect(v.me.id, user.id)); nav(`/chats/${res.room.id}`); } catch { /* toast */ }
@@ -85,12 +87,11 @@ export function PersonPage() {
   return (
     <div className="min-h-full pb-28">
       <TopBar back title="" transparent className="absolute left-0 right-0" right={<button onClick={() => setMenu(true)} className="h-10 w-10 grid place-items-center rounded-full bg-white/80 backdrop-blur" aria-label={t('더보기')}><MoreHorizontal size={20} /></button>} />
-      <Portrait emoji={user.avatar.emoji} hue={user.avatar.hue} url={user.avatar.url} photoType={user.avatar.photoType} className="h-[300px]" />
+      <PhotoHero user={user} />
       <div className="px-4 -mt-8 relative space-y-3">
         <div className="card p-4">
-          <div className="flex items-center gap-2"><h1 className="text-[22px] font-extrabold">{user.nickname}</h1>{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={18} label />}{user.identityVerified && <VerifiedBadge kind="identity" size={18} label />}</div>
-          <div className="text-[13px] text-ink-3 mt-0.5">{affiliationText(user)} · {new Date().getFullYear() - user.birthYear + 1}{t('세')}</div>
-          {mutual && <div className="mt-3 rounded-xl bg-heart-soft text-heart text-[13px] font-semibold px-3 py-2.5 flex items-center gap-2"><Heart size={15} fill="currentColor" />{t('서로의 스타일이 마음에 들었어요. 대화를 시작해볼까요?')}</div>}
+          <div className="flex items-center gap-2 flex-wrap">{user.affiliation.type === 'university' && user.affiliation.emailVerified && <VerifiedBadge kind="school" size={16} label />}{user.identityVerified && <VerifiedBadge kind="identity" size={16} label />}</div>
+          {mutual && <div className="mt-3 rounded-xl bg-heart-soft text-ink text-[13px] font-semibold px-3 py-2.5 flex items-center gap-2"><Heart size={15} fill="currentColor" />{t('서로 관심이 있어요. 이제 메시지를 보낼 수 있어요.')}</div>}
           {conn !== 'none' && !mutual && <Tag tone="mint" className="mt-2"><Check size={11} />{{ friend: t('친구'), activity: t('같은 활동 참가자'), proposal: t('활동 제안 수락'), matched: t('매칭') }[conn]}</Tag>}
           {inReq && (
             <div className="mt-3 rounded-xl bg-primary-soft px-3 py-2.5 flex items-center gap-2 text-[13px]"><span className="flex-1 font-semibold text-primary">{user.nickname}{t('님이 친구 요청을 보냈어요')}</span>
@@ -190,6 +191,26 @@ export function PersonPage() {
         <Button variant="outline" full onClick={() => setBlockOpen(false)}>{t('취소')}</Button>
         <Button variant="danger" full onClick={async () => { setBlockOpen(false); await run(() => api.relationships.block(v.me.id, user.id), t('차단했어요.')); nav(-1); }}>{t('차단')}</Button>
       </Dialog>
+    </div>
+  );
+}
+
+/** 사진 여러 장 + 위쪽 흰 바, 이름은 사진 위에 */
+function PhotoHero({ user }: { user: User }) {
+  const [pi, setPi] = useState(0);
+  const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
+  const tap = (e: React.MouseEvent<HTMLDivElement>) => { const r = e.currentTarget.getBoundingClientRect(); const x = e.clientX - r.left; if (photos.length < 2) return; setPi((p) => (x < r.width / 2 ? (p - 1 + photos.length) % photos.length : (p + 1) % photos.length)); };
+  return (
+    <div className="relative h-[440px] bg-ink text-white select-none" onClick={tap} style={{ background: `linear-gradient(135deg, hsl(${user.avatar.hue} 60% 75%), hsl(${(user.avatar.hue + 40) % 360} 55% 60%))` }}>
+      {photos.length ? <img src={assetUrl(photos[pi])} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} /> : <span className="absolute inset-0 grid place-items-center text-[120px]">{user.avatar.emoji}</span>}
+      <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(to_bottom,rgba(0,0,0,.5),rgba(0,0,0,0))]" />
+      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-[linear-gradient(to_top,rgba(20,14,10,.9),rgba(20,14,10,.3)_60%,rgba(0,0,0,0))]" />
+      {photos.length > 1 && <div className="absolute top-[60px] inset-x-4 flex gap-1">{photos.map((_, i) => <span key={i} className={cn('h-[3px] flex-1 rounded-full', i === pi ? 'bg-white' : 'bg-white/40')} />)}</div>}
+      {user.avatar.photoType !== 'face' && <span className="absolute top-[72px] left-4 rounded-full bg-black/35 backdrop-blur text-[11px] px-2.5 py-1">{user.avatar.photoType === 'masked' ? t('얼굴 비공개') : t('뒷모습')}</span>}
+      <div className="absolute inset-x-0 bottom-0 p-5 pb-12 pointer-events-none">
+        <div className="flex items-end gap-2"><h1 className="font-display text-[40px] leading-none font-bold">{user.nickname}</h1><span className="text-[22px] font-display opacity-80 leading-none pb-0.5">{new Date().getFullYear() - user.birthYear + 1}</span></div>
+        <div className="mt-1.5 text-[13px] opacity-90">{affiliationText(user)}</div>
+      </div>
     </div>
   );
 }

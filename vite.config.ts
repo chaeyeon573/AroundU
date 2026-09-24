@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)), '@core': fileURLToPath(new URL('./packages/core/src', import.meta.url)) } },
   server: { host: true, port: 5173 },
   build: {
     rollupOptions: {

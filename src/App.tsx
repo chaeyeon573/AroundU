@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '@core/store/useAppStore';
 import { AppShell } from '@/components/layout/AppShell';
 import { ErrorState } from '@/components/ui';
 import { WelcomePage } from '@/pages/onboarding/WelcomePage';

@@ -1,5 +1,5 @@
-import { useAppStore } from '@/store/useAppStore';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { cn } from '@core/lib/cn';
 
 export function Toast() {
   const toast = useAppStore((s) => s.toast);

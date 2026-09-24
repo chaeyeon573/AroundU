@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { t } from '@/i18n';
-import type { ReportTargetType } from '@/types';
+import { t } from '@core/i18n';
+import type { ReportTargetType } from '@core/types';
 import { BottomSheet, Button, Textarea } from '@/components/ui';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
-import { cn } from '@/lib/cn';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
+import { cn } from '@core/lib/cn';
 
 const REASONS: Record<ReportTargetType, string[]> = {
   user: [t('사칭 또는 허위 프로필'), t('괴롭힘·혐오 발언'), t('성적으로 부적절한 행동'), t('스팸·광고'), t('기타')],

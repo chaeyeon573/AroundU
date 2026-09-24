@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { t, lang, setLang } from '@/i18n';
+import { t, lang, setLang } from '@core/i18n';
 import { Segmented } from '@/components/ui';
 import { ChevronRight, Lock, ShieldAlert, Bell, MapPin, LogOut, RotateCcw, Bug, User } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { Toggle, Button } from '@/components/ui';
 import { useViewer } from '@/hooks/useViewer';
-import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/api';
+import { useAppStore } from '@core/store/useAppStore';
+import { api } from '@core/api';
 
 export function SettingsPage() {
   const nav = useNavigate();
