@@ -141,7 +141,9 @@ const existing = new Map(snap.organizations.map((o) => [`${o.schoolId}::${o.name
 const existingById = new Map(snap.organizations.map((o) => [o.id, o]));
 /** 이미 있는 조직(id 우선, 없으면 이름)은 멤버·팔로워·인증 상태를 유지한다. 공식 명단으로 인증된 greek 은 이름·분류·카운슬·설명도 그대로 두고 링크만 합친다 */
 function mergeExisting(o: Organization): Organization {
-  const prev = existingById.get(o.id) ?? existing.get(`${o.schoolId}::${o.name.toLowerCase()}`);
+  // id 앞머리가 분류(oc_/og_)라서 공식 명단이 greek 으로 올린 항목은 다음 실행에서 id 가 달라진다 — 반대 접두어도 찾아본다
+  const twin = o.id.startsWith('og_') ? `oc_${o.id.slice(3)}` : `og_${o.id.slice(3)}`;
+  const prev = existingById.get(o.id) ?? existingById.get(twin) ?? existing.get(`${o.schoolId}::${o.name.toLowerCase()}`);
   if (!prev) return o;
   const links = [...(prev.links ?? []), ...(o.links ?? []).filter((l) => !prev.links?.some((p) => p.url === l.url))];
   if (prev.verified && prev.type === 'greek') return { ...prev, links };
