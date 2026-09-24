@@ -4,7 +4,7 @@ import { Dimensions, FlatList, Pressable, ScrollView, Text, View, type NativeSyn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { SlidersHorizontal, Clock, Zap, Bookmark, Heart, BadgeCheck, Hand, X } from 'lucide-react-native';
+import { SlidersHorizontal, Clock, Zap, Bookmark, Heart, BadgeCheck, Hand, X, Coffee, Utensils, BookOpen, MessageCircle } from 'lucide-react-native';
 import { t, lang } from '@core/i18n';
 import { useAppStore } from '@core/store/useAppStore';
 import { api } from '@core/api';
@@ -14,7 +14,8 @@ import { INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@core/li
 import { commonInterests } from '@core/lib/relations';
 import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
 import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
-import type { User, Interest, Goal } from '@core/types';
+import type { User, Interest, Goal, ActivityCategory } from '@core/types';
+import { ProposeSheet } from '@/components/a_ProposeSheet';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { AppHeader, C, BottomSheet, Chip, Button } from '@/ui';
@@ -38,6 +39,7 @@ export default function PeopleScreen() {
   const [saved, setSaved] = useState<string[]>([]);
   const [f, setF] = useState<Filters>(EMPTY);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [propose, setPropose] = useState<{ u: User; cat: ActivityCategory } | null>(null);
   const list = useRef<FlatList<Card>>(null);
   const myDept = me.affiliation.type === 'university' ? me.affiliation.department : '';
 
@@ -69,6 +71,10 @@ export default function PeopleScreen() {
   if (current) getPlatform().setItem(LAST_SEEN_KEY, current.u.id);
   const onCampus = v.visibleUsers.filter((u) => u.timetable.length ? statusNow(u.timetable).kind !== 'none' : u.availability !== 'hidden').length * 3 + 6;
 
+  const message = async (u: User) => {
+    if (!v.canMessage(u.id).ok) { nav(`/users/${u.id}`); return; }
+    try { const res = await run(() => api.chats.openDirect(me.id, u.id)); nav(`/chats/${res.room.id}`); } catch { /* toast */ }
+  };
   const connect = async (u: User) => {
     if (v.isFriend(u.id) || v.pendingOut(u.id)) { nav(`/users/${u.id}`); return; }
     try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
@@ -106,19 +112,26 @@ export default function PeopleScreen() {
             onMomentumScrollEnd={onScroll}
             renderItem={({ item }) => <PersonSlide user={item.u} reasons={item.reasons} />}
           />
-          <View style={tw`pt-4 pb-2 items-center`}>
+          <View style={tw`pt-3 pb-1 items-center`}>
             <View style={[tw`flex-row items-center`, { gap: 32 }]}>
-              <Pressable onPress={() => setSaved((s) => (isSaved ? s.filter((x) => x !== current.u.id) : [...s, current.u.id]))} style={tw`h-[68px] w-[68px] rounded-full items-center justify-center ${isSaved ? 'bg-primary' : 'bg-surface-2'}`}>
+              <Pressable onPress={() => setSaved((s) => (isSaved ? s.filter((x) => x !== current.u.id) : [...s, current.u.id]))} style={tw`h-[60px] w-[60px] rounded-full items-center justify-center ${isSaved ? 'bg-primary' : 'bg-surface-2'}`}>
                 <Bookmark size={26} color={isSaved ? '#fff' : C.primary} fill={isSaved ? '#fff' : 'none'} />
               </Pressable>
-              <Pressable onPress={() => connect(current.u)} style={[tw`h-[84px] w-[84px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
+              <Pressable onPress={() => connect(current.u)} style={[tw`h-[72px] w-[72px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
                 {connected ? <Hand size={32} color="#fff" /> : <Heart size={34} color={C.primary} />}
               </Pressable>
+            </View>
+            <View style={tw`mt-4 flex-row items-center`}>
+              {([['coffee', t('커피'), Coffee], ['meal', t('점심'), Utensils], ['study', t('공부'), BookOpen]] as [ActivityCategory, string, typeof Coffee][]).map(([cat, label, Icon]) => (
+                <Pressable key={cat} onPress={() => setPropose({ u: current.u, cat })} style={tw`h-9 pl-3 pr-3.5 mr-2 rounded-full bg-white border border-line flex-row items-center`}><Icon size={17} color={C.verify} /><Text style={tw`ml-1.5 text-[13px] font-medium text-ink`}>{label}</Text></Pressable>
+              ))}
+              <Pressable onPress={() => message(current.u)} style={tw`h-10 w-10 ml-1 rounded-full bg-primary items-center justify-center`}><MessageCircle size={18} color="#fff" /></Pressable>
             </View>
             <Text style={tw`mt-3 text-[12px] text-ink-3`}>{lang === 'en' ? 'Swipe to browse · Tap card for details' : '옆으로 넘겨 보기 · 카드를 누르면 프로필'}</Text>
           </View>
         </View>
       )}
+      {propose && <ProposeSheet open onClose={() => setPropose(null)} user={propose.u} category={propose.cat} onCategory={(c) => setPropose({ ...propose, cat: c })} />}
       <BottomSheet open={filterOpen} onClose={() => setFilterOpen(false)} title={t('조건')} tall>
         <FilterGroup label={t('학년')}>{[1, 2, 3, 4].map((y) => <Chip key={y} size="sm" active={f.years.includes(y)} onPress={() => setF({ ...f, years: tog(f.years, y) })}>{y}{t('학년')}</Chip>)}</FilterGroup>
         <FilterGroup label={t('관계')}><Chip size="sm" active={f.sameDept} onPress={() => setF({ ...f, sameDept: !f.sameDept })}>{t('같은 학과')}</Chip><Chip size="sm" active={f.sameClass} onPress={() => setF({ ...f, sameClass: !f.sameClass })}>{t('같은 수업')}</Chip><Chip size="sm" active={f.freeNow} onPress={() => setF({ ...f, freeNow: !f.freeNow })}>{t('지금 공강')}</Chip></FilterGroup>
