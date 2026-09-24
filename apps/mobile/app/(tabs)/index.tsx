@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { tw } from '@/tw';
-import { Dimensions, FlatList, Pressable, ScrollView, Text, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
@@ -16,13 +16,13 @@ import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
 import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
 import type { User, Interest, Goal, ActivityCategory } from '@core/types';
 import { ProposeSheet } from '@/components/a_ProposeSheet';
+import { Deck } from '@/components/Deck';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { AppHeader, C, BottomSheet, Chip, Button } from '@/ui';
 
 const W = Dimensions.get('window').width;
 const CARD_W = W - 32;
-const GAP = 12;
 interface Filters { years: number[]; sameDept: boolean; sameClass: boolean; freeNow: boolean; interests: Interest[]; goals: Goal[] }
 const EMPTY: Filters = { years: [], sameDept: false, sameClass: false, freeNow: false, interests: [], goals: [] };
 const yearOf = (u: User) => (u.affiliation.type === 'university' ? Math.min(4, Math.max(1, new Date().getFullYear() - u.affiliation.year + 1)) : 0);
@@ -40,7 +40,7 @@ export default function PeopleScreen() {
   const [f, setF] = useState<Filters>(EMPTY);
   const [filterOpen, setFilterOpen] = useState(false);
   const [propose, setPropose] = useState<{ u: User; cat: ActivityCategory } | null>(null);
-  const list = useRef<FlatList<Card>>(null);
+  const swipe = useRef<((dir: 'right' | 'left') => void) | null>(null);
   const myDept = me.affiliation.type === 'university' ? me.affiliation.department : '';
 
   type Card = { u: User; reasons: Reason[]; score: number };
@@ -57,7 +57,7 @@ export default function PeopleScreen() {
     return true;
   };
   const cards = scored.filter((x) => passes(x.u)).sort((a, b) => b.score - a.score).slice(0, 20);
-  const reset = () => { setIdx(0); list.current?.scrollToOffset({ offset: 0, animated: false }); };
+  const reset = () => setIdx(0);
   const tog = <T,>(arr: T[], x: T) => (arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]);
   const chips: { key: string; label: string; clear: () => void }[] = [
     ...f.years.map((y) => ({ key: `y${y}`, label: `${y}${t('학년')}`, clear: () => setF({ ...f, years: f.years.filter((x) => x !== y) }) })),
@@ -67,8 +67,9 @@ export default function PeopleScreen() {
     ...f.interests.map((i) => ({ key: `i${i}`, label: INTEREST_LABELS[i], clear: () => setF({ ...f, interests: f.interests.filter((x) => x !== i) }) })),
     ...f.goals.map((g) => ({ key: `g${g}`, label: GOAL_LABELS[g], clear: () => setF({ ...f, goals: f.goals.filter((x) => x !== g) }) })),
   ];
-  const current = cards[Math.min(idx, Math.max(0, cards.length - 1))];
+  const current = cards[idx];
   if (current) getPlatform().setItem(LAST_SEEN_KEY, current.u.id);
+  const exhausted = !current && cards.length > 0;
   const onCampus = v.visibleUsers.filter((u) => u.timetable.length ? statusNow(u.timetable).kind !== 'none' : u.availability !== 'hidden').length * 3 + 6;
 
   const message = async (u: User) => {
@@ -79,7 +80,10 @@ export default function PeopleScreen() {
     if (v.isFriend(u.id) || v.pendingOut(u.id)) { nav(`/users/${u.id}`); return; }
     try { await run(() => api.relationships.sendFriendRequest(me.id, u.id), `${u.nickname}${t('님에게 친구 요청을 보냈어요.')}`); } catch { /* */ }
   };
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => setIdx(Math.round(e.nativeEvent.contentOffset.x / (CARD_W + GAP)));
+  const onSwipe = (c: Card, dir: 'right' | 'left') => {
+    if (dir === 'right' && !(v.isFriend(c.u.id) || v.pendingOut(c.u.id))) run(() => api.relationships.sendFriendRequest(me.id, c.u.id), `${c.u.nickname}${t('님에게 친구 요청을 보냈어요.')}`).catch(() => {});
+    setIdx((i) => i + 1);
+  };
   const connected = current ? !!(v.isFriend(current.u.id) || v.pendingOut(current.u.id)) : false;
   const isSaved = current ? saved.includes(current.u.id) : false;
 
@@ -97,27 +101,19 @@ export default function PeopleScreen() {
 
       {chips.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tw`shrink-0 max-h-10 -mt-1`} contentContainerStyle={tw`px-4 pb-2`}>{chips.map((c) => <Pressable key={c.key} onPress={() => { c.clear(); reset(); }} style={tw`h-8 pl-2.5 pr-3 mr-1.5 rounded-full bg-accent-soft flex-row items-center`}><X size={12} color={C.primary} /><Text style={tw`ml-1 text-[12px] font-semibold text-primary`}>{c.label}</Text></Pressable>)}</ScrollView>}
       {!current ? (
-        <View style={tw`flex-1 items-center justify-center`}><Text style={tw`text-[15px] text-ink-3`}>{t('이 조건에 맞는 사람이 아직 없어요')}</Text><View style={tw`mt-3`}><Button size="sm" variant="outline" onPress={() => { setF(EMPTY); reset(); }}>{t('조건 지우기')}</Button></View></View>
+        <View style={tw`flex-1 items-center justify-center`}><Text style={tw`text-[15px] text-ink-3`}>{exhausted ? (lang === 'en' ? "You've seen everyone for now" : '지금은 여기까지 봤어요') : t('이 조건에 맞는 사람이 아직 없어요')}</Text><View style={tw`mt-3`}><Button size="sm" variant="outline" onPress={() => { if (!exhausted) setF(EMPTY); reset(); }}>{exhausted ? (lang === 'en' ? 'Start over' : '처음부터') : t('조건 지우기')}</Button></View></View>
       ) : (
         <View style={tw`flex-1`}>
-          <FlatList
-            ref={list}
-            data={cards}
-            keyExtractor={(c) => c.u.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_W + GAP}
-            decelerationRate="fast"
-            contentContainerStyle={{ paddingHorizontal: 16, gap: GAP }}
-            onMomentumScrollEnd={onScroll}
-            renderItem={({ item }) => <PersonSlide user={item.u} reasons={item.reasons} />}
-          />
+          <View style={tw`flex-1 px-4`}>
+            <Deck<Card> items={cards} index={idx} width={CARD_W} controlRef={swipe} labels={{ right: lang === 'en' ? 'Connect' : '친구', left: lang === 'en' ? 'Later' : '나중에' }}
+              renderCard={(c, isTop) => <PersonSlide user={c.u} reasons={c.reasons} interactive={isTop} />} onSwipe={onSwipe} />
+          </View>
           <View style={tw`pt-3 pb-1 items-center`}>
             <View style={[tw`flex-row items-center`, { gap: 32 }]}>
               <Pressable onPress={() => setSaved((s) => (isSaved ? s.filter((x) => x !== current.u.id) : [...s, current.u.id]))} style={tw`h-[60px] w-[60px] rounded-full items-center justify-center ${isSaved ? 'bg-primary' : 'bg-surface-2'}`}>
                 <Bookmark size={26} color={isSaved ? '#fff' : C.primary} fill={isSaved ? '#fff' : 'none'} />
               </Pressable>
-              <Pressable onPress={() => connect(current.u)} style={[tw`h-[72px] w-[72px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
+              <Pressable onPress={() => (connected ? connect(current.u) : swipe.current?.('right'))} style={[tw`h-[72px] w-[72px] rounded-full items-center justify-center ${connected ? 'bg-primary' : 'bg-accent'}`, { shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 10 }, elevation: 8 }]}>
                 {connected ? <Hand size={32} color="#fff" /> : <Heart size={34} color={C.primary} />}
               </Pressable>
             </View>
@@ -127,7 +123,7 @@ export default function PeopleScreen() {
               ))}
               <Pressable onPress={() => message(current.u)} style={tw`h-10 w-10 ml-1 rounded-full bg-primary items-center justify-center`}><MessageCircle size={18} color="#fff" /></Pressable>
             </View>
-            <Text style={tw`mt-3 text-[12px] text-ink-3`}>{lang === 'en' ? 'Swipe to browse · Tap card for details' : '옆으로 넘겨 보기 · 카드를 누르면 프로필'}</Text>
+            <Text style={tw`mt-3 text-[12px] text-ink-3`}>{lang === 'en' ? 'Swipe card to connect · Tap card for details' : '카드를 밀면 친구 요청 · 누르면 프로필'}</Text>
           </View>
         </View>
       )}
@@ -148,7 +144,7 @@ function FilterGroup({ label, children }: { label: string; children: React.React
 }
 
 /** 카드: 사진 전체 + 아래 그라데이션 위에 이름·학과·찾는 것·칩 3개 */
-function PersonSlide({ user, reasons }: { user: User; reasons: Reason[] }) {
+function PersonSlide({ user, reasons, interactive = true }: { user: User; reasons: Reason[]; interactive?: boolean }) {
   const v = useViewer();
   const [pi, setPi] = useState(0);
   const photos = user.photos?.length ? user.photos : user.avatar.url ? [user.avatar.url] : [];
@@ -168,7 +164,7 @@ function PersonSlide({ user, reasons }: { user: User; reasons: Reason[] }) {
   };
   return (
     <View style={[tw`flex-1 rounded-[32px] overflow-hidden bg-primary`, { width: CARD_W }]}>
-      <Pressable style={{ flex: 1 }} onPress={(e) => tap(e.nativeEvent.locationX)}>
+      <Pressable style={{ flex: 1 }} disabled={!interactive} onPress={(e) => tap(e.nativeEvent.locationX)}>
         {photos.length > 0
           ? <Image source={getPlatform().asset(photos[pi]) as number} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" transition={150} />
           : <View style={tw`absolute inset-0 items-center justify-center`}><Text style={{ fontSize: 96 }}>{user.avatar.emoji}</Text></View>}

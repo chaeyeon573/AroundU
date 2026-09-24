@@ -1,4 +1,15 @@
-// 플랫폼 어댑터(AsyncStorage 캐시)를 먼저 채운 뒤 앱을 띄운다 — core의 i18n·mock DB가 import 시점에 저장소를 읽기 때문
+// 앱 진입점 — 'main'을 동기적으로 등록해야 Expo Go가 찾는다.
+// core의 i18n·mock DB가 import 시점에 저장소를 읽으므로, 라우트(=core)를 불러오기 전에 AsyncStorage를 메모리로 올린다(hydrate).
+import '@expo/metro-runtime';
+import { useEffect, useState } from 'react';
+import { App } from 'expo-router/build/qualified-entry';
+import { renderRootComponent } from 'expo-router/build/renderRootComponent';
 import { hydrate } from './src/platform';
 
-hydrate().then(() => { require('expo-router/entry'); });
+function Gate() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => { hydrate().then(() => setReady(true)); }, []);
+  return ready ? <App /> : null;
+}
+
+renderRootComponent(Gate);
