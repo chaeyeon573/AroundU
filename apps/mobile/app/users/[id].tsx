@@ -15,6 +15,7 @@ import { questionById } from '@core/data/prompts';
 import { availabilityText, freeBlocks, todayIdx, fmtBlock, overlapBlocks } from '@core/lib/timetable';
 import { matchReasons, shareableReasons } from '@core/lib/recommend';
 import { tw } from '@/tw';
+import { WeekGrid } from '@/components/WeekGrid';
 import { useViewer } from '@/viewer';
 import { nav, replace, back } from '@/nav';
 import { Screen, Avatar, Tag, Button, BottomSheet, Chip, Cover, Empty, IconBtn, img, C } from '@/ui';
@@ -149,7 +150,11 @@ export default function PersonScreen() {
           <Block label={t('활동 가능한 시간')} visible={see('timetable') && user.timetable.length > 0 ? true : see('availability') && user.availability !== 'hidden'}>
             <View style={tw`flex-row items-center`}><Clock size={13} color={C.ink3} /><Text style={tw`ml-1 text-[13px] text-ink-2`}>{availabilityText(user, see('timetable')).text}</Text></View>
             {see('timetable') && user.timetable.length > 0 && (() => { const fb = freeBlocks(user.timetable, todayIdx()); const ov = v.me.timetable.length ? overlapBlocks(freeBlocks(v.me.timetable, todayIdx()), fb) : []; return (
-              <View style={[tw`mt-1.5 flex-row flex-wrap`, { gap: 4 }]}>{fb.map((b) => <Tag key={b.start} tone={ov.some((o) => o.start <= b.start && o.end >= b.end) ? 'mint' : 'neutral'}>{fmtBlock(b)}</Tag>)}<Text style={tw`text-[11px] text-ink-3 w-full`}>{t('오늘 공강 · 초록은 나와 겹치는 시간 · 전체 시간표와 강의실은 비공개')}</Text></View>
+              <View>
+                <View style={[tw`mt-1.5 flex-row flex-wrap`, { gap: 4 }]}>{fb.map((b) => <Tag key={b.start} tone={ov.some((o) => o.start <= b.start && o.end >= b.end) ? 'mint' : 'neutral'}>{fmtBlock(b)}</Tag>)}</View>
+                <View style={tw`mt-3`}><WeekGrid courses={user.timetable} /></View>
+                <Text style={tw`mt-1.5 text-[11px] text-ink-3`}>{t('오늘 공강 · 초록은 나와 겹치는 시간 · 강의실은 비공개')}</Text>
+              </View>
             ); })()}
           </Block>
           <Block label={t('이용 목적')} visible={see('purposes')}><View style={[tw`flex-row flex-wrap`, { gap: 6 }]}>{user.purposes.map((p) => <Tag key={p}>{PURPOSE_LABELS[p]}</Tag>)}</View></Block>

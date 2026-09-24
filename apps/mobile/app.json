@@ -30,7 +30,14 @@
       "expo-image",
       "expo-splash-screen",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "AroundU가 시간표 이미지를 사진에 저장합니다.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

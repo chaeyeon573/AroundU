@@ -1,7 +1,6 @@
 /** English demo: a US campus (UC Berkeley) with Greek life, .edu verification and US-style opportunities */
 import type {
-  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll,
-} from '@core/types';
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll, Course } from '@core/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@core/lib/format';
 import { photo } from '@core/lib/assets';
 
@@ -34,6 +33,9 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
   fieldVisibility: defaultVisibility(), settings: { messagePolicy: 'connected', notifications: true, locationPermission: 'granted' }, createdAt: isoHoursAgo(24 * 30), ...u,
 });
 
+/** 데모 계정의 예시 시간표 — 처음엔 비어 있고, 시간표 화면에서 한 번에 불러올 수 있다 */
+export const DEMO_TIMETABLE: Course[] = [{ id: 'c1', name: 'CS 186 Databases', day: 0, start: '10:00', end: '11:00', room: 'Soda 306', hue: 220 }, { id: 'c2', name: 'CS 162 Operating Systems', day: 0, start: '13:00', end: '14:00', room: 'Wheeler 150', hue: 160 }, { id: 'c3', name: 'CS 186 Databases', day: 2, start: '10:00', end: '11:00', room: 'Soda 306', hue: 220 }, { id: 'c4', name: 'CS 162 Operating Systems', day: 2, start: '13:00', end: '14:00', room: 'Wheeler 150', hue: 160 }, { id: 'c5', name: 'UGBA 105 Entrepreneurship', day: 1, start: '15:00', end: '17:30', room: 'Haas C220', hue: 15 }, { id: 'c6', name: 'CS 169 Capstone', day: 3, start: '14:00', end: '16:30', room: 'Soda 310', hue: 280 }, { id: 'c7', name: 'Public Speaking', day: 4, start: '11:00', end: '12:00', room: 'Dwinelle 88', hue: 45 }];
+
 export const users: User[] = [
   mk({
     id: DEMO_USER_ID, nickname: 'Alex', birthYear: 2003, avatar: { emoji: '🧑‍💻', hue: 230, photoType: 'face' , url: photo('p_me') }, photos: [photo('p_me'), photo('c_cafe_laptop'), photo('c_espresso')], identityVerified: true,
@@ -43,7 +45,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_now', answer: 'Coffee at Southside and talk side projects' }, { questionId: 'q_spot', answer: 'Doe Library 4th floor by the windows' }, { questionId: 'q_ask_me', answer: 'React, best cafés on Telegraph, museum picks' }],
     voicePrompt: { questionId: 'v_now', durationSec: 18, recordedAt: isoHoursAgo(40) },
     poll: { questionId: 'p_gap', options: ['Café', 'Library', 'Walk'], ownChoice: 0, votes: { u_sua: 0, u_jimin: 2 } },
-    timetable: [{ id: 'c1', name: 'CS 186 Databases', day: 0, start: '10:00', end: '11:00', room: 'Soda 306', hue: 220 }, { id: 'c2', name: 'CS 162 Operating Systems', day: 0, start: '13:00', end: '14:00', room: 'Wheeler 150', hue: 160 }, { id: 'c3', name: 'CS 186 Databases', day: 2, start: '10:00', end: '11:00', room: 'Soda 306', hue: 220 }, { id: 'c4', name: 'CS 162 Operating Systems', day: 2, start: '13:00', end: '14:00', room: 'Wheeler 150', hue: 160 }, { id: 'c5', name: 'UGBA 105 Entrepreneurship', day: 1, start: '15:00', end: '17:30', room: 'Haas C220', hue: 15 }, { id: 'c6', name: 'CS 169 Capstone', day: 3, start: '14:00', end: '16:30', room: 'Soda 310', hue: 280 }, { id: 'c7', name: 'Public Speaking', day: 4, start: '11:00', end: '12:00', room: 'Dwinelle 88', hue: 45 }],
+    timetable: [],
     goals: ['startup', 'hackathon', 'friends'], lookingFor: ['designer', 'teammate', 'cofounder'], canOffer: ['developer', 'planning'], living: { residence: 'offcampus', zone: 'Northside' }, interestedOrgIds: ['o_ailab', 'o_startup'], meetPreference: ['same_goal', 'same_class', 'same_hobby'], openToNew: true,
   }),
   mk({

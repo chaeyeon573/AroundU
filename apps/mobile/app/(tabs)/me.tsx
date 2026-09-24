@@ -1,18 +1,19 @@
 import { Pressable, Text, View } from 'react-native';
-import { Settings, Pencil, ShieldCheck, BadgeCheck, CalendarDays, ChevronRight, Users, CalendarCheck, Bookmark, MessageCircle, Building2, Quote, Bell } from 'lucide-react-native';
+import { Settings, Pencil, ShieldCheck, BadgeCheck, CalendarDays, ChevronRight, Users, CalendarCheck, Bookmark, MessageCircle, Building2, Quote, Bell, Plus, Eye } from 'lucide-react-native';
+import { VISIBILITY_LABELS } from '@core/lib/labels';
+import { WeekGrid } from '@/components/WeekGrid';
 import { t, lang } from '@core/i18n';
 import { useAppStore } from '@core/store/useAppStore';
 import { INTEREST_LABELS } from '@core/lib/labels';
 import { friendsOf } from '@core/lib/relations';
 import { todayISO, formatDateTime } from '@core/lib/format';
-import { DAY_LABELS, toMin, statusNow, freeBlocks, todayIdx, nowMin, fmtBlock, toHHMM } from '@core/lib/timetable';
+import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock, toHHMM } from '@core/lib/timetable';
 import { profileCompletion, questionById } from '@core/data/prompts';
 import { tw } from '@/tw';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { TabScreen, AppHeader, IconBtn, Avatar, Button, Card, Tag, H1, H2, IconCircle, C } from '@/ui';
 
-const H0 = 9, H1H = 18, PX = 26;
 
 /** 나 — 프로필 카드 · 주간 시간표 · 다가오는 약속 (Pastel Breeze) */
 export default function MeScreen() {
@@ -31,7 +32,6 @@ export default function MeScreen() {
   const goTo = me.prompts[0];
   const now = statusNow(me.timetable);
   const nextFree = freeBlocks(me.timetable, todayIdx()).find((b) => b.end > nowMin());
-  const days = [0, 1, 2, 3, 4];
   const openPolls = polls.filter((p) => p.status === 'open' && (p.hostId === me.id || p.inviteeIds.includes(me.id))).length;
   const saved = intents.filter((i) => i.userId === me.id && (i.saved || i.intent === 'applied')).length;
   const myOrgs = orgs.filter((o) => o.memberIds.includes(me.id) || o.adminIds.includes(me.id)).length;
@@ -79,23 +79,19 @@ export default function MeScreen() {
           <View style={tw`flex-row items-center`}><CalendarDays size={18} color={C.primary} /><H2 style={tw`ml-2`}>{lang === 'en' ? 'Weekly Schedule' : '내 시간표'}</H2></View>
           {me.timetable.length > 0 ? <View style={tw`h-7 px-3 rounded-full flex-row items-center ${now.kind === 'free' ? 'bg-mint-soft' : 'bg-surface-2'}`}><View style={tw`h-1.5 w-1.5 rounded-full mr-1 ${now.kind === 'free' ? 'bg-mint' : 'bg-ink-3'}`} /><Text style={tw`text-[11px] font-bold ${now.kind === 'free' ? 'text-mint' : 'text-ink-2'}`}>{now.kind === 'free' ? (now.until ? `${t('공강')} · ${toHHMM(now.until)}` : t('오늘 수업 없음')) : now.kind === 'in_class' ? t('수업 중') : t('오늘 수업 끝')}</Text></View> : null}
         </View>
-        {me.timetable.length === 0 ? <Button variant="secondary" style={tw`mt-4`} onPress={() => nav('/timetable')}>{t('시간표 만들기')}</Button> : (
+        {me.timetable.length === 0 ? (
+          <View style={tw`mt-4 items-center`}>
+            <Text style={tw`text-[13px] text-ink-3 text-center mb-3`}>{t('수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요.')}</Text>
+            <Button icon={<Plus size={16} color="#fff" />} onPress={() => nav('/timetable')}>{t('시간표 추가하기')}</Button>
+          </View>
+        ) : (
           <>
-            <Pressable onPress={() => nav('/timetable')} style={tw`mt-3`}>
-              <View style={tw`flex-row`}><View style={{ width: 20 }} />{days.map((d) => <Text key={d} style={tw`flex-1 text-center text-[11px] font-semibold ${d === todayIdx() ? 'text-primary' : 'text-ink-3'}`}>{DAY_LABELS[d]}</Text>)}</View>
-              <View style={[tw`flex-row mt-1`, { height: (H1H - H0) * PX }]}>
-                <View style={{ width: 20 }}>{Array.from({ length: H1H - H0 }, (_, i) => <Text key={i} style={[tw`absolute text-[9px] text-ink-3`, { top: i * PX }]}>{H0 + i}</Text>)}</View>
-                {days.map((d) => (
-                  <View key={d} style={[tw`flex-1 border-l border-line`, d === todayIdx() ? { backgroundColor: 'rgba(191,244,255,0.4)' } : null]}>
-                    {me.timetable.filter((c) => c.day === d).map((c) => (
-                      <View key={c.id} style={[tw`absolute left-0.5 right-0.5 rounded-lg bg-primary-soft px-1 overflow-hidden`, { top: Math.max(0, (toMin(c.start) - H0 * 60) / 60 * PX), height: Math.max(14, (toMin(c.end) - toMin(c.start)) / 60 * PX - 2) }]}>
-                        <Text numberOfLines={1} style={tw`text-[9px] font-bold text-primary`}>{c.name}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            </Pressable>
+            <Pressable onPress={() => nav('/timetable')} style={tw`mt-3`}><WeekGrid courses={me.timetable} /></Pressable>
+            <View style={tw`mt-3 flex-row items-center`}>
+              <Pressable onPress={() => nav('/timetable')} style={tw`h-8 px-3 rounded-full bg-surface-2 flex-row items-center`}><Eye size={13} color={C.ink2} /><Text style={tw`ml-1 text-[12px] font-semibold text-ink-2`}>{VISIBILITY_LABELS[me.fieldVisibility.timetable]}</Text></Pressable>
+              <View style={tw`flex-1`} />
+              <Pressable onPress={() => nav('/timetable?add=1')} style={tw`h-9 pl-3 pr-3.5 rounded-full bg-primary flex-row items-center`}><Plus size={15} color="#fff" /><Text style={tw`ml-1 text-[13px] font-semibold text-white`}>{t('수업 추가')}</Text></Pressable>
+            </View>
             {nextFree ? <View style={tw`mt-3 flex-row items-center`}><Text style={tw`text-verify mr-2`}>★</Text><Text numberOfLines={1} style={tw`flex-1 text-[13px] text-ink-2`}>{lang === 'en' ? `Next free window ${fmtBlock({ start: Math.max(nextFree.start, nowMin()), end: nextFree.end })}` : `다음 공강 ${fmtBlock({ start: Math.max(nextFree.start, nowMin()), end: nextFree.end })}`}</Text><Button size="sm" onPress={() => nav('/timetable?open=1')}>{t('열기')}</Button></View> : null}
           </>
         )}

@@ -1,6 +1,5 @@
 import type {
-  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll,
-} from '@core/types';
+  Activity, ActivityProposal, ChatRoom, Notification, Organization, Participation, Post, Relationships, School, User, Visibility, ProfileField, Opportunity, OpportunityIntentRecord, TimePoll, Course } from '@core/types';
 import { addDaysISO, isoHoursAgo, isoMinutesAgo, todayISO } from '@core/lib/format';
 import { photo } from '@core/lib/assets';
 
@@ -57,6 +56,9 @@ const mk = (u: Partial<User> & Pick<User, 'id' | 'nickname'>): User => ({
   ...u,
 });
 
+/** 데모 계정의 예시 시간표 — 처음엔 비어 있고, 시간표 화면에서 한 번에 불러올 수 있다 */
+export const DEMO_TIMETABLE: Course[] = [{ id: 'c1', name: '데이터베이스', day: 0, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c2', name: '운영체제', day: 0, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c3', name: '데이터베이스', day: 2, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c4', name: '운영체제', day: 2, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c5', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', room: '경영관 201', hue: 15 }, { id: 'c6', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', room: '공학관 세미나실', hue: 280 }, { id: 'c7', name: '영어 회화', day: 4, start: '11:00', end: '12:15', room: '외솔관 302', hue: 45 }];
+
 export const users: User[] = [
   mk({
     id: DEMO_USER_ID, nickname: '하늘', birthYear: 2001, gender: 'private',
@@ -73,7 +75,7 @@ export const users: User[] = [
     prompts: [{ questionId: 'q_now', answer: '정문 카페에서 커피 마시면서 사이드 프로젝트 얘기' }, { questionId: 'q_spot', answer: '중도 4층 창가, 오후엔 햇빛이 딱 좋아요' }, { questionId: 'q_ask_me', answer: '리액트, 신촌 카페 지도, 전시 추천' }],
     voicePrompt: { questionId: 'v_now', durationSec: 18, recordedAt: isoHoursAgo(40) },
     poll: { questionId: 'p_gap', options: ['카페', '도서관', '산책'], ownChoice: 0, votes: { u_sua: 0, u_jimin: 2 } },
-    timetable: [{ id: 'c1', name: '데이터베이스', day: 0, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c2', name: '운영체제', day: 0, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c3', name: '데이터베이스', day: 2, start: '10:00', end: '11:15', room: '공학관 B103', hue: 220 }, { id: 'c4', name: '운영체제', day: 2, start: '13:00', end: '14:15', room: '공학관 A201', hue: 160 }, { id: 'c5', name: '창업과 혁신', day: 1, start: '15:00', end: '17:45', room: '경영관 201', hue: 15 }, { id: 'c6', name: '캡스톤 디자인', day: 3, start: '14:00', end: '16:45', room: '공학관 세미나실', hue: 280 }, { id: 'c7', name: '영어 회화', day: 4, start: '11:00', end: '12:15', room: '외솔관 302', hue: 45 }],
+    timetable: [],
     goals: ['startup', 'hackathon', 'friends'], lookingFor: ['designer', 'teammate', 'cofounder'], canOffer: ['developer', 'planning'], living: { residence: 'offcampus', zone: '신촌 북쪽' }, interestedOrgIds: ['o_ailab', 'o_startup'], meetPreference: ['same_goal', 'same_class', 'same_hobby'], openToNew: true,
   }),
   mk({

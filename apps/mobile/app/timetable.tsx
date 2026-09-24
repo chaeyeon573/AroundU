@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles } from 'lucide-react-native';
+import { Plus, Trash2, Lock, Users, CalendarPlus, ChevronRight, Sparkles, ImageDown, Eye } from 'lucide-react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as seedKo from '@core/data/seed';
+import * as seedEn from '@core/data/seed.en';
+import { VISIBILITY_LABELS } from '@core/lib/labels';
 import { t, lang } from '@core/i18n';
 import type { Course } from '@core/types';
 import { useAppStore } from '@core/store/useAppStore';
@@ -28,7 +33,7 @@ const emptyCourse = (day: number): Course => ({ id: '', name: '', day, start: '1
 
 /** 시간표 — 주간 그리드 + 공강 열기 + 수업 추가/수정 (웹 TimetablePage 와 동일) */
 export default function TimetableScreen() {
-  const params = useLocalSearchParams<{ open?: string }>();
+  const params = useLocalSearchParams<{ open?: string; add?: string }>();
   const v = useViewer();
   const run = useAppStore((s) => s.run);
   const status = useAppStore((s) => s.status);
@@ -42,6 +47,8 @@ export default function TimetableScreen() {
   const [space, setSpace] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const openHandled = useRef(false);
+  const gridRef = useRef<View>(null);
+  const showToast = useAppStore((st) => st.showToast);
   const today = todayIdx();
   const showWeekend = me.timetable.some((c) => c.day >= 5);
   const days = showWeekend ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4];
@@ -58,13 +65,14 @@ export default function TimetableScreen() {
   const now = statusNow(me.timetable);
   const myFree = freeBlocks(me.timetable, today);
   useEffect(() => {
+    if (params.add && !openHandled.current) { openHandled.current = true; setEditing(emptyCourse(today < 5 ? today : 0)); return; }
     if (params.open && !openHandled.current && me.timetable.length) {
       openHandled.current = true;
       const nowM = nowMin();
       const b = myFree.find((x) => x.end > nowM) ?? myFree[0];
       if (b) setSlot({ day: today, block: { start: Math.max(b.start, nowM), end: b.end } });
     }
-  }, [params.open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.open, params.add]); // eslint-disable-line react-hooks/exhaustive-deps
   const friendIds = friendsOf(v.snap, me.id);
   const overlaps = friendIds.map((fid) => v.userById(fid)!).filter((f) => f && f.timetable.length > 0 && v.canSeeField(f, 'timetable'))
     .map((f) => ({ f, blocks: overlapBlocks(myFree, freeBlocks(f.timetable, today)) })).filter((x) => x.blocks.length > 0);
@@ -83,6 +91,24 @@ export default function TimetableScreen() {
     try { await run(() => api.users.update(me.id, { timetable: me.timetable.filter((c) => c.id !== editing.id) }), t('수업을 삭제했어요.')); setEditing(null); } catch { /* */ } finally { setBusy(false); }
   };
 
+  const loadSample = async () => {
+    const sample = (lang === 'en' ? seedEn.DEMO_TIMETABLE : seedKo.DEMO_TIMETABLE).map((c) => ({ ...c, id: uid('c') }));
+    setBusy(true);
+    try { await run(() => api.users.update(me.id, { timetable: sample }), t('예시 시간표를 불러왔어요.')); } catch { /* */ } finally { setBusy(false); }
+  };
+  /** 시간표 그리드를 이미지로 저장 (사진 앱) — 권한이 없으면 공유 시트로 */
+  const saveImage = async () => {
+    try {
+      const uri = await captureRef(gridRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      // expo-media-library 는 웹 모듈이 없어서 네이티브에서만 불러온다
+      const MediaLibrary: typeof import('expo-media-library') | null = Platform.OS === 'web' ? null : require('expo-media-library');
+      const perm = MediaLibrary ? await MediaLibrary.requestPermissionsAsync(false, ['photo']).catch(() => ({ granted: false })) : { granted: false };
+      if (MediaLibrary && perm.granted) { await MediaLibrary.saveToLibraryAsync(uri); showToast(t('사진에 저장했어요.'), 'success'); }
+      else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png' });
+      else showToast(t('이 기기에서는 저장할 수 없어요.'), 'error');
+    } catch { showToast(t('이미지 저장은 폰 앱에서 할 수 있어요.'), 'error'); }
+  };
+
   /** 요일 칸 탭: 공강이면 활동 열기, 빈 칸이면 수업 추가 */
   const tapColumn = (d: number, y: number) => {
     const min = GRID_START * 60 + Math.floor(y / HOUR_PX) * 60;
@@ -95,10 +121,7 @@ export default function TimetableScreen() {
   if (status === 'error') return <Screen title={t('시간표')}><Empty title={error ?? t('문제가 발생했어요.')} action={<Button size="sm" onPress={() => init()}>{t('다시 시도')}</Button>} /></Screen>;
 
   const headerRight = (
-    <View style={tw`flex-row items-center`}>
-      <VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }))} options={['public', 'school', 'friends', 'private']} label={t('공강 시간 공개 범위')} />
-      <Pressable onPress={() => setEditing(emptyCourse(today < 5 ? today : 0))} style={tw`ml-1 h-9 px-3 rounded-full flex-row items-center`}><Plus size={15} color={C.primary} /><Text style={tw`ml-1 text-[13px] font-semibold text-primary`}>{t('수업')}</Text></Pressable>
-    </View>
+    <Pressable onPress={() => setEditing(emptyCourse(today < 5 ? today : 0))} style={tw`h-9 pl-3 pr-3.5 rounded-full bg-primary flex-row items-center`}><Plus size={16} color="#fff" /><Text style={tw`ml-1 text-[13px] font-semibold text-white`}>{t('수업 추가')}</Text></Pressable>
   );
 
   const upcomingFree = myFree.filter((b) => b.end > nowMin());
@@ -133,10 +156,24 @@ export default function TimetableScreen() {
         )}
 
         {me.timetable.length === 0 ? (
-          <Empty title={t('시간표가 비어 있어요')} description={t('수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요.')}
-            action={<Button icon={<Plus size={16} color="#fff" />} onPress={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('첫 수업 추가')}</Button>} />
+          <View style={tw`items-center pt-16 px-4`}>
+            <View style={tw`h-16 w-16 rounded-full bg-primary-soft items-center justify-center`}><CalendarPlus size={28} color={C.primary} /></View>
+            <Text style={tw`mt-4 text-[20px] font-bold text-primary`}>{t('시간표 추가하기')}</Text>
+            <Text style={tw`mt-2 text-[13px] text-ink-3 text-center`}>{t('수업을 추가하면 공강 시간에 맞는 친구와 활동을 추천해요. 강의실과 전체 시간표는 다른 사람에게 공개되지 않아요.')}</Text>
+            <View style={tw`mt-6 w-full`}>
+              <Button size="lg" icon={<Plus size={17} color="#fff" />} onPress={() => setEditing(emptyCourse(today < 5 ? today : 0))}>{t('첫 수업 추가')}</Button>
+              <View style={tw`h-2`} />
+              <Button size="lg" variant="secondary" loading={busy} onPress={loadSample}>{t('예시 시간표 불러오기')}</Button>
+            </View>
+          </View>
         ) : (
-          <View style={tw`rounded-[24px] border border-line bg-white overflow-hidden mb-3`}>
+          <>
+          <View style={tw`flex-row items-center mb-3`}>
+            <VisibilityPicker compact value={me.fieldVisibility.timetable} onChange={(vis) => run(() => api.users.update(me.id, { fieldVisibility: { ...me.fieldVisibility, timetable: vis } }), t('공개 범위를 바꿨어요.'))} options={['public', 'school', 'friends', 'private']} label={t('시간표 공개 범위')} />
+            <Text numberOfLines={1} style={tw`ml-2 flex-1 text-[12px] text-ink-3`}>{lang === 'en' ? `Visible to: ${VISIBILITY_LABELS[me.fieldVisibility.timetable]}` : `공개: ${VISIBILITY_LABELS[me.fieldVisibility.timetable]}`}</Text>
+            <Pressable onPress={saveImage} style={tw`h-9 pl-3 pr-3.5 rounded-full bg-surface-2 flex-row items-center`}><ImageDown size={16} color={C.primary} /><Text style={tw`ml-1 text-[12px] font-semibold text-primary`}>{t('이미지 저장')}</Text></Pressable>
+          </View>
+          <View ref={gridRef} collapsable={false} style={tw`rounded-[24px] border border-line bg-white overflow-hidden mb-3`}>
             <View style={tw`flex-row`}>
               <View style={{ width: TIME_COL }} />
               {days.map((d) => <View key={d} style={tw`flex-1 items-center py-2`}><Text style={tw`text-[12px] font-bold ${d === today ? 'text-primary' : 'text-ink-3'}`}>{DAY_LABELS[d]}</Text></View>)}
@@ -166,6 +203,7 @@ export default function TimetableScreen() {
               <Text numberOfLines={2} style={tw`flex-1 ml-3 text-right text-[11px] text-ink-3`}>{t('수업을 탭하면 수업 공간 · 공강은 활동 열기 · 빈 칸은 수업 추가')}</Text>
             </View>
           </View>
+          </>
         )}
 
         {me.timetable.length > 0 && (
@@ -194,7 +232,7 @@ export default function TimetableScreen() {
           </View>
         )}
 
-        <View style={tw`flex-row items-start px-1`}><Lock size={12} color={C.ink3} style={tw`mt-0.5`} /><Text style={tw`ml-1.5 flex-1 text-[11px] text-ink-3`}>{t('다른 사용자에게는 전체 시간표가 아닌 공강 여부만 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.')}</Text></View>
+        {me.timetable.length > 0 && <View style={tw`flex-row items-start px-1`}><Lock size={12} color={C.ink3} style={tw`mt-0.5`} /><Text style={tw`ml-1.5 flex-1 text-[11px] text-ink-3`}>{t('공개 범위 안의 사람에게는 수업 시간표가 보여요. 강의실은 어떤 설정에서도 공개되지 않아요.')}</Text></View>}
       </View>
 
       <BottomSheet open={!!space} onClose={() => setSpace(null)} title={space ?? ''} tall>

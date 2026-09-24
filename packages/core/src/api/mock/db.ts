@@ -6,7 +6,7 @@ import { getPlatform } from '@core/platform';
 
 const seed = lang === 'en' ? seedEn : seedKo;
 
-const STORAGE_KEY = `aroundu.mockdb.v5.${lang}`;
+const STORAGE_KEY = `aroundu.mockdb.v6.${lang}`;
 const SESSION_KEY = `aroundu.session.v1.${lang}`;
 
 export interface MockDB extends Snapshot {
