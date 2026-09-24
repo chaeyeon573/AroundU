@@ -123,6 +123,7 @@ export const en: Record<string, string> = {
   '무엇을 함께 시작할까요?': 'What do you want to start together?',
   '뒤로': 'Back',
   '알림': 'Notifications',
+  '요청·승인·마감 알림': 'Requests, approvals, deadlines',
   '메시지': 'Messages',
   '2줄 이내로 짧게': 'Keep it to two lines',
   '질문': 'Prompt',

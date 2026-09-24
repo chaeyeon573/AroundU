@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { t, lang } from '@core/i18n';
 import { useAppStore } from '@core/store/useAppStore';
@@ -14,16 +13,12 @@ import type { Activity, Opportunity } from '@core/types';
 import { tw } from '@/tw';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
-import { TabScreen, Segmented, Chip, ChipRow, PillRow, Avatar, Button, Empty, H1, Muted, C } from '@/ui';
+import { TabScreen, Chip, ChipRow, PillRow, Avatar, Button, Empty, H1, Muted, C } from '@/ui';
 import { JoinButton } from '@/components/JoinButton';
 import { OpenSlotSheet } from '@/components/OpenSlotSheet';
 
-type Tab = 'now' | 'activities' | 'teams';
-
 /** 발견 — Free Right Now + Spontaneous Hangouts (Pastel Breeze) */
 export default function DiscoverScreen() {
-  const params = useLocalSearchParams<{ tab?: string }>();
-  const [tab, setTab] = useState<Tab>((params.tab as Tab) || 'now');
   const v = useViewer();
   const me = v.me;
   const [slot, setSlot] = useState<{ start: number; end: number } | null>(null);
@@ -38,12 +33,9 @@ export default function DiscoverScreen() {
         <Text numberOfLines={1} style={tw`flex-1 text-[14px] text-primary font-medium`}>{me.timetable.length === 0 ? t('시간표를 추가해보세요') : nextFree ? `${lang === 'en' ? 'Free' : '공강'} ${fmtBlock(nextFree)}` : t('오늘 수업 끝')}</Text>
         <Pressable onPress={() => (nextFree ? setSlot(nextFree) : nav('/timetable'))} style={tw`h-9 px-4 rounded-full bg-primary flex-row items-center`}><Plus size={14} color="#fff" /><Text style={tw`ml-1 text-white text-[13px] font-semibold`}>{nextFree ? t('열기') : t('시간표')}</Text></Pressable>
       </View>
-      <View style={tw`mt-3`}><Segmented value={tab} onChange={setTab} options={[['now', 'Now'], ['activities', t('활동')], ['teams', t('팀')]]} /></View>
-      <View style={tw`pt-5`}>
-        {tab === 'now' && <NowTab />}
-        {tab === 'activities' && <ActivitiesTab />}
-        {tab === 'teams' && <TeamsTab />}
-      </View>
+      <View style={tw`pt-6`}><NowTab /></View>
+      <View style={tw`pt-8`}><ActivitiesTab /></View>
+      <View style={tw`pt-8`}><TeamsTab /></View>
       <OpenSlotSheet open={!!slot} onClose={() => setSlot(null)} day={today} block={slot} />
     </TabScreen>
   );

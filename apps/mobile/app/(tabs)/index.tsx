@@ -10,7 +10,7 @@ import { useAppStore } from '@core/store/useAppStore';
 import { api } from '@core/api';
 import { getPlatform } from '@core/platform';
 import { LAST_SEEN_KEY } from '@/components/CreateSheet';
-import { INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS } from '@core/lib/labels';
+import { INTEREST_LABELS, GOAL_LABELS, ALL_INTERESTS, ALL_GOALS, AVAILABILITY_LABELS } from '@core/lib/labels';
 import { commonInterests } from '@core/lib/relations';
 import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
 import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
@@ -85,7 +85,7 @@ export default function PeopleScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={tw`flex-1 bg-white`}>
-      <AppHeader />
+      <AppHeader people />
       <View style={tw`px-4 pt-1 pb-3 flex-row items-center`}>
         <View style={tw`h-9 px-3.5 rounded-full bg-surface-2 flex-row items-center`}>
           <View style={tw`h-2 w-2 rounded-full bg-primary mr-2`} />
@@ -160,7 +160,7 @@ function PersonSlide({ user, reasons }: { user: User; reasons: Reason[] }) {
   const canSeeTT = user.timetable.length > 0 && v.canSeeField(user, 'timetable');
   const st = canSeeTT ? statusNow(user.timetable) : null;
   const block = canSeeTT ? freeBlocks(user.timetable, todayIdx()).find((b) => b.end > nowMin()) : null;
-  const freeLabel = st?.kind === 'free' && block ? `${t('공강')} ${fmtBlock({ start: Math.max(block.start, nowMin()), end: block.end })}` : user.availability === 'now' ? t('지금 가능') : null;
+  const freeLabel = block ? `${t('공강')} ${fmtBlock({ start: st?.kind === 'free' ? Math.max(block.start, nowMin()) : block.start, end: block.end })}` : user.availability !== 'hidden' ? AVAILABILITY_LABELS[user.availability] : null;
   const tap = (x: number) => {
     if (photos.length > 1 && x < CARD_W * 0.3) setPi((p) => (p - 1 + photos.length) % photos.length);
     else if (photos.length > 1 && x > CARD_W * 0.7) setPi((p) => (p + 1) % photos.length);

@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
-import { Settings, Pencil, ShieldCheck, BadgeCheck, CalendarDays, ChevronRight, Users, CalendarCheck, Bookmark, MessageCircle, Building2, Quote } from 'lucide-react-native';
+import { Settings, Pencil, ShieldCheck, BadgeCheck, CalendarDays, ChevronRight, Users, CalendarCheck, Bookmark, MessageCircle, Building2, Quote, Bell } from 'lucide-react-native';
 import { t, lang } from '@core/i18n';
 import { useAppStore } from '@core/store/useAppStore';
 import { INTEREST_LABELS } from '@core/lib/labels';
@@ -42,6 +42,7 @@ export default function MeScreen() {
     { Icon: CalendarCheck, label: 'My Plans', sub: openPolls ? `${t('시간 정하는 중')} ${openPolls}` : t('초대·대기·확정'), to: '/plans' },
     { Icon: Bookmark, label: t('저장·지원 내역'), sub: `${saved}${t('개')}`, to: '/community?tab=opportunities&sub=saved' },
     { Icon: MessageCircle, label: t('채팅'), sub: t('개인·활동·조직 대화'), to: '/chats' },
+    { Icon: Bell, label: t('알림'), sub: t('요청·승인·마감 알림'), to: '/notifications' },
     { Icon: Building2, label: t('가입한 단체'), sub: `${myOrgs}${t('개')}`, to: '/community?tab=clubs&mine=1' },
   ];
 

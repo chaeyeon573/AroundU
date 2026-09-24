@@ -6,7 +6,7 @@ import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps, type ViewStyle, type ImageStyle, type StyleProp } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, MessageCircle, GraduationCap, ChevronDown, ChevronLeft, User as UserIcon, X } from 'lucide-react-native';
+import { Bell, MessageCircle, GraduationCap, ChevronDown, ChevronLeft, User as UserIcon, X, Search, MapPin } from 'lucide-react-native';
 import { t } from '@core/i18n';
 import { getPlatform } from '@core/platform';
 import { useAppStore } from '@core/store/useAppStore';
@@ -35,24 +35,25 @@ export function Cover({ emoji, hue, url, size = 56, radius = 16, style }: { emoj
 
 /* ---------- Header / Screen ---------- */
 /** 루트 탭 공통 헤더 — 워드마크 + 학교 알약 + 알림·메시지·프로필 */
-export function AppHeader({ right }: { right?: ReactNode }) {
+export function AppHeader({ right, people }: { right?: ReactNode; people?: boolean }) {
   const v = useViewer();
   const notifications = useAppStore((s) => s.notifications);
   const rooms = useAppStore((s) => s.chatRooms);
   const unreadBell = notifications.some((n) => n.userId === v.me.id && !n.read);
   const unreadChat = rooms.some((r) => r.memberIds.includes(v.me.id) && r.messages.some((m) => m.senderId !== v.me.id && new Date(m.createdAt) > new Date(r.lastReadAt[v.me.id] ?? 0)));
-  const school = v.me.affiliation.type === 'university' ? v.me.affiliation.schoolName : '';
+  const full = v.me.affiliation.type === 'university' ? v.me.affiliation.schoolName : '';
+  const school = people ? full.replace(/대학교|University of California,?|University|UC /g, '').trim() : full;
   return (
     <View style={tw`h-16 pl-4 pr-3 flex-row items-center`}>
       <Text style={tw`text-[22px] font-extrabold text-primary tracking-tight`}>AroundU</Text>
       <Pressable onPress={() => nav('/settings')} style={tw`ml-2 h-9 pl-2.5 pr-2 rounded-full bg-primary-soft flex-row items-center max-w-[118px]`}>
-        <GraduationCap size={15} color={C.primary} />
+        {people ? <MapPin size={15} color={C.primary} /> : <GraduationCap size={15} color={C.primary} />}
         <Text numberOfLines={1} style={tw`mx-1.5 text-[13px] font-semibold text-primary shrink`}>{school}</Text>
         <ChevronDown size={14} color={C.primary} />
       </Pressable>
       <View style={tw`flex-1`} />
       {right}
-      <IconBtn onPress={() => nav('/notifications')} badge={unreadBell}><Bell size={22} color={C.ink2} /></IconBtn>
+      {people ? <IconBtn onPress={() => nav('/search?tab=people')}><Search size={22} color={C.ink2} /></IconBtn> : <IconBtn onPress={() => nav('/notifications')} badge={unreadBell}><Bell size={22} color={C.ink2} /></IconBtn>}
       <IconBtn onPress={() => nav('/chats')} badge={unreadChat}><MessageCircle size={22} color={C.ink2} /></IconBtn>
       <Pressable onPress={() => nav('/profile')} style={tw`ml-1`}>
         {v.me.avatar.url ? <Avatar emoji={v.me.avatar.emoji} hue={v.me.avatar.hue} url={v.me.avatar.url} size={32} /> : <View style={tw`h-8 w-8 rounded-full bg-primary items-center justify-center`}><UserIcon size={17} color="#fff" /></View>}
