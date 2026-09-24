@@ -24,18 +24,27 @@ npm run preview    # 빌드 결과 미리보기
 
 웹과 같은 도메인 코드(`packages/core`: 타입·API·mock DB·스토어·i18n·추천 로직)를 그대로 쓰는 React Native 앱입니다. 화면만 RN으로 다시 그립니다. 지금은 **사람 탭**이 이식돼 있고, 나머지 탭은 플레이스홀더입니다.
 
-```bash
-npm install                 # 루트에서 한 번 (npm workspaces: packages/core, apps/mobile)
-cd apps/mobile
-npx expo start              # QR 코드 → 폰의 Expo Go 앱으로 스캔 (같은 Wi-Fi)
-npx expo start --tunnel     # 다른 네트워크면 tunnel
-npx expo export --platform ios,android   # 번들만 만들어 보기 (CI 검증용)
+**폰에서 보기 (Windows PowerShell)** — 다른 작업 세션이 브랜치를 바꿔도 안 깨지도록 `~/AroundU-mobile` 에 따로 클론해서 실행합니다.
+
+```powershell
+.\start-mobile.ps1      # 클론/갱신 → npm install → apps/mobile 에서 expo start --tunnel
 ```
 
-- 폰에 **Expo Go**(App Store / Play 스토어)를 설치한 뒤 QR을 찍으면 바로 실행됩니다.
+QR이 뜨면 폰의 **Expo Go**(App Store / Play 스토어)로 스캔합니다. tunnel 모드라 같은 Wi-Fi가 아니어도 됩니다.
+
+**브라우저에서 보기** — 같은 RN 코드가 react-native-web으로 돌아갑니다.
+
+```bash
+cd apps/mobile
+npx expo start --web                   # http://localhost:8081
+npx expo export --platform web         # 정적 파일 → apps/mobile/dist
+npx expo export --platform ios,android # 네이티브 번들 (CI 검증용)
+```
+
 - 앱스토어 제출은 `npx eas build --platform ios|android` (EAS 계정 필요), 스토어 등록 전에 `app.json`의 번들 ID·아이콘을 바꿉니다.
 - 스타일은 `twrnc`(런타임 Tailwind)로 웹과 같은 클래스 이름·토큰(`apps/mobile/tailwind.config.js`)을 씁니다. 사진은 `apps/mobile/assets/photos` + `src/photos.ts`의 `require` 맵으로 들어갑니다.
 - 저장소는 AsyncStorage를 앱 시작 시 메모리로 올려(`src/platform.ts`의 `hydrate`) core의 동기 저장소 인터페이스에 맞춥니다.
+- 루트(웹)와 모바일의 React 버전이 달라서 `metro.config.js`가 react/react-dom을 항상 `apps/mobile/node_modules` 것으로 고정합니다.
 
 ## 기술 스택
 

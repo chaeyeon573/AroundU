@@ -116,9 +116,9 @@ function PersonSlide({ user, reasons }: { user: User; reasons: Reason[] }) {
     <View style={[tw`flex-1 rounded-[32px] overflow-hidden bg-primary`, { width: CARD_W }]}>
       <Pressable style={{ flex: 1 }} onPress={(e) => tap(e.nativeEvent.locationX)}>
         {photos.length > 0
-          ? <Image source={getPlatform().asset(photos[pi]) as number} style={{ position: 'absolute', inset: 0 }} contentFit="cover" transition={150} />
+          ? <Image source={getPlatform().asset(photos[pi]) as number} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" transition={150} />
           : <View style={tw`absolute inset-0 items-center justify-center`}><Text style={{ fontSize: 96 }}>{user.avatar.emoji}</Text></View>}
-        <LinearGradient colors={['rgba(15,43,72,0)', 'rgba(15,43,72,0.25)', 'rgba(15,43,72,0.88)']} locations={[0.3, 0.55, 1]} style={{ position: 'absolute', inset: 0 }} />
+        <LinearGradient colors={['rgba(15,43,72,0)', 'rgba(15,43,72,0.25)', 'rgba(15,43,72,0.88)']} locations={[0.3, 0.55, 1]} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
       </Pressable>
       {photos.length > 1 && (
         <View style={[tw`absolute top-3 left-4 right-4 flex-row`, { gap: 4 }]}>

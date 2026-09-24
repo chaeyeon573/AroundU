@@ -3,6 +3,7 @@
  * 쓰기는 메모리에 즉시 반영하고 AsyncStorage에는 비동기로 흘려보낸다.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform as RNPlatform } from 'react-native';
 import { getLocales } from 'expo-localization';
 import { setPlatform } from '@core/platform';
 import { PHOTOS } from './photos';
@@ -22,7 +23,7 @@ setPlatform({
   getItem: (k) => memory.get(k) ?? null,
   setItem: (k, v) => { memory.set(k, v); AsyncStorage.setItem(k, v).catch(() => {}); },
   removeItem: (k) => { memory.delete(k); AsyncStorage.removeItem(k).catch(() => {}); },
-  reload: () => reloadHandler(),
+  reload: () => { if (RNPlatform.OS === 'web' && typeof window !== 'undefined') window.location.reload(); else reloadHandler(); },
   locale: () => getLocales()[0]?.languageTag ?? 'en-US',
   asset: (path) => PHOTOS[path] ?? path,
 });
