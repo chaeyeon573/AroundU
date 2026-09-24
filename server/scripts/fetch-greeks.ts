@@ -150,7 +150,9 @@ const berkeley = snap.organizations.filter((o) => o.schoolId === SCHOOL_ID);
 const normName = (n: string) => n.toLowerCase().replace(/^fsl\s+/, '').replace(/,?\s+[a-z]+(\s+[a-z]+)?\s+chapter\b/g, '').replace(/\b(fraternity|sorority|inc\.?|incorporated|chapter)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const keyOf = (o: Organization) => o.links?.map((l) => /callink\.berkeley\.edu\/organization\/([^/?#]+)/i.exec(l.url)?.[1]?.toLowerCase()).find(Boolean);
 const byKey = new Map(berkeley.map((o) => [keyOf(o) ?? '', o] as const).filter(([k]) => k));
-const byName = new Map(berkeley.map((o) => [normName(o.name), o] as const));
+// 같은 이름이 둘이면(공식 명단만으로 만든 항목 vs 디렉터리 항목) 디렉터리 링크가 있는 쪽을 남긴다 — 나중에 넣은 값이 이기므로 링크 있는 것을 뒤에 둔다
+const hasDirLink = (o: Organization) => !!o.links?.some((l) => /callink\.berkeley\.edu|campuslabs\.com|cardinalengage\.stanford\.edu/.test(l.url));
+const byName = new Map([...berkeley].sort((a, b) => Number(hasDirLink(a)) - Number(hasDirLink(b))).map((o) => [normName(o.name), o] as const));
 
 const orgs = rows.map((r) => toOrg(r, (r.websiteKey ? byKey.get(r.websiteKey.toLowerCase()) : undefined) ?? byName.get(normName(r.name))));
 const officialIds = new Set(orgs.map((o) => o.id));
