@@ -84,10 +84,78 @@ async function mit(): Promise<CatalogCourse[]> {
   }).filter((c) => c.meetings.length > 0);
 }
 
+// ─── Berkeley: 공개 수업 시간표 classes.berkeley.edu (키 불필요) ────────────────
+/**
+ * 학교가 공개로 운영하는 Class Schedule 사이트를 읽는다. 서버 렌더링이라 검색 결과 HTML 을 그대로 파싱한다.
+ *   - term id 는 홈페이지 term 필터에서 "Fall 2026" 같은 라벨로 찾는다 (BERKELEY_TERM, 기본 = 다가오는 학기)
+ *   - subject 는 필터의 학과 이름으로 고른다 (BERKELEY_PUBLIC_SUBJECTS, 이름에 쉼표가 있어 | 로 구분)
+ *   - 한 과목에 강의(LEC)·토론(DIS)·랩(LAB) 섹션이 여럿이면 강의만 시간표에 넣는다
+ *   - 코드는 학생들이 부르는 약칭으로 (COMPSCI 61A → CS 61A) — 내장 예시 목록의 id 와 같아져 그대로 덮어쓴다
+ */
+const BERKELEY_PUBLIC = 'https://classes.berkeley.edu';
+const BERKELEY_ABBR: Record<string, string> = { COMPSCI: 'CS', 'POL SCI': 'POLSCI', 'MCELLBI': 'MCB', 'INTEGBI': 'IB', 'PB HLTH': 'PBHLTH', 'IND ENG': 'IEOR', 'MEC ENG': 'ME', 'CIV ENG': 'CE', 'BIO ENG': 'BIOE', 'COG SCI': 'COGSCI', 'ART': 'ART', 'L & S': 'LS' };
+const BERKELEY_DEFAULT_SUBJECTS = ['Computer Science', 'Electrical Engineering and Computer Sciences', 'Data Science, Undergraduate', 'Mathematics', 'Statistics', 'Economics', 'Business Administration, Undergraduate', 'Psychology', 'Biology', 'Molecular and Cell Biology', 'Integrative Biology', 'Chemistry', 'Physics', 'Political Science', 'History', 'English', 'Sociology', 'Art Practice', 'Music', 'Public Health', 'Cognitive Science', 'Industrial Engineering and Operations Research', 'Mechanical Engineering', 'Bioengineering', 'Civil and Environmental Engineering', 'Philosophy', 'Linguistics', 'Film & Media', 'Environmental Science, Policy, and Management', 'Legal Studies', 'Architecture', 'Korean', 'Information Management and Systems'];
+const decode = (x: string) => x.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;|&#39;/g, "'").replace(/&nbsp;/g, ' ');
+const text = (html: string) => decode(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+const berkeleyGet = async (url: string) => { const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } }); if (!r.ok) throw new Error(`${url} → ${r.status}`); return r.text(); };
+function nextTermLabel(): string { const d = new Date(); const y = d.getFullYear(); const m = d.getMonth() + 1; return m >= 10 ? `Spring ${y + 1}` : m >= 3 ? `Fall ${y}` : `Spring ${y}`; }
+
+async function berkeleyPublic(): Promise<CatalogCourse[]> {
+  const termLabel = process.env.BERKELEY_TERM ?? nextTermLabel();
+  const home = await berkeleyGet(`${BERKELEY_PUBLIC}/`);
+  const termId = [...home.matchAll(/href="[^"]*term%3A(\d+)[^"]*"[^>]*>([\s\S]*?)<\/a>/g)].find((m) => text(m[2]).replace(/\s*\(\d+\)\s*$/, '') === termLabel)?.[1];
+  if (!termId) throw new Error(`classes.berkeley.edu 에 "${termLabel}" 학기가 없어요 (BERKELEY_TERM 으로 지정)`);
+  const subjectIds = new Map([...home.matchAll(/href="\/search\/class\?f%5B0%5D=subject_area%3A(\d+)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => [text(m[2]).replace(/\s*\(\d+\)\s*$/, ''), m[1]] as const));
+  const subjects = (process.env.BERKELEY_PUBLIC_SUBJECTS?.split('|').map((x) => x.trim()) ?? BERKELEY_DEFAULT_SUBJECTS).filter(Boolean);
+  const out: CatalogCourse[] = [];
+  const byId = new Map<string, CatalogCourse>();
+  const field = (row: string, cls: string) => text(row.match(new RegExp(`class="${cls}"[^>]*>([\\s\\S]*?)</div>`))?.[1] ?? '');
+  for (const subject of subjects) {
+    const sid = subjectIds.get(subject);
+    if (!sid) { console.warn(`  ${subject}: 학과 필터에 없음 (건너뜀)`); continue; }
+    let added = 0;
+    for (let page = 0; page < 60; page++) {
+      const html = await berkeleyGet(`${BERKELEY_PUBLIC}/search/class?f%5B0%5D=subject_area%3A${sid}&f%5B1%5D=term%3A${termId}&page=${page}`);
+      const rows = html.split(/<div class="views-row[^"]*">/).slice(1);
+      if (!rows.length) break;
+      for (const row of rows) {
+        const component = text(row.match(/class="st--section-code"[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? '');
+        if (component && component !== 'LEC') continue;
+        const rawCode = text(row.match(/class="st--section-name"[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? '');
+        if (!rawCode) continue;
+        const [subj, ...num] = rawCode.split(' ');
+        const subjKey = rawCode.replace(/\s+\S+$/, '');
+        const code = `${BERKELEY_ABBR[subjKey] ?? BERKELEY_ABBR[subj] ?? subjKey} ${num.length ? rawCode.slice(subjKey.length).trim() : ''}`.trim();
+        const title = text(row.match(/class="st--title"[^>]*>\s*<h2>([\s\S]*?)<\/h2>/)?.[1] ?? '');
+        const instructor = field(row, 'st--instructors') || undefined;
+        const department = text(row.match(/offered through[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/)?.[1] ?? '') || subject;
+        const units = Number(text(row.match(/class="st--details-unit"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '').replace(/Units:\s*/i, '').split(/[^\d.]/)[0]) || undefined;
+        const meetings: Meeting[] = []; let location: string | undefined;
+        for (const det of row.split(/class="st--meeting-details"/).slice(1)) {
+          const days = text(det.match(/class="st--meeting-days"[^>]*>[\s\S]*?<span>([\s\S]*?)<\/span>\s*<\/div>/)?.[1] ?? '');
+          const time = text(det.match(/class="st--meeting-time"[^>]*>[\s\S]*?<span>([\s\S]*?)<\/span>\s*<\/div>/)?.[1] ?? '');
+          const tm = time.match(/(\d{1,2}:\d{2}\s*[ap]m)\s*-\s*(\d{1,2}:\d{2}\s*[ap]m)/i);
+          if (!days || !tm) continue;
+          location ||= text(det.match(/class="st--location"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '') || undefined;
+          for (const day of parseDays(days)) meetings.push({ day, start: parseTime(tm[1]), end: parseTime(tm[2]) });
+        }
+        if (!meetings.length) continue;
+        const id = courseId('s_berkeley', code);
+        const prev = byId.get(id);
+        if (prev) { prev.meetings = uniq([...prev.meetings, ...meetings]); continue; }
+        const course: CatalogCourse = { id, schoolId: 's_berkeley', code, title, department, instructor, location, meetings: uniq(meetings), term: termLabel, units };
+        byId.set(id, course); out.push(course); added++;
+      }
+    }
+    console.log(`  ${subject}: ${added}`);
+  }
+  return out;
+}
+
 // ─── Berkeley: SIS Class API (키 필요) ───────────────────────────────────────
 async function berkeley(): Promise<CatalogCourse[]> {
   const { BERKELEY_APP_ID: id, BERKELEY_APP_KEY: key, BERKELEY_TERM_ID: termId } = process.env;
-  if (!id || !key || !termId) throw new Error('BERKELEY_APP_ID / BERKELEY_APP_KEY / BERKELEY_TERM_ID 가 필요해요 (https://api-central.berkeley.edu → SIS Class API)');
+  if (!id || !key || !termId) { console.log('  SIS API 키 없음 → 공개 시간표(classes.berkeley.edu) 사용'); return berkeleyPublic(); }
   const subjects = (process.env.BERKELEY_SUBJECTS ?? 'COMPSCI,EECS,DATA,MATH,STAT,ECON,UGBA,PSYCH,BIOLOGY,CHEM,PHYSICS,POLSCI,HISTORY,ENGLISH,SOCIOL,ART,MUSIC').split(',');
   const out: CatalogCourse[] = [];
   for (const subj of subjects) {

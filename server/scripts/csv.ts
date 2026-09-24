@@ -28,7 +28,7 @@ export function parseCSV(text: string): Record<string, string>[] {
 
 /** "MWF" / "TuTh" / "M,W" / "Mon Wed" 등을 요일 인덱스(0=월)로 */
 export function parseDays(s: string): number[] {
-  const map: [RegExp, number][] = [[/^(mon\w*|m)$/i, 0], [/^(tue\w*|tu|t)$/i, 1], [/^(wed\w*|w)$/i, 2], [/^(thu\w*|th|r)$/i, 3], [/^(fri\w*|f)$/i, 4], [/^(sat\w*|sa|s)$/i, 5], [/^(sun\w*|su|u)$/i, 6]];
+  const map: [RegExp, number][] = [[/^(mon\w*|mo|m)$/i, 0], [/^(tue\w*|tu|t)$/i, 1], [/^(wed\w*|we|w)$/i, 2], [/^(thu\w*|th|r)$/i, 3], [/^(fri\w*|fr|f)$/i, 4], [/^(sat\w*|sa|s)$/i, 5], [/^(sun\w*|su|u)$/i, 6]];
   const tokens = s.includes(',') || s.includes(' ') ? s.split(/[\s,]+/) : (s.match(/Tu|Th|Sa|Su|M|W|F|T|R|S|U/g) ?? []);
   const out: number[] = [];
   for (const tok of tokens) { const hit = map.find(([re]) => re.test(tok)); if (hit && !out.includes(hit[1])) out.push(hit[1]); }
