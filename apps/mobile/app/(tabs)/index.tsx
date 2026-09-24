@@ -16,7 +16,7 @@ import { matchScore, shareableReasons, type Reason } from '@core/lib/recommend';
 import { statusNow, freeBlocks, todayIdx, nowMin, fmtBlock } from '@core/lib/timetable';
 import type { User, Interest, Goal, ActivityCategory } from '@core/types';
 import { ProposeSheet } from '@/components/a_ProposeSheet';
-import { Deck } from '@/components/Deck';
+import { Deck, justDragged } from '@/components/Deck';
 import { useViewer } from '@/viewer';
 import { nav } from '@/nav';
 import { AppHeader, C, BottomSheet, Chip, Button } from '@/ui';
@@ -158,6 +158,7 @@ function PersonSlide({ user, reasons, interactive = true }: { user: User; reason
   const block = canSeeTT ? freeBlocks(user.timetable, todayIdx()).find((b) => b.end > nowMin()) : null;
   const freeLabel = block ? `${t('공강')} ${fmtBlock({ start: st?.kind === 'free' ? Math.max(block.start, nowMin()) : block.start, end: block.end })}` : user.availability !== 'hidden' ? AVAILABILITY_LABELS[user.availability] : null;
   const tap = (x: number) => {
+    if (justDragged()) return;
     if (photos.length > 1 && x < CARD_W * 0.3) setPi((p) => (p - 1 + photos.length) % photos.length);
     else if (photos.length > 1 && x > CARD_W * 0.7) setPi((p) => (p + 1) % photos.length);
     else nav(`/users/${user.id}`);

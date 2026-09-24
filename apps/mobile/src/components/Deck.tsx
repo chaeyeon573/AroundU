@@ -3,6 +3,9 @@ import { Animated, PanResponder, Text, View } from 'react-native';
 import { tw } from '@/tw';
 
 const SWIPE = 110;
+/** 드래그 직후에 카드의 탭이 함께 발생하는 것(웹 click)을 막기 위한 공유 상태 */
+export const dragState = { moved: false, endedAt: 0 };
+export const justDragged = () => dragState.moved || Date.now() - dragState.endedAt < 350;
 
 /**
  * 카드 덱 — 한 장만 보이고, 오른쪽으로 밀면 Connect, 왼쪽으로 밀면 Later (Stitch people_pure_minimal 과 동일).
@@ -33,13 +36,15 @@ export function Deck<T>({ items, index, width, renderCard, onSwipe, labels, tapE
 
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+    onPanResponderGrant: () => { dragState.moved = true; },
     onPanResponderMove: Animated.event([null, { dx: pos.x, dy: pos.y }], { useNativeDriver: false }),
     onPanResponderRelease: (_, g) => {
+      dragState.moved = false; dragState.endedAt = Date.now();
       if (g.dx > SWIPE) flyOut('right');
       else if (g.dx < -SWIPE) flyOut('left');
       else Animated.spring(pos, { toValue: { x: 0, y: 0 }, friction: 6, useNativeDriver: false }).start();
     },
-    onPanResponderTerminate: () => Animated.spring(pos, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start(),
+    onPanResponderTerminate: () => { dragState.moved = false; dragState.endedAt = Date.now(); Animated.spring(pos, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start(); },
   })).current;
 
   const rotate = pos.x.interpolate({ inputRange: [-width, 0, width], outputRange: ['-14deg', '0deg', '14deg'] });
