@@ -1,12 +1,15 @@
 /**
- * Berkeley 공식 Greek 챕터 목록 → organizations (type: greek)
+ * 학교 공식 Greek 챕터 목록 → organizations (type: greek, verified: true)
  *
- * 출처: UC Berkeley LEAD Center "Find A Chapter" (https://lead.berkeley.edu/cal-greeks/find-a-chapter/)
- *   IFC · MCGC(Multi-Cultural Greek Council) · NPHC · PHC(Panhellenic) 4개 카운슬, 챕터마다
- *   이름 · CalLink 링크 · 주소(하우스) · Fraternity/Sorority · 주류/하우징 정책 · SVSH 교육 이수 여부
- *
- *   npm run fetch:greeks                    # 가져와서 DB 반영 + server/.data/greeks-berkeley.csv
+ *   npm run fetch:greeks                    # Berkeley (기본)
+ *   npm run fetch:greeks -- s_stanford      # Stanford
  *   FETCH_DRY=1 npm run fetch:greeks        # CSV 만 만들고 DB 는 건드리지 않음
+ *
+ * 출처
+ *   Berkeley  LEAD Center "Find A Chapter" (https://lead.berkeley.edu/cal-greeks/find-a-chapter/)
+ *             IFC · MCGC · NPHC · PHC 4개 카운슬, 챕터마다 이름 · CalLink 링크 · 주소 · Fraternity/Sorority · 주류/하우징 정책 · SVSH 이수
+ *   Stanford  Fraternity & Sorority Life "Our Community" (https://fsl.stanford.edu/our-community)
+ *             IFC · ISC(Inter-Sorority, Panhellenic) · MGC · AAFSA(Divine Nine) 4개 카운슬, 챕터마다 이름 · 소개 한 단락
  *
  * 병합 규칙
  *   - 모든 행에 CalLink 링크가 있으므로 그 websiteKey 로 fetch:orgs 가 만든 항목(oc_/og_berkeley_<key>)을 찾아
@@ -21,8 +24,11 @@ import { fileURLToPath } from 'node:url';
 import type { Organization } from '@core/types';
 import { createStore, emptySnapshot } from '../store';
 
-const SCHOOL_ID = 's_berkeley';
-const SOURCE = 'https://lead.berkeley.edu/cal-greeks/find-a-chapter/';
+const SCHOOL_ID = process.argv[2] || 's_berkeley';
+const SOURCES: Record<string, string> = { s_berkeley: 'https://lead.berkeley.edu/cal-greeks/find-a-chapter/', s_stanford: 'https://fsl.stanford.edu/our-community' };
+const SOURCE = SOURCES[SCHOOL_ID];
+if (!SOURCE) { console.error(`usage: npm run fetch:greeks -- <${Object.keys(SOURCES).join('|')}>`); process.exit(1); }
+const SCHOOL_NAME: Record<string, string> = { s_berkeley: 'UC Berkeley', s_stanford: 'Stanford' };
 
 type Council = 'IFC' | 'MGC' | 'NPHC' | 'Panhellenic';
 const COUNCIL_BY_HEADING: [RegExp, Council][] = [[/Interfraternity/i, 'IFC'], [/Multi-?Cultural/i, 'MGC'], [/Pan-Hellenic/i, 'NPHC'], [/Panhellenic/i, 'Panhellenic']];
@@ -36,7 +42,7 @@ const COUNCIL_JOIN: Record<Council, string> = {
   MGC: 'Interest meeting → intake process (varies by chapter)',
 };
 
-interface Row { council: Council; name: string; websiteKey: string; address?: string; kind: 'Fraternity' | 'Sorority'; policy?: string; svsh?: string }
+interface Row { council: Council; name: string; websiteKey?: string; address?: string; kind: 'Fraternity' | 'Sorority'; policy?: string; svsh?: string; intro?: string; url?: string }
 
 const strip = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&amp;|&quot;|&#39;|&#8217;/g, (m) => ({ '&nbsp;': ' ', '&amp;': '&', '&quot;': '"', '&#39;': "'", '&#8217;': '’' }[m] ?? ' ')).replace(/\s+/g, ' ').trim();
 
@@ -76,18 +82,42 @@ function parse(html: string): Row[] {
   return out;
 }
 
+/** Stanford FSL: 챕터 링크 경로에 카운슬이 들어 있고(/our-community%23<council>/<slug>), 본문에서 이름 다음 단락이 소개다 */
+const STANFORD_COUNCIL: Record<string, Council> = { 'interfraternity-council': 'IFC', 'inter-sorority-council': 'Panhellenic', 'multicultural-greek-council': 'MGC', 'african-american-fraternal-and-sororal-association': 'NPHC' };
+function parseStanford(html: string): Row[] {
+  const text = html.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/g, '');
+  const lines = strip(text.replace(/<[^>]+>/g, '\n')).split('\n').map((l) => l.trim()).filter(Boolean);
+  const plain = text.replace(/<[^>]+>/g, '\n').split('\n').map((l) => strip(l)).filter(Boolean);
+  void lines;
+  const out: Row[] = []; const seen = new Set<string>();
+  for (const m of html.matchAll(/href="\/our-community%23([a-z-]+)\/([a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    const council = STANFORD_COUNCIL[m[1]]; const slug = m[2]; const name = strip(m[3]);
+    if (!council || !name || seen.has(slug)) continue;
+    seen.add(slug);
+    const idx = plain.lastIndexOf(name);
+    const intro = idx >= 0 ? plain[idx + 1] : undefined;
+    out.push({ council, name, kind: /sorority|inter-sorority/i.test(`${name} ${m[1]}`) || council === 'Panhellenic' ? 'Sorority' : 'Fraternity', intro: intro && intro.length > 40 ? intro : undefined, url: `https://fsl.stanford.edu/our-community#${m[1]}` });
+  }
+  return out;
+}
+
 function toOrg(row: Row, prev?: Organization): Organization {
-  const parts = [`${row.kind} · ${COUNCIL_LONG[row.council]} (${row.council}) chapter at UC Berkeley.`];
+  const councilLabel = SCHOOL_ID === 's_stanford' && row.council === 'Panhellenic' ? 'Inter-Sorority Council (ISC)' : SCHOOL_ID === 's_stanford' && row.council === 'NPHC' ? 'African American Fraternal & Sororal Association (AAFSA)' : `${COUNCIL_LONG[row.council]} (${row.council})`;
+  const parts = [`${row.kind} · ${councilLabel} chapter at ${SCHOOL_NAME[SCHOOL_ID]}.`];
   if (row.address) parts.push(`Chapter house: ${row.address}.`);
   if (row.policy) parts.push(`${row.policy}.`);
+  if (row.intro) parts.push(row.intro);
   const policyNote = [
     `Listed on the university's official Fraternity & Sorority Life chapter roster.`,
     row.svsh === 'Yes' ? 'Completed the 25-26 SVSH (sexual violence & harassment prevention) training.' : undefined,
     row.council === 'IFC' ? 'Dry recruitment and anti-hazing policies apply.' : undefined,
   ].filter(Boolean).join(' ');
-  const links = [{ label: 'CalLink', url: `https://callink.berkeley.edu/organization/${row.websiteKey}` }, { label: 'Cal Greeks', url: SOURCE }];
+  const links = row.websiteKey
+    ? [{ label: 'CalLink', url: `https://callink.berkeley.edu/organization/${row.websiteKey}` }, { label: 'Cal Greeks', url: SOURCE }]
+    : [...(prev?.links?.filter((l) => !/fsl\.stanford\.edu/.test(l.url)) ?? []), { label: 'Stanford FSL', url: row.url ?? SOURCE }];
+  const slug = (row.websiteKey ?? row.name).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
   return {
-    id: prev?.id ?? `og_berkeley_${row.websiteKey.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+    id: prev?.id ?? `og_${SCHOOL_ID.replace('s_', '')}_${slug}`,
     name: row.name,
     logo: prev?.logo.url ? prev.logo : { emoji: COUNCIL_EMOJI[row.council], hue: COUNCIL_HUE[row.council] },
     type: 'greek', schoolId: SCHOOL_ID, parent: row.council, verified: true,
@@ -103,30 +133,32 @@ function toOrg(row: Row, prev?: Organization): Organization {
 console.log(`${SCHOOL_ID} ← ${SOURCE}`);
 const res = await fetch(SOURCE, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } });
 if (!res.ok) { console.error(`fetch failed: ${res.status}`); process.exit(1); }
-const rows = parse(await res.text());
+const rows = SCHOOL_ID === 's_stanford' ? parseStanford(await res.text()) : parse(await res.text());
 const byCouncil = rows.reduce<Record<string, number>>((m, r) => ({ ...m, [r.council]: (m[r.council] ?? 0) + 1 }), {});
 console.log(`${rows.length} chapters`, byCouncil);
-if (rows.length < 40) { console.error('too few rows — page layout probably changed; not touching DB'); process.exit(1); }
+if (rows.length < (SCHOOL_ID === 's_stanford' ? 15 : 40)) { console.error('too few rows — page layout probably changed; not touching DB'); process.exit(1); }
 
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.data');
 mkdirSync(dataDir, { recursive: true });
-writeFileSync(path.join(dataDir, 'greeks-berkeley.csv'), ['council,name,kind,callink,address,policy,svsh', ...rows.map((r) => [r.council, r.name, r.kind, r.websiteKey, r.address ?? '', r.policy ?? '', r.svsh ?? ''].map((v) => `"${v.replace(/"/g, '""')}"`).join(','))].join('\n'));
+writeFileSync(path.join(dataDir, `greeks-${SCHOOL_ID.replace('s_', '')}.csv`), ['council,name,kind,callink,address,policy,svsh,intro', ...rows.map((r) => [r.council, r.name, r.kind, r.websiteKey ?? '', r.address ?? '', r.policy ?? '', r.svsh ?? '', r.intro ?? ''].map((v) => `"${v.replace(/"/g, '""')}"`).join(','))].join('\n'));
 
 const store = createStore();
 await store.init();
 const snap = (await store.loadSnapshot()) ?? emptySnapshot();
 const berkeley = snap.organizations.filter((o) => o.schoolId === SCHOOL_ID);
+const normName = (n: string) => n.toLowerCase().replace(/\b(fraternity|sorority|inc\.?|incorporated)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const keyOf = (o: Organization) => o.links?.map((l) => /callink\.berkeley\.edu\/organization\/([^/?#]+)/i.exec(l.url)?.[1]?.toLowerCase()).find(Boolean);
 const byKey = new Map(berkeley.map((o) => [keyOf(o) ?? '', o] as const).filter(([k]) => k));
-const byName = new Map(berkeley.map((o) => [o.name.toLowerCase(), o] as const));
+const byName = new Map(berkeley.map((o) => [normName(o.name), o] as const));
 
-const orgs = rows.map((r) => toOrg(r, byKey.get(r.websiteKey.toLowerCase()) ?? byName.get(r.name.toLowerCase())));
+const orgs = rows.map((r) => toOrg(r, (r.websiteKey ? byKey.get(r.websiteKey.toLowerCase()) : undefined) ?? byName.get(normName(r.name))));
 const officialIds = new Set(orgs.map((o) => o.id));
-const stale = berkeley.filter((o) => o.type === 'greek' && !officialIds.has(o.id) && !keyOf(o) && o.memberIds.length === 0 && o.adminIds.length === 0);
-const matched = rows.filter((r) => byKey.has(r.websiteKey.toLowerCase()) || byName.has(r.name.toLowerCase())).length;
+const hasDirectoryLink = (o: Organization) => !!keyOf(o) || !!o.links?.some((l) => /cardinalengage\.stanford\.edu/.test(l.url));
+const stale = berkeley.filter((o) => o.type === 'greek' && !officialIds.has(o.id) && !hasDirectoryLink(o) && o.memberIds.length === 0 && o.adminIds.length === 0);
+const matched = rows.filter((r) => (r.websiteKey ? byKey.has(r.websiteKey.toLowerCase()) : false) || byName.has(normName(r.name))).length;
 console.log(`merge: ${matched} matched existing, ${orgs.length - matched} new; remove ${stale.length} hand-curated guesses`);
 
-if (process.env.FETCH_DRY === '1') { console.log(`CSV 만 생성: ${dataDir}/greeks-berkeley.csv`); process.exit(0); }
+if (process.env.FETCH_DRY === '1') { console.log(`CSV 만 생성: ${dataDir}/greeks-${SCHOOL_ID.replace('s_', '')}.csv`); process.exit(0); }
 await store.applyPatch({ organizations: orgs, removed: { organizations: stale.map((o) => o.id) } });
 console.log('DB 반영 완료');
 process.exit(0);

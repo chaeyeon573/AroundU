@@ -4,7 +4,9 @@
  * CampusLabs Engage 디렉터리는 로그인 없이 공개 검색 API 가 열려 있다 (실제 확인됨):
  *   Berkeley  callink.berkeley.edu            → 1,550개
  *   SF State  sfsu.campuslabs.com/engage      → 289개
- * UCLA(SOLE)·MIT(CampusGroups)·Stanford 는 Engage 가 아니라 이 API 가 없다 → CSV 로 넣거나(import-orgs.ts),
+ * Stanford 는 CampusGroups(Cardinal Engage) — 공개 목록 페이지(club_signup)가 서버 렌더링이고 range=N 으로 30개씩 넘어간다 (814개, 실제 확인됨).
+ *   Stanford  cardinalengage.stanford.edu     → CAMPUSGROUPS_HOSTS 로 같은 방식의 학교를 더 붙일 수 있다 (MIT 도 CampusGroups)
+ * UCLA(SOLE) 는 둘 다 아니라 CSV 로 넣는다(import-orgs.ts).
  * Engage 를 쓰는 다른 학교를 추가하려면 ENGAGE_HOSTS="s_xxx=https://xxx.campuslabs.com/engage" 로 지정한다.
  *
  *   npm run fetch:orgs                     # 모든 학교 → orgs CSV 출력 + DB 반영
@@ -26,6 +28,53 @@ const ENGAGE_HOSTS: Record<string, string> = {
   s_sfsu: 'https://sfsu.campuslabs.com/engage',
   ...(process.env.ENGAGE_HOSTS ? Object.fromEntries(process.env.ENGAGE_HOSTS.split(',').map((p) => p.split('=') as [string, string])) : {}),
 };
+
+const CAMPUSGROUPS_HOSTS: Record<string, string> = {
+  s_stanford: 'https://cardinalengage.stanford.edu',
+  ...(process.env.CAMPUSGROUPS_HOSTS ? Object.fromEntries(process.env.CAMPUSGROUPS_HOSTS.split(',').map((p) => p.split('=') as [string, string])) : {}),
+};
+
+interface CampusGroupsOrg { id: string; name: string; groupType: string; tags: string[]; mission: string }
+
+/** CampusGroups club_signup 목록: <li class="list-group-item"> 마다 club_id · 이름 · "그룹유형 - 태그, 태그" · Mission 본문 */
+async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
+  const out: CampusGroupsOrg[] = [];
+  const seen = new Set<string>();
+  for (let range = 0; range < 5000; range += 30) {
+    const res = await fetch(`${host}/club_signup?ax=1&range=${range}`, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } });
+    if (!res.ok) throw new Error(`${host}/club_signup?range=${range} → ${res.status}`);
+    const items = (await res.text()).split('<li class="list-group-item"').slice(1);
+    if (!items.length) break;
+    let added = 0;
+    for (const it of items) {
+      const id = /club_id=(\d+)/.exec(it)?.[1];
+      const name = strip(/<h2 class="media-heading[^"]*">\s*<a[^>]*>([\s\S]*?)<\/a>/.exec(it)?.[1] ?? '');
+      if (!id || !name || seen.has(id)) continue;
+      seen.add(id); added++;
+      const catLine = strip(/<p class="h5 media-heading grey-element">([\s\S]*?)<\/p>/.exec(it)?.[1] ?? '');
+      const [groupType, tagText = ''] = catLine.split(/\s+-\s+/, 2);
+      const mission = strip(new RegExp(`id="club_${id}"[^>]*>\\s*<strong>Mission</strong><br>([\\s\\S]*?)</p>`).exec(it)?.[1] ?? '');
+      out.push({ id, name, groupType: groupType.trim(), tags: tagText.split(',').map((t) => t.trim()).filter(Boolean), mission });
+    }
+    if (!added) break;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return out;
+}
+
+function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Organization {
+  const catText = `${o.groupType} ${o.tags.join(' ')} ${o.name}`;
+  const type: Organization['type'] = GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
+  return {
+    id: `${type === 'greek' ? 'og' : 'oc'}_${schoolId.replace('s_', '')}_cg${o.id}`,
+    name: o.name,
+    logo: { emoji: type === 'club' ? '🎯' : '🏛️', hue: Math.abs([...o.name].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7)) % 360 },
+    type, schoolId, parent: o.tags[0] || o.groupType || undefined, verified: false,
+    description: o.mission.slice(0, 600),
+    gallery: [], regularActivities: [], notices: [], followerIds: [], memberIds: [], adminIds: [], applicantIds: [],
+    links: [{ label: 'Cardinal Engage', url: `${host}/student_community?club_id=${o.id}` }],
+  };
+}
 
 interface EngageOrg { Id: string; Name: string; ShortName?: string; WebsiteKey?: string; Summary?: string; Description?: string; CategoryNames?: string[]; Status?: string }
 
@@ -72,6 +121,13 @@ await store.init();
 const snap = (await store.loadSnapshot()) ?? emptySnapshot();
 const existing = new Map(snap.organizations.map((o) => [`${o.schoolId}::${o.name.toLowerCase()}`, o]));
 
+/** 디렉터리에서 받은 뒤, 같은 학교의 손으로 넣어 둔 추정 항목(디렉터리 링크 없음 · 멤버/관리자 없음 · 이번에 안 맞음)은 지운다. greek 은 fetch-greeks 가 담당 */
+function staleSeed(schoolId: ID, fresh: Organization[]): ID[] {
+  const freshIds = new Set(fresh.map((o) => o.id));
+  const hasDirLink = (o: Organization) => !!o.links?.some((l) => /callink\.berkeley\.edu|campuslabs\.com|cardinalengage\.stanford\.edu/.test(l.url));
+  return snap.organizations.filter((o) => o.schoolId === schoolId && o.type !== 'greek' && !freshIds.has(o.id) && !hasDirLink(o) && o.memberIds.length === 0 && o.adminIds.length === 0).map((o) => o.id);
+}
+
 for (const [schoolId, host] of Object.entries(ENGAGE_HOSTS)) {
   if (only && only !== schoolId) continue;
   process.stdout.write(`${schoolId} ← ${host} … `);
@@ -82,8 +138,22 @@ for (const [schoolId, host] of Object.entries(ENGAGE_HOSTS)) {
     .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
-  console.log(`${orgs.length}개 (greek ${orgs.filter((o) => o.type === 'greek').length})`);
-  if (process.env.FETCH_DRY !== '1') await store.applyPatch({ organizations: orgs });
+  const stale = staleSeed(schoolId, orgs);
+  console.log(`${orgs.length}개 (greek ${orgs.filter((o) => o.type === 'greek').length})${stale.length ? `, 추정 항목 ${stale.length}개 삭제` : ''}`);
+  if (process.env.FETCH_DRY !== '1') await store.applyPatch({ organizations: orgs, removed: { organizations: stale } });
+}
+for (const [schoolId, host] of Object.entries(CAMPUSGROUPS_HOSTS)) {
+  if (only && only !== schoolId) continue;
+  process.stdout.write(`${schoolId} ← ${host} (CampusGroups) … `);
+  let raw: CampusGroupsOrg[];
+  try { raw = await fetchCampusGroups(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
+  const orgs = raw.map((o) => mapCampusGroupsOrg(schoolId, host, o))
+    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
+  const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
+  writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
+  const stale = staleSeed(schoolId, orgs);
+  console.log(`${orgs.length}개 (greek ${orgs.filter((o) => o.type === 'greek').length})${stale.length ? `, 추정 항목 ${stale.length}개 삭제` : ''}`);
+  if (process.env.FETCH_DRY !== '1') await store.applyPatch({ organizations: orgs, removed: { organizations: stale } });
 }
 console.log(process.env.FETCH_DRY === '1' ? `CSV 만 생성: ${dataDir}` : 'DB 반영 완료');
 process.exit(0);

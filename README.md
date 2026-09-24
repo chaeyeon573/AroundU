@@ -168,20 +168,21 @@ UCLA 와 SF State 는 공개 API 가 없어서 학교 스케줄 페이지에서 
 
 **동아리·소로리티·프래터니티** — `src/data/catalog/orgs.ts` 에 5개 캠퍼스 338개 조직이 있다. 그리스 조직은 IFC / Panhellenic / NPHC(Divine Nine) / MGC / Professional / Service 계열별로 전국 조직 사전(`NATIONAL_GREEK`)에서 골라 넣었고, 동아리는 CalLink 등 각 학교 학생단체 디렉터리 기준이다. 이 목록은 외부에서 가져온 것이 아니라 직접 정리한 **시작용 목록**이라 캠퍼스별 챕터 존재 여부가 검증되지 않았고, **모두 `verified: false`** 로 시작한다.
 
-실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink 1,550개 · SF State 289개 — CampusLabs Engage 공개 API, 실제 확인됨):
+실제 디렉터리에서 통째로 가져오려면 (Berkeley CalLink 1,550개 · SF State 289개 — CampusLabs Engage 공개 API · Stanford Cardinal Engage 767개 — CampusGroups 공개 목록, 모두 실제 확인됨). 가져온 학교의 손으로 넣은 추정 동아리(링크·멤버 없음)는 함께 지운다:
 
 ```bash
 npm run fetch:orgs                      # Berkeley + SF State → DB 반영 + server/.data/orgs-<school>.csv
-npm run fetch:orgs -- s_berkeley        # 한 학교만
+npm run fetch:orgs -- s_berkeley        # 한 학교만 (s_berkeley · s_sfsu · s_stanford)
 FETCH_DRY=1 npm run fetch:orgs          # CSV 만 만들고 DB 는 건드리지 않음
 ```
 
-**Berkeley Greek 공식 명단** — 학교 LEAD Center 의 Find A Chapter 페이지(IFC · MCGC · NPHC · PHC 4개 카운슬, 62개 챕터)를 읽어
+**Greek 공식 명단 (Berkeley · Stanford)** — Berkeley 는 LEAD Center 의 Find A Chapter 페이지(IFC · MCGC · NPHC · PHC 4개 카운슬, 62개 챕터)를 읽어
 CalLink 로 들어온 같은 조직에 카운슬·하우스 주소·주류/하우징 정책·SVSH 교육 이수 여부를 합치고 `verified: true` 로 표시한다.
 공식 명단에 없고 링크·멤버도 없는 손으로 넣은 추정 챕터는 지운다.
 
 ```bash
 npm run fetch:greeks                    # lead.berkeley.edu → DB 반영 + server/.data/greeks-berkeley.csv
+npm run fetch:greeks -- s_stanford      # fsl.stanford.edu/our-community (IFC · ISC · MGC · AAFSA 24개)
 FETCH_DRY=1 npm run fetch:greeks        # CSV 만
 ```
 
