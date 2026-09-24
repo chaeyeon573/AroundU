@@ -97,7 +97,17 @@ const BERKELEY_ABBR: Record<string, string> = { COMPSCI: 'CS', 'POL SCI': 'POLSC
 const BERKELEY_DEFAULT_SUBJECTS = ['Computer Science', 'Electrical Engineering and Computer Sciences', 'Data Science, Undergraduate', 'Mathematics', 'Statistics', 'Economics', 'Business Administration, Undergraduate', 'Psychology', 'Biology', 'Molecular and Cell Biology', 'Integrative Biology', 'Chemistry', 'Physics', 'Political Science', 'History', 'English', 'Sociology', 'Art Practice', 'Music', 'Public Health', 'Cognitive Science', 'Industrial Engineering and Operations Research', 'Mechanical Engineering', 'Bioengineering', 'Civil and Environmental Engineering', 'Philosophy', 'Linguistics', 'Film & Media', 'Environmental Science, Policy, and Management', 'Legal Studies', 'Architecture', 'Korean', 'Information Management and Systems'];
 const decode = (x: string) => x.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;|&#39;/g, "'").replace(/&nbsp;/g, ' ');
 const text = (html: string) => decode(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
-const berkeleyGet = async (url: string) => { const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } }); if (!r.ok) throw new Error(`${url} → ${r.status}`); return r.text(); };
+/** 학교 사이트가 가끔 504 를 돌려준다 — 5xx·네트워크 오류는 2s·4s·8s 간격으로 3번 더 시도하고, 요청 사이에 잠깐 쉰다 */
+const berkeleyGet = async (url: string): Promise<string> => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 AroundU-importer' } });
+      if (r.ok) { await new Promise((res) => setTimeout(res, 250)); return await r.text(); }
+      if (r.status < 500 || attempt >= 3) throw new Error(`${url} → ${r.status}`);
+    } catch (e) { if (attempt >= 3) throw e; }
+    await new Promise((res) => setTimeout(res, 2000 * 2 ** attempt));
+  }
+};
 function nextTermLabel(): string { const d = new Date(); const y = d.getFullYear(); const m = d.getMonth() + 1; return m >= 10 ? `Spring ${y + 1}` : m >= 3 ? `Fall ${y}` : `Spring ${y}`; }
 
 async function berkeleyPublic(): Promise<CatalogCourse[]> {
