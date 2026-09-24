@@ -46,7 +46,7 @@ export function AppHeader({ right, people }: { right?: ReactNode; people?: boole
   const school = people ? full.replace(/대학교|University of California,?|University|UC /g, '').trim() : full;
   return (
     <View style={tw`h-16 pl-4 pr-3 flex-row items-center`}>
-      <Text style={tw`text-[22px] font-extrabold text-primary tracking-tight`}>AroundU</Text>
+      <Text style={tw`text-[22px] font-extrabold text-brand tracking-tight`}>AroundU</Text>
       <Pressable onPress={() => setLangOpen(true)} style={tw`ml-2 h-9 pl-2.5 pr-2 rounded-full bg-primary-soft flex-row items-center max-w-[118px]`}>
         {people ? <MapPin size={15} color={C.primary} /> : <GraduationCap size={15} color={C.primary} />}
         <Text numberOfLines={1} style={tw`mx-1.5 text-[13px] font-semibold text-primary shrink`}>{school}</Text>
