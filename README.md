@@ -165,6 +165,14 @@ FETCH_DRY=1 npm run fetch:greeks        # CSV 만
 DATABASE_URL=... npm run import:orgs -- berkeley-orgs.csv
 ```
 
+**지원 마감 달력(기회)** — 인턴·연구·장학금·교환·행사는 본문을 옮기지 않고 **무엇을 · 언제까지 · 어디서(원문 링크)** 만 넣는다.
+학교별 CSV(`server/data/opportunities-<school>.csv`)를 손보고 넣으면 Community › Opportunities 에 마감 순으로 보이고, 저장·마감 알림·"지원하러 가기" 링크가 붙는다.
+마감일을 모르면 비워 두고 설명에 "보통 3월" 처럼 적는다 — 지어내지 않는다. Berkeley 초안은 학교 공개 페이지에서 확인한 날짜만 넣었다 (2026-09-24 기준).
+
+```bash
+npm run import:opportunities -- server/data/opportunities-berkeley.csv
+```
+
 **사용자** — 실제 사용자는 온보딩으로 들어온다. 초기에 비어 보이지 않도록 시드 사용자가 함께 들어가 있으며, 운영 전에 `src/data/seed.en.ts` 의 `users`/`posts` 를 비우거나 줄이면 된다.
 
 ### 남은 일 (운영 전)
