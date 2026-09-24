@@ -16,7 +16,8 @@
     "import:courses": "tsx --tsconfig server/tsconfig.json server/scripts/import-courses.ts",
     "import:orgs": "tsx --tsconfig server/tsconfig.json server/scripts/import-orgs.ts",
     "fetch:orgs": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-orgs.ts",
-    "fetch:courses": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-courses.ts"
+    "fetch:courses": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-courses.ts",
+    "fetch:greeks": "tsx --tsconfig server/tsconfig.json server/scripts/fetch-greeks.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",

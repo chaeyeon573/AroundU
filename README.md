@@ -147,6 +147,15 @@ npm run fetch:orgs -- s_berkeley        # 한 학교만
 FETCH_DRY=1 npm run fetch:orgs          # CSV 만 만들고 DB 는 건드리지 않음
 ```
 
+**Berkeley Greek 공식 명단** — 학교 LEAD Center 의 Find A Chapter 페이지(IFC · MCGC · NPHC · PHC 4개 카운슬, 62개 챕터)를 읽어
+CalLink 로 들어온 같은 조직에 카운슬·하우스 주소·주류/하우징 정책·SVSH 교육 이수 여부를 합치고 `verified: true` 로 표시한다.
+공식 명단에 없고 링크·멤버도 없는 손으로 넣은 추정 챕터는 지운다.
+
+```bash
+npm run fetch:greeks                    # lead.berkeley.edu → DB 반영 + server/.data/greeks-berkeley.csv
+FETCH_DRY=1 npm run fetch:greeks        # CSV 만
+```
+
 카테고리 이름에 fraternity/sorority/Panhellenic/IFC/NPHC 가 있으면 `greek` 으로, 학생회는 `council` 로 분류된다. UCLA(SOLE) · MIT(CampusGroups) · Stanford 는 Engage 가 아니라서 이 API 가 없다. 학교 디렉터리에서 받은 표를 CSV 로 넣고, Engage 를 쓰는 학교를 더 붙일 땐 `ENGAGE_HOSTS=s_xxx=https://xxx.campuslabs.com/engage` 로 지정한다. 손으로 고칠 때는 CSV 로:
 
 ```bash
