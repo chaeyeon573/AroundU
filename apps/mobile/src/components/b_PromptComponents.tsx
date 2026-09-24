@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Plus, X, Mic, Square, Play, Pause, Trash2, BarChart3, Pencil } from 'lucide-react-native';
 import { t, lang } from '@core/i18n';
 import type { PollPrompt, ProfilePrompt, VoicePrompt } from '@core/types';
-import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, type PromptCategory } from '@core/data/prompts';
+import { TEXT_PROMPTS, VOICE_PROMPTS, POLL_PROMPTS, PROMPT_CATEGORY_LABELS, questionById, pollById, MAX_TEXT_PROMPTS, REQUIRED_TEXT_PROMPTS, REQUIRED_SLOTS, FIRST_PROMPT_ID, slotCategories, normalizePrompts, type PromptCategory } from '@core/data/prompts';
 import { tw } from '@/tw';
 import { BottomSheet, Chip, Textarea, Tag, C } from '@/ui';
 
@@ -16,7 +16,15 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
   const [cat, setCat] = useState<PromptCategory | 'all'>('all');
   const used = new Set(value.map((p) => p.questionId));
   const answered = value.filter((p) => p.answer.trim()).length;
+  // 1번 슬롯은 첫 질문으로 고정. 저장된 값이 규칙에 안 맞으면 정규화한다.
+  useEffect(() => {
+    if (value[0]?.questionId !== FIRST_PROMPT_ID) onChange(normalizePrompts(value));
+  }, [value, onChange]);
+  const targetIndex = editing ?? value.length;
+  const allowed = slotCategories(targetIndex);
+  const slot = REQUIRED_SLOTS[targetIndex];
 
+  const openPicker = (index: number | null) => { setEditing(index); setCat('all'); setPickerOpen(true); };
   const pick = (questionId: string) => {
     if (editing !== null) onChange(value.map((p, i) => (i === editing ? { questionId, answer: '' } : p)));
     else onChange([...value, { questionId, answer: '' }]);
@@ -27,11 +35,16 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
     <View>
       {value.map((p, i) => {
         const q = questionById(p.questionId);
+        const fixed = i === 0;
+        const hint = REQUIRED_SLOTS[i]?.hint;
         return (
           <View key={p.questionId} style={[card, tw`p-3.5 mb-2.5`]}>
+            {hint && <Text style={tw`text-[11px] font-semibold text-ink-3 mb-1`}>{i + 1}. {hint}{fixed ? ` · ${t('첫 질문은 고정이에요')}` : ''}</Text>}
             <View style={tw`flex-row items-start justify-between`}>
-              <Pressable onPress={() => { setEditing(i); setPickerOpen(true); }} style={tw`flex-1 flex-row items-center pr-2`}><Text style={tw`text-[13px] font-bold text-primary shrink`}>{q?.text}</Text><Pencil size={11} color={C.ink3} style={tw`ml-1`} /></Pressable>
-              <Pressable onPress={() => onChange(value.filter((_, j) => j !== i))} hitSlop={6} style={tw`h-6 w-6 items-center justify-center`}><X size={15} color={C.ink3} /></Pressable>
+              {fixed
+                ? <View style={tw`flex-1 pr-2`}><Text style={tw`text-[13px] font-bold text-primary`}>{q?.text}</Text></View>
+                : <Pressable onPress={() => openPicker(i)} style={tw`flex-1 flex-row items-center pr-2`}><Text style={tw`text-[13px] font-bold text-primary shrink`}>{q?.text}</Text><Pencil size={11} color={C.ink3} style={tw`ml-1`} /></Pressable>}
+              {!fixed && <Pressable onPress={() => onChange(normalizePrompts(value.filter((_, j) => j !== i)))} hitSlop={6} style={tw`h-6 w-6 items-center justify-center`}><X size={15} color={C.ink3} /></Pressable>}
             </View>
             <Textarea style={tw`mt-2 min-h-[64px]`} placeholder={q?.placeholder ?? t('2줄 이내로 짧게')} maxLength={80} value={p.answer} onChangeText={(text) => onChange(value.map((x, j) => (j === i ? { ...x, answer: text } : x)))} />
             <Text style={tw`text-right text-[11px] text-ink-3 mt-1`}>{p.answer.length}/80</Text>
@@ -39,18 +52,19 @@ export function PromptEditor({ value, onChange }: { value: ProfilePrompt[]; onCh
         );
       })}
       {value.length < MAX_TEXT_PROMPTS && (
-        <Pressable onPress={() => { setEditing(null); setPickerOpen(true); }} style={tw`h-12 rounded-2xl border-2 border-dashed border-line flex-row items-center justify-center`}>
+        <Pressable onPress={() => openPicker(null)} style={tw`h-12 rounded-2xl border-2 border-dashed border-line flex-row items-center justify-center`}>
           <Plus size={16} color={C.ink2} />
           <Text style={tw`ml-1.5 text-[13px] font-semibold text-ink-2`}>{value.length < REQUIRED_TEXT_PROMPTS ? (lang === 'en' ? `Add a prompt (${answered}/${REQUIRED_TEXT_PROMPTS} required)` : `질문 추가 (${answered}/${REQUIRED_TEXT_PROMPTS} 필수)`) : t('질문 하나 더 답하기')}</Text>
         </Pressable>
       )}
-      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title={t('질문 고르기')} tall>
+      <BottomSheet open={pickerOpen} onClose={() => { setPickerOpen(false); setEditing(null); }} title={slot ? `${targetIndex + 1}. ${slot.hint}` : t('질문 고르기')} tall>
+        {slot && <Text style={tw`text-[12px] text-ink-3 mb-2`}>{t('이 자리에는 다른 종류의 질문이 들어가요')}: {slot.categories.map((c) => PROMPT_CATEGORY_LABELS[c]).join(' · ')}</Text>}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={tw`pb-2`}>
           <Chip size="sm" active={cat === 'all'} onPress={() => setCat('all')}>{t('전체')}</Chip>
-          {(Object.keys(PROMPT_CATEGORY_LABELS) as PromptCategory[]).map((c) => <Chip key={c} size="sm" active={cat === c} onPress={() => setCat(c)}>{PROMPT_CATEGORY_LABELS[c]}</Chip>)}
+          {(Object.keys(PROMPT_CATEGORY_LABELS) as PromptCategory[]).filter((c) => !allowed || allowed.includes(c)).map((c) => <Chip key={c} size="sm" active={cat === c} onPress={() => setCat(c)}>{PROMPT_CATEGORY_LABELS[c]}</Chip>)}
         </ScrollView>
         <View style={tw`mt-1`}>
-          {TEXT_PROMPTS.filter((q) => cat === 'all' || q.category === cat).map((q) => {
+          {TEXT_PROMPTS.filter((q) => q.id !== FIRST_PROMPT_ID && (!allowed || allowed.includes(q.category)) && (cat === 'all' || q.category === cat)).map((q) => {
             const taken = used.has(q.id) && value[editing ?? -1]?.questionId !== q.id;
             return (
               <Pressable key={q.id} disabled={taken} onPress={() => pick(q.id)} style={tw`rounded-xl px-3.5 py-3 border border-line mb-1.5 ${taken ? 'opacity-40' : ''}`}>
