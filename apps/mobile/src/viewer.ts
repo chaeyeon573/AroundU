@@ -1,15 +1,19 @@
 import { useMemo } from 'react';
 import { useAppStore } from '@core/store/useAppStore';
-import type { ID, User } from '@core/types';
-import { canViewField, isFriend, pendingRequestFrom } from '@core/lib/relations';
+import type { Activity, ID, Post, User } from '@core/types';
+import {
+  canMessage, canViewActivity, canViewField, canViewPost, connectionState, iLike, isFollowing, isFriend, isMutualLike, pendingRequestFrom, hasBlocked, isBlocked,
+} from '@core/lib/relations';
 
-/** 현재 사용자 관점의 데이터 접근 헬퍼 (웹 useViewer의 모바일 축약판) */
+/** 현재 사용자 관점의 데이터 접근 헬퍼 (웹 src/hooks/useViewer 와 동일) */
 export function useViewer() {
   const users = useAppStore((s) => s.users);
   const relationships = useAppStore((s) => s.relationships);
   const participations = useAppStore((s) => s.participations);
   const proposals = useAppStore((s) => s.proposals);
   const activities = useAppStore((s) => s.activities);
+  const posts = useAppStore((s) => s.posts);
+  const organizations = useAppStore((s) => s.organizations);
   const opportunities = useAppStore((s) => s.opportunities);
   const opportunityIntents = useAppStore((s) => s.opportunityIntents);
   const timePolls = useAppStore((s) => s.timePolls);
@@ -18,14 +22,34 @@ export function useViewer() {
   return useMemo(() => {
     const snap = { users, relationships, participations, proposals, activities, opportunities, opportunityIntents, timePolls };
     const me = users.find((u) => u.id === currentUserId) as User;
-    const blocked = new Set(relationships.blocks.filter((b) => b.fromId === me?.id || b.toId === me?.id).flatMap((b) => [b.fromId, b.toId]));
-    const visibleUsers: User[] = me ? users.filter((u) => u.id !== me.id && !blocked.has(u.id)) : [];
+    const userById = (id: ID) => users.find((u) => u.id === id);
+    const orgById = (id: ID) => organizations.find((o) => o.id === id);
+    const blockedIds = new Set(relationships.blocks.filter((b) => b.fromId === me?.id).map((b) => b.toId));
+    const blockedByIds = new Set(relationships.blocks.filter((b) => b.toId === me?.id).map((b) => b.fromId));
+    const hidden = (id: ID) => blockedIds.has(id) || blockedByIds.has(id);
+
+    const visibleActivities: Activity[] = me ? activities.filter((a) => !hidden(a.hostId) && canViewActivity(snap, me, a)) : [];
+    const visiblePosts: Post[] = me ? posts.filter((p) => !hidden(p.authorId) && canViewPost(snap, me, p)) : [];
+    const visibleUsers: User[] = me ? users.filter((u) => u.id !== me.id && !hidden(u.id)) : [];
+
+    const approvedCount = (activityId: ID) => participations.filter((p) => p.activityId === activityId && p.status === 'approved').length;
+    const myParticipation = (activityId: ID) => participations.find((p) => p.activityId === activityId && p.userId === me?.id && (p.status === 'approved' || p.status === 'pending'));
+
     return {
-      me, users, snap, visibleUsers,
-      userById: (id: ID) => users.find((u) => u.id === id),
+      me, users, userById, orgById, snap,
+      visibleActivities, visiblePosts, visibleUsers,
+      approvedCount, myParticipation,
+      iLike: (to: ID) => iLike(snap, me.id, to),
+      isMutual: (to: ID) => isMutualLike(snap, me.id, to),
+      isFollowing: (to: ID) => isFollowing(snap, me.id, to),
       isFriend: (to: ID) => isFriend(snap, me.id, to),
       pendingOut: (to: ID) => pendingRequestFrom(snap, me.id, to),
+      pendingIn: (from: ID) => pendingRequestFrom(snap, from, me.id),
+      connection: (to: ID) => connectionState(snap, me.id, to, activities),
+      canMessage: (to: ID) => canMessage(snap, me.id, to),
       canSeeField: (owner: User, field: keyof User['fieldVisibility']) => canViewField(snap, me, owner, field),
+      hasBlocked: (to: ID) => hasBlocked(snap, me.id, to),
+      isBlocked: (to: ID) => isBlocked(snap, me.id, to),
     };
-  }, [users, relationships, participations, proposals, activities, opportunities, opportunityIntents, timePolls, currentUserId]);
+  }, [users, relationships, participations, proposals, activities, posts, organizations, opportunities, opportunityIntents, timePolls, currentUserId]);
 }

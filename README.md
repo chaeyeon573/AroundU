@@ -22,7 +22,7 @@ npm run preview    # 빌드 결과 미리보기
 
 ## 모바일 앱 (Expo) — `apps/mobile`
 
-웹과 같은 도메인 코드(`packages/core`: 타입·API·mock DB·스토어·i18n·추천 로직)를 그대로 쓰는 React Native 앱입니다. 화면만 RN으로 다시 그립니다. 지금은 **사람 탭**이 이식돼 있고, 나머지 탭은 플레이스홀더입니다.
+웹과 같은 도메인 코드(`packages/core`: 타입·API·mock DB·스토어·i18n·추천 로직)를 그대로 쓰는 React Native 앱입니다. 화면은 RN으로 다시 그렸고, 웹의 모든 화면(사람·발견·캠퍼스·나 탭, `+` 시트, 사람/활동/조직/공고 상세, 채팅, 알림, 설정, 시간표, 수업 공간, Plan Together, 활동·게시물 만들기, 프로필 편집)이 `apps/mobile/app/**` 에 같은 경로 이름으로 있습니다. 온보딩·지도는 아직 없고 데모 계정으로 바로 들어갑니다.
 
 **폰에서 보기 (Windows PowerShell)** — 다른 작업 세션이 브랜치를 바꿔도 안 깨지도록 `~/AroundU-mobile` 에 따로 클론해서 실행합니다.
 

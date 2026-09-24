@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Tabs } from 'expo-router';
+import { CreateSheet } from '@/components/CreateSheet';
 import { Pressable, View } from 'react-native';
 import { Users, Compass, Plus, School, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +12,9 @@ const MUTED = '#74777E';
 /** 사람 | 발견 | + | 캠퍼스 | 나 */
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  return (
+  const [open, setOpen] = useState(false);
+  return (<>
+    <CreateSheet open={open} onClose={() => setOpen(false)} />
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -32,11 +36,11 @@ export default function TabLayout() {
               <Plus size={26} color="#fff" />
             </View>
           ),
-          tabBarButton: ({ onPress, children, style }) => <Pressable onPress={onPress} style={[style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>{children}</Pressable>,
+          tabBarButton: ({ children, style }) => <Pressable onPress={() => setOpen(true)} style={[style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>{children}</Pressable>,
         }}
       />
       <Tabs.Screen name="campus" options={{ title: t('캠퍼스'), tabBarIcon: ({ color }) => <School size={24} color={color} /> }} />
       <Tabs.Screen name="me" options={{ title: t('나'), tabBarIcon: ({ color }) => <User size={24} color={color} /> }} />
     </Tabs>
-  );
+  </>);
 }
