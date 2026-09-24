@@ -66,7 +66,7 @@ async function fetchCampusGroups(host: string): Promise<CampusGroupsOrg[]> {
 const CAMPUSGROUPS_SKIP = /^Campus Departments$/i;
 function mapCampusGroupsOrg(schoolId: ID, host: string, o: CampusGroupsOrg): Organization {
   const catText = `${o.groupType} ${o.tags.join(' ')} ${o.name}`;
-  const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && GREEK_RE.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
+  const type: Organization['type'] = /\b(council|association)\b/i.test(o.name) && /fratern|soror|greek/i.test(o.name) ? 'council' : GREEK_RE.test(catText) ? 'greek' : COUNCIL_RE.test(catText) || /^Associated Students/i.test(o.groupType) ? 'council' : 'club';
   return {
     id: `${type === 'greek' ? 'og' : 'oc'}_${schoolId.replace('s_', '')}_cg${o.id}`,
     name: o.name,
@@ -122,6 +122,15 @@ const store = createStore();
 await store.init();
 const snap = (await store.loadSnapshot()) ?? emptySnapshot();
 const existing = new Map(snap.organizations.map((o) => [`${o.schoolId}::${o.name.toLowerCase()}`, o]));
+const existingById = new Map(snap.organizations.map((o) => [o.id, o]));
+/** 이미 있는 조직(id 우선, 없으면 이름)은 멤버·팔로워·인증 상태를 유지한다. 공식 명단으로 인증된 greek 은 이름·분류·카운슬·설명도 그대로 두고 링크만 합친다 */
+function mergeExisting(o: Organization): Organization {
+  const prev = existingById.get(o.id) ?? existing.get(`${o.schoolId}::${o.name.toLowerCase()}`);
+  if (!prev) return o;
+  const links = [...(prev.links ?? []), ...(o.links ?? []).filter((l) => !prev.links?.some((p) => p.url === l.url))];
+  if (prev.verified && prev.type === 'greek') return { ...prev, links };
+  return { ...prev, type: o.type, description: o.description || prev.description, links, parent: o.parent ?? prev.parent };
+}
 
 /** 디렉터리에서 받은 뒤, 같은 학교의 손으로 넣어 둔 추정 항목(디렉터리 링크 없음 · 멤버/관리자 없음 · 이번에 안 맞음)은 지운다. greek 은 fetch-greeks 가 담당 */
 function staleSeed(schoolId: ID, fresh: Organization[]): ID[] {
@@ -136,8 +145,7 @@ for (const [schoolId, host] of Object.entries(ENGAGE_HOSTS)) {
   let raw: EngageOrg[];
   try { raw = await fetchAll(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
   const orgs = raw.filter((o) => !o.Status || /active/i.test(o.Status)).map((o) => mapOrg(schoolId, host, o))
-    // 이미 있는 조직은 멤버·팔로워·인증 상태를 유지하고 설명·링크·분류만 갱신 (공식 명단으로 인증된 greek 은 분류를 내리지 않는다)
-    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, type: prev.verified && prev.type === 'greek' ? prev.type : o.type, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
+    .map(mergeExisting);
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
   const stale = staleSeed(schoolId, orgs);
@@ -150,7 +158,7 @@ for (const [schoolId, host] of Object.entries(CAMPUSGROUPS_HOSTS)) {
   let raw: CampusGroupsOrg[];
   try { raw = await fetchCampusGroups(host); } catch (e) { console.log(`실패: ${(e as Error).message}`); continue; }
   const orgs = raw.filter((o) => !CAMPUSGROUPS_SKIP.test(o.groupType)).map((o) => mapCampusGroupsOrg(schoolId, host, o))
-    .map((o) => { const prev = existing.get(`${o.schoolId}::${o.name.toLowerCase()}`); return prev ? { ...prev, type: prev.verified && prev.type === 'greek' ? prev.type : o.type, description: o.description || prev.description, links: o.links ?? prev.links, parent: o.parent ?? prev.parent } : o; });
+    .map(mergeExisting);
   const csv = ['school_id,name,type,category,description', ...orgs.map((o) => [o.schoolId, o.name, o.type, o.parent ?? '', o.description].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
   writeFileSync(path.join(dataDir, `orgs-${schoolId}.csv`), csv);
   const freshIds = new Set(orgs.map((o) => o.id));
