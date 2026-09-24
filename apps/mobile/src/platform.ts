@@ -23,7 +23,7 @@ setPlatform({
   getItem: (k) => memory.get(k) ?? null,
   setItem: (k, v) => { memory.set(k, v); AsyncStorage.setItem(k, v).catch(() => {}); },
   removeItem: (k) => { memory.delete(k); AsyncStorage.removeItem(k).catch(() => {}); },
-  reload: () => { if (RNPlatform.OS === 'web' && typeof window !== 'undefined') window.location.reload(); else reloadHandler(); },
+  reload: () => { if (RNPlatform.OS === 'web' && typeof window !== 'undefined') window.location.href = document.baseURI; else reloadHandler(); },
   locale: () => getLocales()[0]?.languageTag ?? 'en-US',
   asset: (path) => PHOTOS[path] ?? path,
 });

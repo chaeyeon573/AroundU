@@ -10,7 +10,7 @@ config.resolver.nodeModulesPaths = [path.resolve(__dirname, 'node_modules'), pat
 
 // 루트(웹)와 모바일의 React 버전이 달라 두 벌이 번들되는 것을 막는다:
 // react/react-dom/scheduler는 항상 apps/mobile/node_modules 의 것으로 해석
-const forced = ['react', 'react-dom', 'scheduler'].filter((m) => fs.existsSync(path.join(__dirname, 'node_modules', m)));
+const forced = ['react', 'react-dom', 'react-native', 'scheduler'].filter((m) => fs.existsSync(path.join(__dirname, 'node_modules', m)));
 const defaultResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const hit = forced.find((m) => moduleName === m || moduleName.startsWith(m + '/'));

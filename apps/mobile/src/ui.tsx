@@ -7,7 +7,7 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View,
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, MessageCircle, GraduationCap, ChevronDown, ChevronLeft, User as UserIcon, X, Search, MapPin } from 'lucide-react-native';
-import { t } from '@core/i18n';
+import { t, lang, setLang } from '@core/i18n';
 import { getPlatform } from '@core/platform';
 import { useAppStore } from '@core/store/useAppStore';
 import { tw } from './tw';
@@ -37,6 +37,7 @@ export function Cover({ emoji, hue, url, size = 56, radius = 16, style }: { emoj
 /** 루트 탭 공통 헤더 — 워드마크 + 학교 알약 + 알림·메시지·프로필 */
 export function AppHeader({ right, people }: { right?: ReactNode; people?: boolean }) {
   const v = useViewer();
+  const [langOpen, setLangOpen] = useState(false);
   const notifications = useAppStore((s) => s.notifications);
   const rooms = useAppStore((s) => s.chatRooms);
   const unreadBell = notifications.some((n) => n.userId === v.me.id && !n.read);
@@ -46,7 +47,7 @@ export function AppHeader({ right, people }: { right?: ReactNode; people?: boole
   return (
     <View style={tw`h-16 pl-4 pr-3 flex-row items-center`}>
       <Text style={tw`text-[22px] font-extrabold text-primary tracking-tight`}>AroundU</Text>
-      <Pressable onPress={() => nav('/settings')} style={tw`ml-2 h-9 pl-2.5 pr-2 rounded-full bg-primary-soft flex-row items-center max-w-[118px]`}>
+      <Pressable onPress={() => setLangOpen(true)} style={tw`ml-2 h-9 pl-2.5 pr-2 rounded-full bg-primary-soft flex-row items-center max-w-[118px]`}>
         {people ? <MapPin size={15} color={C.primary} /> : <GraduationCap size={15} color={C.primary} />}
         <Text numberOfLines={1} style={tw`mx-1.5 text-[13px] font-semibold text-primary shrink`}>{school}</Text>
         <ChevronDown size={14} color={C.primary} />
@@ -58,7 +59,24 @@ export function AppHeader({ right, people }: { right?: ReactNode; people?: boole
       <Pressable onPress={() => nav('/profile')} style={tw`ml-1`}>
         {v.me.avatar.url ? <Avatar emoji={v.me.avatar.emoji} hue={v.me.avatar.hue} url={v.me.avatar.url} size={32} /> : <View style={tw`h-8 w-8 rounded-full bg-primary items-center justify-center`}><UserIcon size={17} color="#fff" /></View>}
       </Pressable>
+      <LangSheet open={langOpen} onClose={() => setLangOpen(false)} school={full} />
     </View>
+  );
+}
+
+/** 학교 알약 → 한국어 / English 전환 (한국 대학 버전 · 미국 대학 버전) */
+export function LangSheet({ open, onClose, school }: { open: boolean; onClose: () => void; school: string }) {
+  const pick = (l: 'ko' | 'en') => { onClose(); if (l !== lang) setLang(l); };
+  return (
+    <BottomSheet open={open} onClose={onClose} title={school}>
+      <Text style={tw`text-[12px] font-bold text-ink-3 mb-2`}>{lang === 'en' ? 'Language · Campus version' : '언어 · 캠퍼스 버전'}</Text>
+      {([['ko', '한국어 · 한국 대학'], ['en', 'English · US campus']] as ['ko' | 'en', string][]).map(([l, label]) => (
+        <Pressable key={l} onPress={() => pick(l)} style={tw`h-12 px-4 mb-2 rounded-full flex-row items-center ${lang === l ? 'bg-primary' : 'bg-surface-2'}`}>
+          <Text style={tw`text-[14px] font-semibold ${lang === l ? 'text-white' : 'text-primary'}`}>{label}</Text>
+        </Pressable>
+      ))}
+      <Pressable onPress={() => { onClose(); nav('/settings'); }} style={tw`h-11 items-center justify-center`}><Text style={tw`text-[13px] font-semibold text-verify`}>{t('설정')}</Text></Pressable>
+    </BottomSheet>
   );
 }
 export function IconBtn({ onPress, children, badge }: { onPress: () => void; children: ReactNode; badge?: boolean }) {

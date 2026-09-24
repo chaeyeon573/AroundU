@@ -41,6 +41,7 @@ npx expo export --platform web         # 정적 파일 → apps/mobile/dist
 npx expo export --platform ios,android # 네이티브 번들 (CI 검증용)
 ```
 
+- Expo SDK 57 (Expo Go 최신 버전과 호환). 헤더의 학교 알약을 누르면 **한국어 · 한국 대학 / English · US campus** 버전을 바꿀 수 있어요.
 - 앱스토어 제출은 `npx eas build --platform ios|android` (EAS 계정 필요), 스토어 등록 전에 `app.json`의 번들 ID·아이콘을 바꿉니다.
 - 스타일은 `twrnc`(런타임 Tailwind)로 웹과 같은 클래스 이름·토큰(`apps/mobile/tailwind.config.js`)을 씁니다. 사진은 `apps/mobile/assets/photos` + `src/photos.ts`의 `require` 맵으로 들어갑니다.
 - 저장소는 AsyncStorage를 앱 시작 시 메모리로 올려(`src/platform.ts`의 `hydrate`) core의 동기 저장소 인터페이스에 맞춥니다.
