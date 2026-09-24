@@ -54,7 +54,7 @@ for (const r of rows) {
 console.log(`${out.length} opportunities (${out.filter((o) => existing.has(o.id)).length} updated, ${out.filter((o) => !o.deadline && !o.date).length} without a confirmed date)`);
 const schools = new Set(out.map((o) => o.schoolId));
 const demo = process.env.PRUNE_DEMO === '1'
-  ? snap.opportunities.filter((o) => o.schoolId && schools.has(o.schoolId) && !out.some((n) => n.id === o.id) && (!o.sourceUrl || /(^|\.)example\.com\//.test(o.sourceUrl) || /instagram\.com\/example/.test(o.sourceUrl)))
+  ? snap.opportunities.filter((o) => o.schoolId && schools.has(o.schoolId) && !out.some((n) => n.id === o.id) && (!o.sourceUrl || /(^|[./])example\.com(\/|$)/.test(o.sourceUrl) || /instagram\.com\/example/.test(o.sourceUrl)))
   : [];
 const demoIds = new Set(demo.map((o) => o.id));
 const intents = snap.opportunityIntents.filter((i) => demoIds.has(i.opportunityId)).map((i) => i.id);
